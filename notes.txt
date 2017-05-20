@@ -1,0 +1,8 @@
+Make venv:
+python3 -m venv venv
+source myvenv/bin/activate
+deactivate
+
+pip3 install django
+
+django-admin startproject tournament

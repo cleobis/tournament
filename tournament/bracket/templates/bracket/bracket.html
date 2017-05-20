@@ -1,0 +1,87 @@
+<table border="1px">
+  <thead>
+    <td>Round 1</td>
+    <td>Round 2</td>
+    <td>Round 3</td>
+    <td>Winner</td>
+  </thead>
+  <tr>
+    <td>A</td>
+    <td rowspan="2">}B</td>
+    <td rowspan="4">}C</td>
+    <td rowspan="8">}C</td>
+  </tr>
+  <tr>
+    <td>B</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td rowspan="2">C</td>
+  </tr>
+  <tr>
+    <td></td>
+  </tr>
+  <tr>
+    <td>D</td>
+    <td rowspan="2">}D</td>
+    <td rowspan="4">}D</td>
+  </tr>
+  <tr>
+    <td>E</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td rowspan="2">F</td>
+  </tr>
+  <tr>
+    <td></td>
+  </tr>
+</table>
+
+<table border="1px">
+  <thead>
+    {% for h in grid.headers %}
+    <td>{{ h }}</td>
+    {% endfor %}
+  </thead>
+  <tbody>
+    {% for row in grid.rows %}
+    <tr>
+      {% for cell in row %}
+        {% if cell is not None %}
+          {% if cell.match is not None %}
+            <td {% if cell.span != 1 %}rowspan="{{ cell.span }}"{% endif %}>round {{ cell.round }}, match {{ cell.match_i }}, {{ cell.name }}</td>
+          {% else %}
+            <td {% if cell.span != 1 %}rowspan="{{ cell.span }}"{% endif %} />
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h1>Consolation Round</h1>
+<table border="1px">
+  <thead>
+    {% for h in consolation_grid.headers %}
+    <td>{{ h }}</td>
+    {% endfor %}
+  </thead>
+  <tbody>
+    {% for row in consolation_grid.rows %}
+    <tr>
+      {% for cell in row %}
+        {% if cell is not None %}
+          {% if cell.match is not None %}
+            <td {% if cell.span != 1 %}rowspan="{{ cell.span }}"{% endif %}>round {{ cell.round }}, match {{ cell.match_i }}, {{ cell.name }}</td>
+          {% else %}
+            <td {% if cell.span != 1 %}rowspan="{{ cell.span }}"{% endif %} />
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+

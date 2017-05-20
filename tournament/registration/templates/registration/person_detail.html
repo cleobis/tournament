@@ -1,0 +1,22 @@
+<h1>{{ person.full_name }}</h1>
+
+<p><a href="{% url 'index' %}">Back</a> | <a href="{% url 'update' person.pk %}">Update</a> | <a href="{% url 'delete' person.pk %}">Delete</a></p>
+
+<ul>
+  <li>Gender: {{ person.gender }}</li>
+  <li>Age: {{ person.age }}</li>
+  <li>Rank: {{ person.rank.name }}</li>
+  <li>Instructor: {{ person.instructor }}</li>
+  <li>Phone number: {{ person.phone_number }}</li>
+  <li>Email: {{ person.email|urlize }}</li>
+  <li>Registration date: {{ person.reg_date|date }}</li>
+  <li>Paid: {{ person.paid|yesno }}</li>
+  <li>Date paid: {{ person.paidDate }}</li>
+  <li>Events:</li>
+  <ul>
+  {% for l in person.eventlink_set.all %}
+    <li>{{ l.event.name }} - {{ l.division }}</li>
+  {% endfor %}
+</ul>
+  <li>Notes: {{ person.notes }}</li>
+</ul>

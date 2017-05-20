@@ -1,0 +1,11 @@
+<h1>Registered participants</h1>
+
+<p><a href="{% url 'create' %}">Register</a></p>
+
+<ul>
+  {% for p in object_list %}
+      <li><a href="{% url 'detail' p.id %}">{{ p.full_name }}</a></li>
+  {% empty %}
+      <li>No registrations yet.</li>
+  {% endfor %}
+</ul>

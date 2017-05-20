@@ -1,0 +1,21 @@
+<h1>{{ person.full_name }}</h1>
+
+<ul>
+  <li>Gender: {{ person.gender }}</li>
+  <li>Age: {{ person.age }}</li>
+  <li>Rank: {{ person.rank.name }}</li>
+  <li>Instructor: {{ person.instructor }}</li>
+  <li>Email: {{ person.email|urlize }}</li>
+  <li>Registration date: {{ person.reg_date|date }}</li>
+  <li>Paid: {{ person.paid|yesno }}</li>
+  <li>Date paid: {{ person.paidDate }}</li>
+  <li>Notes: {{ person.notes }}</li>
+</ul>
+
+<form action="delete" method="post">
+  {% csrf_token %}
+  <table>
+    {{ form }}
+  </table>
+  <input type="submit" value="Delete">
+</form>

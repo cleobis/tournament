@@ -1,0 +1,28 @@
+<tr>
+    <form ic-post-to="{{ request.path }}" method="post">
+
+      {% csrf_token %}
+        {% for field in form %}
+        <td>
+          <div class="fieldWrapper">
+            {{ field.errors }}
+            {{ field }}
+            {% if field.help_text %}
+            <p class="help">{{ field.help_text|safe }}</p>
+            {% endif %}
+          </div>
+        </td>
+        {% endfor %}
+        <td/><td/>
+        <td>
+          <input type="submit" value="save" />
+        </td>
+<!--    </form>-->
+</tr>      {% if form.non_field_errors %}
+        <tr>
+          <td colspan="8">
+            {{ form.non_field_errors }}
+          </td>
+        </tr>
+      {% endif %}
+    
