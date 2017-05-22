@@ -50,7 +50,9 @@
       {% for cell in row %}
         {% if cell is not None %}
           {% if cell.match is not None %}
-            <td {% if cell.span != 1 %}rowspan="{{ cell.span }}"{% endif %}>round {{ cell.round }}, match {{ cell.match_i }}, {{ cell.name }}</td>
+            <td {% if cell.span != 1 %}rowspan="{{ cell.span }}"{% endif %}>
+              {% if cell.is_aka %}round {{ cell.round }}, match {{ cell.match_i }}<br />{% else %}vs {% endif %}
+              {% if cell.person is not None %}{{ cell.person }}{% else %}?{% endif %}
           {% else %}
             <td {% if cell.span != 1 %}rowspan="{{ cell.span }}"{% endif %} />
           {% endif %}
@@ -74,7 +76,7 @@
       {% for cell in row %}
         {% if cell is not None %}
           {% if cell.match is not None %}
-            <td {% if cell.span != 1 %}rowspan="{{ cell.span }}"{% endif %}>round {{ cell.round }}, match {{ cell.match_i }}, {{ cell.name }}</td>
+            <td {% if cell.span != 1 %}rowspan="{{ cell.span }}"{% endif %}>{{ cell.match }} {{ cell.name }}{# round {{ cell.round }}, match {{ cell.match_i }}, {{ cell.name }} #}</td>
           {% else %}
             <td {% if cell.span != 1 %}rowspan="{{ cell.span }}"{% endif %} />
           {% endif %}

@@ -13,14 +13,15 @@ class BracketGrid():
             self.n_row = 2
             self.n_col = 2
         else:
-            self.n_row = int(math.pow(2, self.bracket.get_num_round()))
-            self.n_col = self.bracket.get_num_round() + 1
+            self.n_row = int(math.pow(2, self.bracket.rounds))
+            self.n_col = self.bracket.rounds + 1
 
     
     def headers(self):
         for i in range(self.n_col-1):
             yield "Round " + str(i+1)
         yield "Winner"
+    
     
     def rows(self):
         yield from [self.row(i) for i in range(self.n_row)]
@@ -44,19 +45,22 @@ class BracketGrid():
             else:
                 match_i = row // span // 2
                 match = self.bracket.get_match(round, match_i)
-            
+                
                 if row / span % 2 == 0:
-                    name = 'top'
+                    is_aka = True
+                    p = match.aka if match is not None else None
                 else:
-                    name = 'bottom'
-                yield {'name': name, 'match_i': match_i, 'match': match, 'round': round, 'span': span}
+                    is_aka = False
+                    p = match.shiro if match is not None else None
+                yield {'match_i': match_i, 'match': match, 'round': round, 'span': span, 'person': p, 'is_aka': is_aka}
         
         if row == 0:
             yield {'name': 'winner', 'match_i': 0, 'match': self.bracket.final_match, 'round': 0, 'span': self.n_row}
+        else:
+            yield None
 
 # Create your views here.
 def test_bracket(request):
-    bracket = Bracket1Elim()
-    bracket.build_test()
+    bracket = Bracket1Elim.objects.all()[0]
     context = {'bracket': bracket, 'grid': BracketGrid(bracket), 'consolation_grid': BracketGrid(bracket, consolation=True)}
     return render(request, "bracket/bracket.html", context)
