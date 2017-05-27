@@ -17,7 +17,15 @@ class Event(models.Model):
 
 
 class Rank(models.Model):
-    order = models.SmallIntegerField()
+    """A belt rank.
+    
+    By default, kyu grades are stored with `order` having a value of -kyu and
+    dan grades are stored with `order` having a value of dan.
+    
+    Standard Karate ranks will be prepopulated in the database by the migration.
+    """
+    
+    order = models.SmallIntegerField(unique=True)
     name = models.CharField(max_length=100)
     
     class Meta:
@@ -25,6 +33,16 @@ class Rank(models.Model):
     
     def __str__(self):
         return self.name
+    
+    
+    @staticmethod
+    def get_dan(dan):
+        return Rank.objects.get(order=dan)
+    
+    
+    @staticmethod
+    def get_kyu(kyu):
+        return Rank.objects.get(order=-kyu)
     
     
     @staticmethod

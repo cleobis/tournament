@@ -1,9 +1,26 @@
 from django.test import TestCase
-
+from django.core.exceptions import ObjectDoesNotExist
 from .models import Rank
 
 # Create your tests here.
 class RankTestCase(TestCase):
+    
+    
+    def test_get_kyu(self):
+        rank = Rank.get_kyu(8)
+        self.assertTrue(rank.name.startswith("Yellow"))
+        
+        with self.assertRaises(ObjectDoesNotExist):
+            rank = Rank.get_kyu(10)
+    
+    
+    def test_get_dan(self):
+        rank = Rank.get_dan(2)
+        self.assertTrue(rank.name.startswith("Nidan"))
+    
+        with self.assertRaises(ObjectDoesNotExist):
+            rank = Rank.get_dan(0)
+    
     
     def test_build_default_fixture(self):
         """Check that default entries have been populated.
@@ -18,30 +35,16 @@ class RankTestCase(TestCase):
         import io
         
         db = serializers.serialize("json", Rank.objects.all(), indent=4)
-        # print(db)
-        db = io.StringIO(db)
         
         filename = os.path.realpath(__file__)
         filename = os.path.join(os.path.dirname(filename), "fixtures", "rank.json")
+        with open(filename) as f:
+            filename = f.read()
         
         fun = io.StringIO()
         Rank.build_default_fixture(fun)
         fun.seek(0)
+        fun = fun.read()
         
-        with open(filename) as f:
-            line = 1
-            line_db = "start"
-            line_file = "start"
-            line_fun = "start"
-            while len(line_db) > 0 or len(line_file) > 0:
-                line_db = db.readline()
-                line_file = f.readline()
-                line_fun = fun.readline()
-                self.assertEquals(line_db.strip(), line_file.strip(), "Error on line {}.".format(line))
-                self.assertEquals(line_file, line_fun, "Error on line {}.".format(line))
-                line += 1
-        
-        # XMLSerializer = serializers.get_serializer("json")
-        # xml_serializer = XMLSerializer()
-        # xml_serializer.serialize(Rank.objects.all())
-        # data = xml_serializer.getvalue()
+        self.assertJSONEqual(db, filename)
+        self.assertJSONEqual(db, fun)
