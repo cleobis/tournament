@@ -12,7 +12,7 @@ class KataScoreList(generic.ListView):
     model = Scoring
 
 class KataScoreListWithAdd(CreateView):
-    template_name = "KataScore/scoring_list.html"
+    template_name = "kata/scoring_list.html"
     form_class = ScoringForm
     success_url = reverse_lazy('list')
 
@@ -30,7 +30,7 @@ class KataScoreListWithAdd(CreateView):
 
 class KataScoreListModifyInline(UpdateView):
     model = Scoring
-    template_name = "KataScore/scoring_list_update_inline.html"
+    template_name = "kata/scoring_list_update_inline.html"
     form_class = ScoringForm
     
     def get_success_url(self):
@@ -38,4 +38,4 @@ class KataScoreListModifyInline(UpdateView):
     
 class KataScoreListDisplayInline(generic.DetailView):
     model = Scoring
-    template_name = "KataScore/scoring_list_display_inline.html"
+    template_name = "kata/scoring_list_display_inline.html"

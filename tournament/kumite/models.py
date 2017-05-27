@@ -6,33 +6,27 @@ from django.core.exceptions import MultipleObjectsReturned
 
 # Create your models here.
 
-class MatchPerson(models.Model):
+class KumiteMatchPerson(models.Model):
     name = models.CharField(max_length=250)
     points = models.PositiveSmallIntegerField(default=0)
     disqualified = models.BooleanField(default=False)
     
-    
-    @property
-    def match_set(self):
-        return Match.objects.filter(Q(aka__id=self.id) | Q(shiro__id=self.id))
-    
-    
     def __str__(self):
         return self.name
 
-class Match(models.Model):
+class KumiteMatch(models.Model):
     
     class Meta:
         ordering = ['-round', 'order']
     
-    bracket = models.ForeignKey('Bracket1Elim', on_delete=models.CASCADE)
+    bracket = models.ForeignKey('KumiteElim1Bracket', on_delete=models.CASCADE)
     round = models.SmallIntegerField()
     order = models.SmallIntegerField()
 
     winner_match = models.ForeignKey('self', blank=True, null=True, on_delete=models.SET_NULL, related_name='+')
     consolation_match = models.ForeignKey('self', blank=True, null=True, on_delete=models.SET_NULL, related_name='+')
-    aka = models.ForeignKey(MatchPerson, blank=True, null=True, on_delete=models.PROTECT, related_name='+')
-    shiro = models.ForeignKey(MatchPerson, blank=True, null=True, on_delete=models.PROTECT, related_name='+')
+    aka = models.OneToOneField(KumiteMatchPerson, blank=True, null=True, on_delete=models.PROTECT, related_name='+')
+    shiro = models.OneToOneField(KumiteMatchPerson, blank=True, null=True, on_delete=models.PROTECT, related_name='+')
 
     done = models.BooleanField(default=False)
     aka_won = models.BooleanField(default=False)
@@ -77,7 +71,7 @@ class Match(models.Model):
     
     
     def save(self, *args, **kwargs):
-        super(Match, self).save(*args, **kwargs)
+        super(KumiteMatch, self).save(*args, **kwargs)
         
         if self.done:
             if self.winner_match:
@@ -88,7 +82,7 @@ class Match(models.Model):
     
     @property
     def prev_matches(self):
-        return Match.objects.filter(bracket__id=self.bracket.id).filter(
+        return KumiteMatch.objects.filter(bracket__id=self.bracket.id).filter(
             Q(winner_match__id=self.id) | Q(consolation_match__id=self.id))
     
     
@@ -142,16 +136,16 @@ class Match(models.Model):
             set_aka = False
 
 
-class Bracket1Elim(models.Model):
+class KumiteElim1Bracket(models.Model):
     
-    people = models.ManyToManyField(MatchPerson)
+    people = models.ManyToManyField(KumiteMatchPerson)
     name = models.CharField(max_length=250)
     rounds = models.PositiveSmallIntegerField(default=0)
     
     
     @property
     def final_match(self):
-        m = self.match_set.filter(round=0, order=0)
+        m = self.kumitematch_set.filter(round=0, order=0)
         if len(m) == 0:
             return None
         elif len(m) == 1:
@@ -162,7 +156,7 @@ class Bracket1Elim(models.Model):
     
     @property
     def consolation_match(self):
-        m = self.match_set.filter(round=0, order=-1)
+        m = self.kumitematch_set.filter(round=0, order=-1)
         if len(m) == 0:
             return None
         elif len(m) == 1:
@@ -173,14 +167,14 @@ class Bracket1Elim(models.Model):
     
     def build(self):
         
-        if len(self.match_set.all()) > 0:
+        if len(self.kumitematch_set.all()) > 0:
             raise Exception("Bracket has already been built.")
         
         def build_helper(bracket, round, match, parent, order):
             
             if len(order) > 2:
                 # Add another round
-                m = Match()
+                m = KumiteMatch()
                 m.bracket = self
                 m.str = str(round)
                 m.round = round
@@ -205,7 +199,7 @@ class Bracket1Elim(models.Model):
                     parent.save()
                     
                 else:
-                    m = Match()
+                    m = KumiteMatch()
                     m.bracket = self
                     m.str = str(round)
                     m.round = round
@@ -230,7 +224,7 @@ class Bracket1Elim(models.Model):
         m = build_helper(self, round, 0, None, order)
         
         # Consolation Match
-        m = Match()
+        m = KumiteMatch()
         m.bracket = self
         m.str = "consolation"
         m.round = round

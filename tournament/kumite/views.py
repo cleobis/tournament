@@ -2,7 +2,7 @@ from django.shortcuts import render
 
 import math
 
-from .models import Bracket1Elim, Match
+from .models import KumiteElim1Bracket, KumiteMatch
 
 class BracketGrid():
     
@@ -61,6 +61,6 @@ class BracketGrid():
 
 # Create your views here.
 def test_bracket(request):
-    bracket = Bracket1Elim.objects.all()[0]
+    bracket = KumiteElim1Bracket.objects.all()[0]
     context = {'bracket': bracket, 'grid': BracketGrid(bracket), 'consolation_grid': BracketGrid(bracket, consolation=True)}
-    return render(request, "bracket/bracket.html", context)
+    return render(request, "kumite/bracket.html", context)

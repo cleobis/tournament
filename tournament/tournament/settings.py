@@ -33,8 +33,8 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     'registration.apps.RegistrationConfig',
     'tmp.apps.TmpConfig',
-    'KataScore.apps.KataScoreConfig',
-    'bracket.apps.BracketConfig',
+    'kata.apps.KataConfig',
+    'kumite.apps.KumiteConfig',
     
     'django.contrib.admin',
     'django.contrib.auth',

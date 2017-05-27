@@ -1,21 +1,21 @@
 from django.test import TestCase
-from .models import Bracket1Elim, MatchPerson, Match
+from .models import KumiteElim1Bracket, KumiteMatchPerson, KumiteMatch
 
 import math
 
 def match_person_gen(n=None):
     """
-    Iterator that will return a new MatchPerson each time called
+    Iterator that will return a new KumiteMatchPerson each time called
     
     Args:
         n (optional): Number of people to return.
     
     Yields:
-        MatchPerson: People named "a", "b", etc..
+        KumiteMatchPerson: People named "a", "b", etc..
     """
     i = 0
     while n is None or i < n:
-        p = MatchPerson()
+        p = KumiteMatchPerson()
         p.name = chr(ord("a") + i)
         i += 1
         p.save()
@@ -23,7 +23,7 @@ def match_person_gen(n=None):
 
 
 def make_bracket(n):
-    b = Bracket1Elim()
+    b = KumiteElim1Bracket()
     b.name = "asdf"
     b.save()
     
@@ -34,7 +34,7 @@ def make_bracket(n):
     
     # for round in range(2,-1,-1):
     #     print("round = {}".format(round))
-    #     for m in b.match_set.filter(round=round):
+    #     for m in b.kumitematch_set.filter(round=round):
     #         aka = m.aka.name if m.aka is not None else "?"
     #         shiro = m.shiro.name if m.shiro is not None else "?"
     #         print("{} - {} vs {}".format(m, aka, shiro))
@@ -49,15 +49,15 @@ class MatchTestCase(TestCase):
     
     def test_winner_loser(self):
         
-        aka = MatchPerson()
+        aka = KumiteMatchPerson()
         aka.name = "aka"
         aka.save()
         
-        shiro = MatchPerson()
+        shiro = KumiteMatchPerson()
         shiro.name = "shiro"
         shiro.save()
         
-        m = Match() ;
+        m = KumiteMatch() ;
         m.aka = aka
         m.shiro = shiro
         
@@ -84,17 +84,17 @@ class MatchTestCase(TestCase):
     
     
     def test_claim(self):
-        b = Bracket1Elim()
+        b = KumiteElim1Bracket()
         b.save()
         
-        final = Match()
+        final = KumiteMatch()
         final.bracket = b
         final.name = "final"
         final.round = 0
         final.order = 1
         final.save()
         
-        consolation = Match()
+        consolation = KumiteMatch()
         consolation.bracket = b
         consolation.name = "consolation"
         consolation.round = 0
@@ -103,9 +103,9 @@ class MatchTestCase(TestCase):
         
         people = match_person_gen()
         
-        m1 = Match()
+        m1 = KumiteMatch()
         m1.bracket = b
-        m1.name = "Match 1"
+        m1.name = "KumiteMatch 1"
         m1.round = 1
         m1.order = 0
         m1.winner_match = final
@@ -114,9 +114,9 @@ class MatchTestCase(TestCase):
         m1.shiro = people.__next__()
         m1.save()
         
-        m2 = Match()
+        m2 = KumiteMatch()
         m2.bracket = b
-        m2.name = "Match 2"
+        m2.name = "KumiteMatch 2"
         m2.round = 1
         m2.order = 1
         m2.winner_match = final
@@ -148,14 +148,14 @@ class MatchTestCase(TestCase):
         self.assertEqual(consolation.aka.name, "a")
         self.assertEqual(consolation.shiro.name, "d")
 
-class Bracket1ElimTestCase(TestCase):
+class KumiteElim1BracketTestCase(TestCase):
     
     def setUp(self):
         pass
     
     
     def test_get_seed_order(self):
-        b = Bracket1Elim()
+        b = KumiteElim1Bracket()
         
         order = b.get_seed_order(1)
         self.assertEqual(order, [0, 1])
@@ -180,7 +180,7 @@ class Bracket1ElimTestCase(TestCase):
         """Try building brackets of different sizes and make sure people are assigned correctly."""
         
         def round_matches_list(round):
-            matches = b.match_set.filter(round=round)
+            matches = b.kumitematch_set.filter(round=round)
             return [(m.order,
                 m.aka.name if m.aka is not None else None,
                 m.shiro.name if m.shiro is not None else None
@@ -243,7 +243,7 @@ class Bracket1ElimTestCase(TestCase):
         self.assertIsNotNone(b.final_match)
         self.assertIsNotNone(b.consolation_match)
         
-        for m in b.match_set.all():
+        for m in b.kumitematch_set.all():
             if m == b.final_match:
                 self.assertTrue(m.is_final())
                 self.assertFalse(m.is_consolation())

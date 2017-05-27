@@ -19,7 +19,7 @@ from django.contrib import admin
 urlpatterns = [
     url(r'^registration/', include('registration.urls')),
     url(r'^tmp/', include('tmp.urls')),
-    url(r'^kata_score/', include('KataScore.urls')),
-    url(r'^bracket/', include('bracket.urls')),
+    url(r'^kata/', include('kata.urls')),
+    url(r'^kumite/', include('kumite.urls')),
     url(r'^admin/', admin.site.urls),
 ]
