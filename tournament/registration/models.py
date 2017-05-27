@@ -26,6 +26,63 @@ class Rank(models.Model):
     def __str__(self):
         return self.name
     
+    
+    @staticmethod
+    def build_default_fixture(stream=None):
+        """Create a fixture file to populate the Rank table with default data.
+        
+        If no output stream is provided, the fixture data is saved to fixtures/rank.json.
+        The data is loaded automatically as part of the database migration. 
+        Alternatively, it can be loaded by calling::
+        
+            ./manage.py loaddata rank.json
+        
+        Args:
+            stream (optional): Stream where the data will be written.
+        """
+        
+        import json
+        import os
+    
+        data = []
+        pk = 0
+    
+        def suffix(i):
+            if i <= 3:
+                return ("st", "nd", "rd")[i-1]
+            else:
+                return "th"
+    
+        belts = ("White", "Yellow", "Orange", "Green", "Blue", "Purple", "Brown", "Brown", "Brown")
+        belts = zip(belts, range(len(belts),0,-1))
+        for (b, kyu) in belts:
+            data.append({"model": "registration.rank", "pk": pk, "fields": {
+                "order": -kyu, "name": "{} ({}{} kyu)".format(b, kyu, suffix(kyu))
+            }})
+            pk += 1
+    
+        belts = ("Shodan", "Nidan", "Sandan", "Yondan", "Godan", "Rokudan", "Shichidan", "Hachidan", "Kudan", "Jūdan")
+        dan = 1
+        for b in belts:
+            data.append({"model": "registration.rank", "pk": pk, "fields": {
+                "order": dan, "name": "{} ({}{} dan black belt)".format(b, dan, suffix(dan))
+            }})
+            dan += 1
+            pk += 1
+    
+        if stream is None:
+            # Get file path
+            filename = os.path.realpath(__file__)
+            filename = os.path.join(os.path.dirname(filename), "fixtures")
+            if not os.path.isdir(filename):
+                os.mkdir(filename)
+    
+            filename = os.path.join(filename, "rank.json")
+            with open(filename, 'w') as stream:
+                json.dump(data, stream, indent=4)
+        else:
+            json.dump(data, stream, indent=4)
+
 
 class Division(models.Model):
     event = models.ForeignKey(Event, on_delete=models.PROTECT)

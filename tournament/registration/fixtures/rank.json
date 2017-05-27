@@ -1,0 +1,154 @@
+[
+    {
+        "model": "registration.rank",
+        "pk": 0,
+        "fields": {
+            "order": -9,
+            "name": "White (9th kyu)"
+        }
+    },
+    {
+        "model": "registration.rank",
+        "pk": 1,
+        "fields": {
+            "order": -8,
+            "name": "Yellow (8th kyu)"
+        }
+    },
+    {
+        "model": "registration.rank",
+        "pk": 2,
+        "fields": {
+            "order": -7,
+            "name": "Orange (7th kyu)"
+        }
+    },
+    {
+        "model": "registration.rank",
+        "pk": 3,
+        "fields": {
+            "order": -6,
+            "name": "Green (6th kyu)"
+        }
+    },
+    {
+        "model": "registration.rank",
+        "pk": 4,
+        "fields": {
+            "order": -5,
+            "name": "Blue (5th kyu)"
+        }
+    },
+    {
+        "model": "registration.rank",
+        "pk": 5,
+        "fields": {
+            "order": -4,
+            "name": "Purple (4th kyu)"
+        }
+    },
+    {
+        "model": "registration.rank",
+        "pk": 6,
+        "fields": {
+            "order": -3,
+            "name": "Brown (3rd kyu)"
+        }
+    },
+    {
+        "model": "registration.rank",
+        "pk": 7,
+        "fields": {
+            "order": -2,
+            "name": "Brown (2nd kyu)"
+        }
+    },
+    {
+        "model": "registration.rank",
+        "pk": 8,
+        "fields": {
+            "order": -1,
+            "name": "Brown (1st kyu)"
+        }
+    },
+    {
+        "model": "registration.rank",
+        "pk": 9,
+        "fields": {
+            "order": 1,
+            "name": "Shodan (1st dan black belt)"
+        }
+    },
+    {
+        "model": "registration.rank",
+        "pk": 10,
+        "fields": {
+            "order": 2,
+            "name": "Nidan (2nd dan black belt)"
+        }
+    },
+    {
+        "model": "registration.rank",
+        "pk": 11,
+        "fields": {
+            "order": 3,
+            "name": "Sandan (3rd dan black belt)"
+        }
+    },
+    {
+        "model": "registration.rank",
+        "pk": 12,
+        "fields": {
+            "order": 4,
+            "name": "Yondan (4th dan black belt)"
+        }
+    },
+    {
+        "model": "registration.rank",
+        "pk": 13,
+        "fields": {
+            "order": 5,
+            "name": "Godan (5th dan black belt)"
+        }
+    },
+    {
+        "model": "registration.rank",
+        "pk": 14,
+        "fields": {
+            "order": 6,
+            "name": "Rokudan (6th dan black belt)"
+        }
+    },
+    {
+        "model": "registration.rank",
+        "pk": 15,
+        "fields": {
+            "order": 7,
+            "name": "Shichidan (7th dan black belt)"
+        }
+    },
+    {
+        "model": "registration.rank",
+        "pk": 16,
+        "fields": {
+            "order": 8,
+            "name": "Hachidan (8th dan black belt)"
+        }
+    },
+    {
+        "model": "registration.rank",
+        "pk": 17,
+        "fields": {
+            "order": 9,
+            "name": "Kudan (9th dan black belt)"
+        }
+    },
+    {
+        "model": "registration.rank",
+        "pk": 18,
+        "fields": {
+            "order": 10,
+            "name": "J\u016bdan (10th dan black belt)"
+        }
+    }
+]
