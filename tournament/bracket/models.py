@@ -69,11 +69,11 @@ class Match(models.Model):
     
     
     def is_final(self):
-        return self.round == 0 and self.order == 1
+        return self.round == 0 and self.order == 0
     
     
     def is_consolation(self):
-        return self.round == 0 and self.order == 0
+        return self.round == 0 and self.order == -1
     
     
     def save(self, *args, **kwargs):
@@ -119,6 +119,7 @@ class Match(models.Model):
         else:
             raise MultipleObjectsReturned()
     
+    
     def claim_people(self):
         
         if self.done:
@@ -147,26 +148,27 @@ class Bracket1Elim(models.Model):
     name = models.CharField(max_length=250)
     rounds = models.PositiveSmallIntegerField(default=0)
     
+    
     @property
     def final_match(self):
-        m = self.match_set.filter(round=0, order=1)
-        if len(m) == 0:
-            return None
-        elif len(m) == 1:
-            return m[0]
-        else:
-            raise Exception('Multiple final matches.')
-    
-    
-    @property
-    def consolation_match(self):
         m = self.match_set.filter(round=0, order=0)
         if len(m) == 0:
             return None
         elif len(m) == 1:
             return m[0]
         else:
-            raise Exception('Multiple final matches.')
+            raise MultipleObjectsReturned('Multiple final matches.')
+    
+    
+    @property
+    def consolation_match(self):
+        m = self.match_set.filter(round=0, order=-1)
+        if len(m) == 0:
+            return None
+        elif len(m) == 1:
+            return m[0]
+        else:
+            raise MultipleObjectsReturned('Multiple consolation matches.')
     
     
     def build(self):
@@ -226,15 +228,13 @@ class Bracket1Elim(models.Model):
         order = self.get_seed_order()
         round = 0
         m = build_helper(self, round, 0, None, order)
-        m.order = 1 # Final runs after consolation match.
-        m.save()
         
         # Consolation Match
         m = Match()
         m.bracket = self
         m.str = "consolation"
         m.round = round
-        m.order = 0
+        m.order = -1
         m.save()
         
         self.save()
@@ -270,79 +270,6 @@ class Bracket1Elim(models.Model):
         return order
     
     
-    def build_test(self, round=0, match=0, parent=None, name_gen=None):
-        
-        if round == 0:
-            self.name = "test"
-            self.save()
-            
-            m = Match()
-            m.bracket = self
-            m.str = "final"
-            name_gen = iter("abcdefghijk")
-            m.round = round
-            m.order = 1
-            m.save()
-            final_match = m
-            # m.prev_matches = [
-            self.build_test(round+1, 0, m, name_gen),
-            self.build_test(round+1, 1, m, name_gen),
-            # ]
-            
-            m = Match()
-            m.bracket = self
-            m.round = round
-            m.order = 0
-            m.save()
-            for m in final_match.prev_matches:
-                m.consolation_match = self.consolation_match
-                m.save()
-            
-            self.num_round = 3
-            
-        elif round == 1:
-            m = Match()
-            m.bracket = self
-            m.str = "1"
-            m.winner_match = parent
-            m.round = round
-            m.order = match
-            m.save()
-            self.build_test(round+1, 0 + 2 * match, m, name_gen),
-            # m.prev_matches = [
-            # ]
-            # if match == 1:
-            #     m.prev_matches.append(
-            #         self.build_test(round+1, 1 + 2 * match, m))
-            
-            return m
-        
-        elif round == 2:
-            m = Match()
-            m.bracket = self
-            m.str = "2"
-            m.winner_match = parent
-            m.round = round
-            m.order = match
-            
-            aka = MatchPerson()
-            aka.name = name_gen.__next__()
-            aka.save()
-            m.aka = aka
-            
-            shiro = MatchPerson()
-            shiro.name = name_gen.__next__()
-            shiro.save()
-            m.shiro = shiro
-            
-            m.save()
-            
-            return m
-            
-        else:
-            raise ArgumentError("Unexpected round {}.".format(round))
-    
-    
     def get_num_match_in_round(self, round=None):
         if round is None:
             # Can't pass argument from template. Return array.
@@ -352,6 +279,21 @@ class Bracket1Elim(models.Model):
     
     
     def get_match(self, round, match_i):
+        """
+        Returns a match specified by round and match index (order).
+        
+        If the bracket is incomplete, some matches will not exist. In this
+        case, None is returned.
+        
+        Args:
+            round: The round index. 0 is finals, preceeding rounds are
+                positive numbers.
+            match_i: The match index. 0 to 2^round-1. The consolation match
+                is -1 in round 0.
+        
+        Returns:
+            The specified match or None.
+        """
         #       2    1      0
         # 0      ____
         # 1          \____
@@ -364,6 +306,13 @@ class Bracket1Elim(models.Model):
         
         if round // 1 != round or round < 0 or self.rounds <= round:
             raise ValueError("Invalid round {}.".format(round))
+        
+        if round == 0 and match_i == -1:
+            return self.consolation_match
+        
+        if match_i // 1 != match_i or match_i < 0 or self.get_num_match_in_round(round) <= match_i:
+            raise ValueError("Invalid match index {}.".format(match_i))
+            
         split = -1
         m = self.final_match
         for i_round in range(round):
@@ -375,14 +324,10 @@ class Bracket1Elim(models.Model):
                 # want bottom
                 match_i -= split
                 m = m.prev_match_shiro
-            else:
-                m = None
             
             if m is None:
                 break
-                
-        # return {'round': round, 'split': split, 'str': m.str if m is not None else "",
-            # 'kids': m.prev_matches if m is not None else []}
+        
         return m
 
 

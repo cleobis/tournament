@@ -268,7 +268,11 @@ class Bracket1ElimTestCase(TestCase):
                 self.assertEqual(m.order, i, msg = "order error" + msg)
             else:
                 self.assertIsNone(m, msg="None error" + msg)
-                
+        with self.assertRaises(ValueError):
+            b.get_match(round, -1)
+        with self.assertRaises(ValueError):
+            b.get_match(round, 4)
+        
         round = 1
         valid_matches = [0, 1]
         for i in range(b.get_num_match_in_round(round)):
@@ -279,3 +283,18 @@ class Bracket1ElimTestCase(TestCase):
                 self.assertEqual(m.order, i, msg = "order error" + msg)
             else:
                 self.assertIsNone(m, msg="None error" + msg)
+        with self.assertRaises(ValueError):
+            b.get_match(round, -1)
+        with self.assertRaises(ValueError):
+            b.get_match(round, 2)
+        
+        round = 0
+        valid_matches = [-1, 0]
+        m = b.get_match(0,0)
+        self.assertEqual(m, b.final_match)
+        m = b.get_match(0, -1)
+        self.assertEqual(m, b.consolation_match)
+        with self.assertRaises(ValueError):
+            b.get_match(round, -2)
+        with self.assertRaises(ValueError):
+            b.get_match(round, 1)
