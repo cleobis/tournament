@@ -14,8 +14,15 @@ class KumiteMatchPerson(models.Model):
     points = models.PositiveSmallIntegerField(default=0)
     disqualified = models.BooleanField(default=False)
     
+    
     def __str__(self):
         return self.name
+    
+    
+    @property
+    def kumitematch(self):
+        return KumiteMatch.objects.get(Q(aka=self.id) | Q(shiro=self.id))
+
 
 class KumiteMatch(models.Model):
     

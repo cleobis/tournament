@@ -43,6 +43,28 @@ def make_bracket(n):
     return b
 
 
+class KumiteMatchPersonTestCase(TestCase):
+    
+    def setUp(self):
+        pass
+    
+    
+    def test_matchperson(self):
+        
+        b = make_bracket(4)
+        
+        p = KumiteMatchPerson.objects.get(name="a")
+        self.assertEqual(p.kumitematch, b.get_match(1,0))
+        p = KumiteMatchPerson.objects.get(name="b")
+        self.assertEqual(p.kumitematch, b.get_match(1,1))
+        p = KumiteMatchPerson.objects.get(name="c")
+        self.assertEqual(p.kumitematch, b.get_match(1,1))
+        p = KumiteMatchPerson.objects.get(name="d")
+        self.assertEqual(p.kumitematch, b.get_match(1,0))
+        
+        b.delete()
+
+
 class KumiteMatchTestCase(TestCase):
     
     def setUp(self):
