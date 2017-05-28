@@ -1,4 +1,5 @@
 from django.test import TestCase
+
 from .models import KumiteElim1Bracket, KumiteMatchPerson, KumiteMatch
 
 import math
@@ -42,10 +43,24 @@ def make_bracket(n):
     return b
 
 
-class MatchTestCase(TestCase):
+class KumiteMatchTestCase(TestCase):
     
     def setUp(self):
         pass
+    
+    
+    def test_cleanup(self):
+        """Test linked KumiteMatchPersons are deleted automatically.
+        """
+        self.assertEquals(len(KumiteMatchPerson.objects.all()), 0)
+        
+        b = make_bracket(5)
+        b.save()
+        self.assertEquals(len(KumiteMatchPerson.objects.all()), 5)
+        
+        b.delete()
+        self.assertEquals(len(KumiteMatchPerson.objects.all()), 0)
+        
     
     def test_winner_loser(self):
         

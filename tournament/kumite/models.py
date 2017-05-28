@@ -1,8 +1,11 @@
 from django.db import models
 from django.db.models import Q, F
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
+from django.core.exceptions import MultipleObjectsReturned
+
 import math
 
-from django.core.exceptions import MultipleObjectsReturned
 
 # Create your models here.
 
@@ -80,6 +83,7 @@ class KumiteMatch(models.Model):
             if self.consolation_match:
                 self.consolation_match.claim_people()
     
+    
     @property
     def prev_matches(self):
         return KumiteMatch.objects.filter(bracket__id=self.bracket.id).filter(
@@ -134,6 +138,14 @@ class KumiteMatch(models.Model):
                     else:
                         self.shiro = p
             set_aka = False
+
+
+@receiver(post_delete, sender=KumiteMatch)
+def kumite_match_post_delete(sender, instance, **kwargs):
+    if instance.aka is not None:
+        instance.aka.delete()
+    if instance.shiro is not None:
+        instance.shiro.delete()
 
 
 class KumiteElim1Bracket(models.Model):
