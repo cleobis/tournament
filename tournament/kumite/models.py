@@ -12,6 +12,7 @@ import math
 class KumiteMatchPerson(models.Model):
     name = models.CharField(max_length=250)
     points = models.PositiveSmallIntegerField(default=0)
+    warnings = models.PositiveSmallIntegerField(default=0)
     disqualified = models.BooleanField(default=False)
     
     
@@ -89,7 +90,6 @@ class KumiteMatch(models.Model):
             
             if self.consolation_match:
                 self.consolation_match.claim_people()
-    
     
     @property
     def prev_matches(self):

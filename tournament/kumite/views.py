@@ -59,8 +59,31 @@ class BracketGrid():
         else:
             yield None
 
-# Create your views here.
+
 def test_bracket(request):
     bracket = KumiteElim1Bracket.objects.all()[0]
     context = {'bracket': bracket, 'grid': BracketGrid(bracket), 'consolation_grid': BracketGrid(bracket, consolation=True)}
     return render(request, "kumite/bracket.html", context)
+
+
+class KumiteMatchUpdate(UpdateView):
+    model = KumiteMatch
+    form_class = KumiteMatchCombinedForm
+    
+    
+    def get_form_kwargs(self):
+        kwargs = super(KumiteMatchUpdate, self).get_form_kwargs()
+        kwargs.update(instance={
+            'match': self.object,
+            'aka': self.object.aka,
+            'shiro': self.object.shiro,
+        })
+        # raise Exception(kwargs.__str__())
+        return kwargs
+    
+    
+    def get_success_url(self):
+        
+        return reverse('bracket')
+    
+        

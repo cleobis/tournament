@@ -44,7 +44,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     
     'address',
-    'phonenumber_field'
+    'phonenumber_field',
+    'betterforms',
     
 ]
 
