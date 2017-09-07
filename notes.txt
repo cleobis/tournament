@@ -6,3 +6,11 @@ deactivate
 pip3 install django
 
 django-admin startproject tournament
+
+
+Windows download:
+pip download -r requirements.txt --no-binary download
+pip download -r requirements.txt --only-binary=:all: --python-version 34 --platform win32 --implementation py download
+
+
+./manage.py graph_models -o models.png kata kumite registration
