@@ -1,0 +1,427 @@
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="styesheet" href="normalize.css">
+		<!--<link rel="stylesheet" href="w3.css">-->
+	<style>
+		
+		html, body {
+			margin-top: 0;
+		}
+		
+		h1 {
+			height: 10vh;
+			font-size: 8vh;
+			line-height: 10vh;
+			overflow: scroll;
+			margin: 0;
+		}
+		
+		div, h1 {
+			outline: 0px solid black;
+		}
+		
+		button {
+			-webkit-appearance: none;
+			background-color: #2196F3;
+			border-color: black;
+			border-radius: 1vh;
+			border-width: 1px;
+		}
+		
+		button:hover{
+			box-shadow:0 8px 16px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+		}
+		
+		.v10 {
+			height: 10vh;
+		}
+		.people {
+			padding: 0;
+			display:flex;
+			width: 100%;
+			padding: 0;
+		}
+		
+		.people > div{
+			width: calc(50% - 5px);
+			margin-left: 5px;
+		}
+		
+		.people > div:first-child {
+			margin-left: 0;
+			margin-right: 5px;
+		}
+		
+		.people h2 {
+			height: 15vh;
+			font-size: 6vh;
+			overflow: scroll;
+			width: calc(100% - 10px);
+			margin: 0;
+			padding: 0 5px;
+		}
+		
+		.people .aka h2 {
+			background-color:#f44336;
+		}
+		
+		.people .shiro h2 {
+			background-color:#bbb;
+		}
+		
+		.people label {
+			width: 100%;
+			display: block;
+			height: 5vh;
+			font-size: 4vh;
+			line-height: 5vh;
+			font-weight: bold;
+			text-align: center;
+		}
+		
+		.input_pm {
+			position: relative;
+		}
+		
+		.input_pm input {
+			width: calc(100% - 7.5vh);
+			height: 15vh;
+			font-size: 12vh;
+			padding: 0px;
+			text-align: center;
+			
+		}
+		
+		.input_pm button {
+			position:absolute;
+			right: 0;
+			height: 50%;
+			width: 7.5vh;
+			max-width: 7.5vh;
+			font-size: 2.5vh;
+			font-weight: bold;
+			padding: 5px;
+			vertical-align: middle;
+			-webkit-appearance: none;
+		}
+		
+		.input_pm button:nth-child(2) {
+			top: 0;
+		}
+		
+		.input_pm button:last-child {
+			bottom: 0;
+		}
+		
+		.timer_box {
+			width: 100%;
+			height: 15vh;
+			line-height: calc(15vh - 10px);
+			vertical-align: middle;
+			text-align: center;
+			font-size: 10vh;
+			background-clip: content-box;
+			box-sizing: border-box;
+			padding: 5px 0;
+		}
+		
+		.timer_soon {
+			color: #FF0000;
+		}
+		
+		.buttons {
+			height: 10vh;
+			display: flex;
+			overflow: scroll;
+		}
+		
+		.buttons button {
+			height: 100%;
+			width: 12vh;
+			padding: 0px;
+			-webkit-appearance: none;
+			font-size: 3vh;
+			font-weight: bold;
+			cursor: pointer;
+			margin-right: 5px;
+		}
+		
+		.buttons button#submit {
+			margin-left: auto;
+			margin-right: 0;
+		}
+		
+	</style>
+	</head>
+<body>
+<h1>Round {{ form.match.instance.round }} Match {{ form.match.instance.order }}</h1>
+
+<div class="v10">
+	<form action="{{ request.path }}" method="post">
+    {{ form.match }}
+    {% csrf_token %}
+<div style="width:50%">a</div>
+</div>
+
+<div class="people">
+  <div class="aka">
+    <h2>Aka: {{ form.aka.instance.name }}</h2>
+    <!-- {{ form.aka.disqualified }} {{ form.aka.disqualified.label_tag }}
+    {{ form.aka.disqualified.errors }}-->
+    <div class="points">
+      {{ form.aka.points.label_tag }}
+      <div class="input_pm">
+        {{ form.aka.points }}
+        <button type="button">+</button>
+        <button type="button">-</button>
+      </div>
+      {{ form.aka.points.errors }}
+    </div>
+    <div class="warnings">
+      {{ form.aka.warnings.label_tag }}
+      <div class="input_pm" style="position:relative;">
+        {{ form.aka.warnings }}
+        <button type="button">+</button>
+        <button type="button">-</button>
+      </div>
+      {{ form.aka.warnings.errors }}
+    </div>
+    {{ form.aka.non_field_errors }}
+  </div>
+  
+  <div class="shiro">
+    <h2>Shiro: {{ form.shiro.instance.name }}</h2>
+    <!-- {{ form.shiro.disqualified }} {{ form.shiro.disqualified.label_tag }}
+    {{ form.shiro.disqualified.errors }}-->
+    <div class="points">
+      {{ form.shiro.points.label_tag }}
+      <div class="input_pm">
+        {{ form.shiro.points }}
+        <button type="button">+</button>
+        <button type="button">-</button>
+      </div>
+      {{ form.shiro.points.errors }}
+    </div>
+    <div class="warnings">
+      {{ form.shiro.warnings.label_tag }}
+      <div class="input_pm" style="position:relative;">
+        {{ form.shiro.warnings }}
+        <button type="button">+</button>
+        <button type="button">-</button>
+      </div>
+      {{ form.shiro.warnings.errors }}
+    </div>
+    {{ form.shiro.non_field_errors }}
+  </div>
+</div>
+
+<div class="timer_box">
+	<span id="time"></span>
+</div>
+
+
+<div class="buttons">
+	<button id="start" type="button">Start</button>
+    <button id="stop" type="button">Stop</button>
+    <button id="plus" type="button">Plus</button>
+    <button id="minus" type="button">Minus</button>
+    <button id="reset" type="button">Reset</button>
+    <button id="submit" type="submit">Save</button>
+</div>
+</form>
+
+<!-- see https://stackoverflow.com/a/20618517 for timer help. -->
+<script lang="text/javascript">
+function CountDownTimer(duration, granularity) {
+  this.duration = duration;
+  this.granularity = granularity || 1000;
+  this.tickFtns = [];
+  this.running = false;
+  
+  this.tstart = null;
+}
+
+CountDownTimer.prototype.start = function() {
+  if (this.running) {
+    return;
+  }
+  this.running = true;
+  this.tstart = Date.now();
+  var that = this,
+      diff;
+
+  (function timer() {
+  	if (!that.running) {
+    	return;
+	}
+  	
+    diff = that.remaining();
+    if (diff < 10.05) {
+    	that.granularity = .1;
+	} else {
+		that.granularity = 1;
+	}
+	diff_round = Math.round(diff / that.granularity) * that.granularity;
+	
+    if (diff > 0) {
+    	var dt = diff - Math.floor(diff / that.granularity) * that.granularity;
+    	if (dt <= 0) {
+    		dt = that.granularity;
+    	}
+    	console.info(dt);
+    	setTimeout(timer, dt * 1000);
+    } else {
+      that.running = false;
+      that.duration = 0;
+    }
+    
+	that.notify(diff_round);
+  }());
+};
+
+CountDownTimer.prototype.remaining = function () {
+    if (this.running) {
+    	diff = (this.duration - ((Date.now() - this.tstart) / 1000));
+	} else {
+   		diff = this.duration; 
+	}
+	if (diff < 0) {
+		diff = 0;
+	}
+	return diff;
+};
+
+CountDownTimer.prototype.notify = function (diff) {
+	diff = diff | Math.round(this.remaining() / this.granularity) * this.granularity;
+	
+    var obj = CountDownTimer.parse(diff);
+    this.tickFtns.forEach(function(ftn) {
+      ftn.call(this, obj.minutes, obj.seconds);
+    }, this);
+};
+
+CountDownTimer.prototype.stop = function () {
+	if (!this.running) {
+    	return;
+	}
+	this.running = false;
+	this.duration = this.duration - ((Date.now() - this.tstart) / 1000);
+};
+
+CountDownTimer.prototype.add = function (dt) {
+	this.duration += dt;
+	if (this.duration < 0) {
+    	this.duration = 0;
+	}
+	this.notify();
+};
+
+CountDownTimer.prototype.onTick = function(ftn) {
+  if (typeof ftn === 'function') {
+    this.tickFtns.push(ftn);
+  }
+  return this;
+};
+
+CountDownTimer.prototype.expired = function() {
+  return !this.running;
+};
+
+CountDownTimer.parse = function(seconds) {
+	var min = Math.floor(seconds / 60);
+  return {
+    'minutes': min,
+    'seconds': seconds - min * 60
+  };
+};
+</script>
+
+<!-- start button -->
+<script lang="text/javascript">
+window.onload = function () {
+    var display = document.querySelector('#time'),
+        display_box = display.parentElement,
+        timer = new CountDownTimer(8.1);
+    
+    timer.onTick(format);
+    timer.notify();
+    
+    document.querySelector('#start').addEventListener('click', function () {
+        timer.start();
+    });
+    
+    document.querySelector('#stop').addEventListener('click', function () {
+        timer.stop();
+    });
+    
+    document.querySelector('#plus').addEventListener('click', function () {
+        timer.add(10);
+    });
+    
+    document.querySelector('#minus').addEventListener('click', function () {
+        timer.add(-10);
+    });
+    
+    document.querySelector('#reset').addEventListener('click', function () {
+    	timer.stop();
+        timer.duration = 90;
+        timer.notify();
+    });
+    
+    function format(minutes, seconds) {
+        minutes = minutes < 10 ? "0" + minutes : minutes;
+        seconds = seconds < 10 ? "0" + seconds : seconds;
+        display.textContent = minutes + ':' + seconds;
+        
+        soon = minutes == 0 && seconds <= 10;
+        if (display_box.classList.contains("timer_soon")) {
+        	if (!soon) {
+        		display_box.classList.remove("timer_soon");
+        	}
+		} else {
+    		if (soon) {
+        		display_box.classList.add("timer_soon");
+        	}
+		}
+    };
+    
+    var objs = document.querySelectorAll(".input_pm button");
+    generator = function (id, do_inc) {
+    	if (do_inc) {
+    		return function(){inc(id)};
+    	} else {
+    		return function(){dec(id)};
+    	}
+	};
+    console.info(objs);
+    for(obj in objs) {
+    	obj = objs[obj];
+     	console.info(obj);
+    	var id = obj.parentElement.querySelector("input").id;
+    	obj.onclick = generator(id, obj.innerText == '+');
+    	console.info(obj);
+    };
+};
+
+function inc(id) {
+    obj = document.getElementById(id);
+    x = obj.value;
+    x++;
+    obj.value = x;
+};
+
+
+function dec(id) {
+    obj = document.getElementById(id);
+    x = obj.value;
+    x--;
+    if (x < 0) {
+    	x = 0;
+    }
+    obj.value = x;
+};
+</script>
+
+</body>
+</html>
