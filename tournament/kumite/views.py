@@ -1,8 +1,12 @@
 from django.shortcuts import render
+from django.views.generic.edit import CreateView, UpdateView, DeleteView, ModelFormMixin, FormView
+from django.core.urlresolvers import reverse
+from django.http.response import HttpResponseRedirect
 
 import math
 
-from .models import KumiteElim1Bracket, KumiteMatch
+from .models import KumiteElim1Bracket, KumiteMatch, KumiteMatchPerson
+from .forms import KumiteMatchCombinedForm, KumiteMatchForm, KumiteMatchPersonForm
 
 class BracketGrid():
     
@@ -34,6 +38,7 @@ class BracketGrid():
             if round != 0 or match_i != 0:
                 ValueError("Only one consolation match.")
             return self.bracket.consolation_match
+    
     
     def row(self, row):
         

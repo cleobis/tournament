@@ -131,20 +131,27 @@ class KumiteMatch(models.Model):
             raise Exception("Can't modify matches that are done.")
         
         curr_ids = [x.id for x in self.people() if x is not None]
-        set_aka = True # prev_matches is sorted already
-        for m in self.prev_matches:
-            if m.done:
+        attr_name = 'aka'
+        for m in [self.prev_match_aka, self.prev_match_shiro]:
+            if m is not None and m.done:
                 if m.winner_match == self:
                     p = m.winner()
                 elif m.consolation_match == self:
                     p = m.loser()
-            
-                if p.id not in curr_ids:
-                    if set_aka:
-                        self.aka = p
-                    else:
-                        self.shiro = p
-            set_aka = False
+                
+                curr_p = getattr(self, attr_name)
+                if curr_p is not None:
+                    if self.done and curr_p.name != p.name:
+                        raise Exception("Can't change participant after match is done.")
+                p = KumiteMatchPerson(name=p.name)
+                p.save()
+                setattr(self, attr_name, p)
+                self.save()
+                
+                if curr_p is not None:
+                    curr_p.delete()
+                
+            attr_name = 'shiro'
 
 
 @receiver(post_delete, sender=KumiteMatch)
@@ -315,7 +322,8 @@ class KumiteElim1Bracket(models.Model):
         # 4 ----\____      /
         # 5 ----/    \____/
         # 6      ____/
-        # 7                 ____
+        # 7
+        # -1                ____
         
         if round // 1 != round or round < 0 or self.rounds <= round:
             raise ValueError("Invalid round {}.".format(round))

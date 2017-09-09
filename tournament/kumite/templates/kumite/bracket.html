@@ -51,8 +51,9 @@
         {% if cell is not None %}
           {% if cell.match is not None %}
             <td {% if cell.span != 1 %}rowspan="{{ cell.span }}"{% endif %}>
-              {% if cell.is_aka %}round {{ cell.round }}, match {{ cell.match_i }}<br />{% else %}vs {% endif %}
+              {% if cell.is_aka %} round {{ cell.round }}, match {{ cell.match_i }}<br />{% else %}vs {% endif %}
               {% if cell.person is not None %}{{ cell.person }}{% else %}?{% endif %}
+              {% if not cell.is_aka %}(<a href="match/{{ cell.match.pk }}/edit/">edit</a>){% endif %}
           {% else %}
             <td {% if cell.span != 1 %}rowspan="{{ cell.span }}"{% endif %} />
           {% endif %}
