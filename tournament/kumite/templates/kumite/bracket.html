@@ -1,45 +1,5 @@
 <table border="1px">
   <thead>
-    <td>Round 1</td>
-    <td>Round 2</td>
-    <td>Round 3</td>
-    <td>Winner</td>
-  </thead>
-  <tr>
-    <td>A</td>
-    <td rowspan="2">}B</td>
-    <td rowspan="4">}C</td>
-    <td rowspan="8">}C</td>
-  </tr>
-  <tr>
-    <td>B</td>
-  </tr>
-  <tr>
-    <td></td>
-    <td rowspan="2">C</td>
-  </tr>
-  <tr>
-    <td></td>
-  </tr>
-  <tr>
-    <td>D</td>
-    <td rowspan="2">}D</td>
-    <td rowspan="4">}D</td>
-  </tr>
-  <tr>
-    <td>E</td>
-  </tr>
-  <tr>
-    <td></td>
-    <td rowspan="2">F</td>
-  </tr>
-  <tr>
-    <td></td>
-  </tr>
-</table>
-
-<table border="1px">
-  <thead>
     {% for h in grid.headers %}
     <td>{{ h }}</td>
     {% endfor %}
@@ -51,9 +11,20 @@
         {% if cell is not None %}
           {% if cell.match is not None %}
             <td {% if cell.span != 1 %}rowspan="{{ cell.span }}"{% endif %}>
-              {% if cell.is_aka %} round {{ cell.round }}, match {{ cell.match_i }}<br />{% else %}vs {% endif %}
-              {% if cell.person is not None %}{{ cell.person }}{% else %}?{% endif %}
-              {% if not cell.is_aka %}(<a href="match/{{ cell.match.pk }}/edit/">edit</a>){% endif %}
+              {# {{ cell.match }} #}
+              {% if cell.round == -1 %}
+                {% if cell.person is not None %}{{ cell.person }}{% else %}?{% endif %}
+              {% else %}
+                {# {% if cell.is_aka %} round {{ cell.round }}, match {{ cell.match_i|floatformat }}<br />{% else %}vs {% endif %} #}
+                {% if cell.person is not None %}{{ cell.person }}{% else %}?{% endif %}
+                {% if not cell.is_aka and cell.match.is_editable %}
+                  {% if cell.match.is_ready %}
+                    (<a href="match/{{ cell.match.pk }}/edit/">start</a>)
+                  {% else %}
+                    (<a href="match/{{ cell.match.pk }}/edit/">edit</a>)
+                  {% endif %}
+                {% endif %}
+              {% endif %}
           {% else %}
             <td {% if cell.span != 1 %}rowspan="{{ cell.span }}"{% endif %} />
           {% endif %}
@@ -74,15 +45,29 @@
   <tbody>
     {% for row in consolation_grid.rows %}
     <tr>
-      {% for cell in row %}
-        {% if cell is not None %}
-          {% if cell.match is not None %}
-            <td {% if cell.span != 1 %}rowspan="{{ cell.span }}"{% endif %}>{{ cell.match }} {{ cell.name }}{# round {{ cell.round }}, match {{ cell.match_i }}, {{ cell.name }} #}</td>
-          {% else %}
-            <td {% if cell.span != 1 %}rowspan="{{ cell.span }}"{% endif %} />
-          {% endif %}
-        {% endif %}
-      {% endfor %}
+      	{% for cell in row %}
+	        {% if cell is not None %}
+	          {% if cell.match is not None %}
+                <td {% if cell.span != 1 %}rowspan="{{ cell.span }}"{% endif %}>
+                  {# {{ cell.match }} #}
+                  {% if cell.round == -1 %}
+                    {% if cell.person is not None %}{{ cell.person }}{% else %}?{% endif %}
+                  {% else %}
+                    {# {% if cell.is_aka %} round {{ cell.round }}, match {{ cell.match_i|floatformat }}<br />{% else %}vs {% endif %} #}
+                    {% if cell.person is not None %}{{ cell.person }}{% else %}?{% endif %}
+                    {% if not cell.is_aka and cell.match.is_editable %}
+                      {% if cell.match.is_ready %}
+                        (<a href="match/{{ cell.match.pk }}/edit/">start</a>)
+                      {% else %}
+                        (<a href="match/{{ cell.match.pk }}/edit/">edit</a>)
+                      {% endif %}
+                    {% endif %}
+                  {% endif %}
+              {% else %}
+                <td {% if cell.span != 1 %}rowspan="{{ cell.span }}"{% endif %} />
+	          {% endif %}
+	        {% endif %}
+	      {% endfor %}
     </tr>
     {% endfor %}
   </tbody>

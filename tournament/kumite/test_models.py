@@ -121,69 +121,211 @@ class KumiteMatchTestCase(TestCase):
     
     
     def test_claim(self):
-        b = KumiteElim1Bracket()
-        b.save()
         
-        final = KumiteMatch()
-        final.bracket = b
-        final.name = "final"
-        final.round = 0
-        final.order = 1
-        final.save()
+        b = make_bracket(4)
+        final = b.final_match
+        consolation = b.consolation_match
+        m1 = b.get_match(1,0)
+        m2 = b.get_match(1,1)
         
-        consolation = KumiteMatch()
-        consolation.bracket = b
-        consolation.name = "consolation"
-        consolation.round = 0
-        consolation.order = 0
-        consolation.save()
+        # Test initial state
+        # a --\_____
+        # d --/     \__
+        # b --\_____/
+        # c --/
+        #      _____
+        #           \_
+        #      _____/
+        self.assertTrue(m1.is_editable())
+        self.assertTrue(m1.is_ready())
         
-        people = match_person_gen()
+        self.assertTrue(m2.is_editable())
+        self.assertTrue(m2.is_ready())
         
-        m1 = KumiteMatch()
-        m1.bracket = b
-        m1.name = "KumiteMatch 1"
-        m1.round = 1
-        m1.order = 0
-        m1.winner_match = final
-        m1.consolation_match = consolation
-        m1.aka = people.__next__()
-        m1.shiro = people.__next__()
-        m1.save()
-        
-        m2 = KumiteMatch()
-        m2.bracket = b
-        m2.name = "KumiteMatch 2"
-        m2.round = 1
-        m2.order = 1
-        m2.winner_match = final
-        m2.consolation_match = consolation
-        m2.aka = people.__next__()
-        m2.shiro = people.__next__()
-        m2.save()
-        
+        self.assertFalse(final.is_editable())
+        self.assertFalse(final.is_ready())
         self.assertIsNone(final.aka)
         self.assertIsNone(final.shiro)
+        
+        self.assertFalse(consolation.is_editable())
+        self.assertFalse(consolation.is_ready())
         self.assertIsNone(consolation.aka)
         self.assertIsNone(consolation.shiro)
         
+        # Test editing a non-editable match
+        final.done = True
+        self.assertRaises(ValueError, final.save)
+        final = b.final_match
+        self.assertFalse(final.done)
+        
+        # Set second match winner
+        # a --\_____
+        # d --/     \__
+        # b --\__b__/
+        # c --/
+        #      _____
+        #           \_
+        #      __c__/
         m2.aka_won = True
         m2.done = True
         m2.save()
         
-        self.assertIsNone(final.aka)
-        self.assertEqual(final.shiro.name, "c")
-        self.assertIsNone(consolation.aka)
-        self.assertEqual(consolation.shiro.name, "d")
+        final = b.final_match
+        consolation = b.consolation_match
+        m1 = b.get_match(1,0)
+        m2 = b.get_match(1,1)
         
+        self.assertTrue(m1.is_editable())
+        self.assertTrue(m1.is_ready())
+        
+        self.assertTrue(m2.is_editable())
+        self.assertFalse(m2.is_ready())
+        
+        self.assertFalse(final.is_editable())
+        self.assertFalse(final.is_ready())
+        self.assertIsNone(final.aka)
+        self.assertEqual(final.shiro.name, "b")
+        
+        self.assertFalse(consolation.is_editable())
+        self.assertFalse(consolation.is_ready())
+        self.assertIsNone(consolation.aka)
+        self.assertEqual(consolation.shiro.name, "c")
+        
+        # Set first winner
+        # a --\__d__
+        # d --/     \__
+        # b --\__b__/
+        # c --/
+        #      __a__
+        #           \_
+        #      __c__/
         m1.aka_won = False
         m1.done = True
         m1.save()
         
-        self.assertEqual(final.aka.name, "b")
-        self.assertEqual(final.shiro.name, "c")
+        final = b.final_match
+        consolation = b.consolation_match
+        m1 = b.get_match(1,0)
+        m2 = b.get_match(1,1)
+        
+        self.assertTrue(m1.is_editable())
+        self.assertFalse(m1.is_ready())
+        
+        self.assertTrue(m2.is_editable())
+        self.assertFalse(m2.is_ready())
+        
+        self.assertTrue(final.is_editable())
+        self.assertTrue(final.is_ready())
+        self.assertEqual(final.aka.name, "d")
+        self.assertEqual(final.shiro.name, "b")
+        
+        self.assertTrue(consolation.is_editable())
+        self.assertTrue(consolation.is_ready())
         self.assertEqual(consolation.aka.name, "a")
-        self.assertEqual(consolation.shiro.name, "d")
+        self.assertEqual(consolation.shiro.name, "c")
+
+        # Undo first winner
+        # a --\_____
+        # d --/     \__
+        # b --\__b__/
+        # c --/
+        #      _____
+        #           \_
+        #      __c__/
+        m1.aka_won = True
+        m1.done = False
+        m1.save()
+        
+        final = b.final_match
+        consolation = b.consolation_match
+        m1 = b.get_match(1,0)
+        m2 = b.get_match(1,1)
+        
+        self.assertTrue(m1.is_editable())
+        self.assertTrue(m1.is_ready())
+        
+        self.assertTrue(m2.is_editable())
+        self.assertFalse(m2.is_ready())
+        
+        self.assertFalse(final.is_editable())
+        self.assertFalse(final.is_ready())
+        self.assertIsNone(final.aka)
+        self.assertEqual(final.shiro.name, "b")
+        
+        self.assertFalse(consolation.is_editable())
+        self.assertFalse(consolation.is_ready())
+        self.assertIsNone(consolation.aka)
+        self.assertEqual(consolation.shiro.name, "c")
+        
+        # Redo first winner
+        # a --\__a__
+        # d --/     \__
+        # b --\__b__/
+        # c --/
+        #      __d__
+        #           \_
+        #      __c__/
+        m1.aka_won = True
+        m1.done = True
+        m1.save()
+        
+        final = b.final_match
+        consolation = b.consolation_match
+        m1 = b.get_match(1,0)
+        m2 = b.get_match(1,1)
+        
+        self.assertTrue(m1.is_editable())
+        self.assertFalse(m1.is_ready())
+        
+        self.assertTrue(m2.is_editable())
+        self.assertFalse(m2.is_ready())
+        
+        self.assertTrue(final.is_editable())
+        self.assertTrue(final.is_ready())
+        self.assertEqual(final.aka.name, "a")
+        self.assertEqual(final.shiro.name, "b")
+        
+        self.assertTrue(consolation.is_editable())
+        self.assertTrue(consolation.is_ready())
+        self.assertEqual(consolation.aka.name, "d")
+        self.assertEqual(consolation.shiro.name, "c")
+        
+        # Set consolation first winner
+        # a --\__a__
+        # d --/     \__
+        # b --\__b__/
+        # c --/
+        #      __d__
+        #           \__d__
+        #      __c__/
+        consolation.aka_won = True
+        consolation.done = True
+        consolation.save()
+        
+        final = b.final_match
+        consolation = b.consolation_match
+        m1 = b.get_match(1,0)
+        m2 = b.get_match(1,1)
+        
+        self.assertFalse(m1.is_editable())
+        self.assertFalse(m1.is_ready())
+        
+        self.assertFalse(m2.is_editable())
+        self.assertFalse(m2.is_ready())
+        
+        self.assertTrue(final.is_editable())
+        self.assertTrue(final.is_ready())
+        self.assertEqual(final.aka.name, "a")
+        self.assertEqual(final.shiro.name, "b")
+        
+        self.assertTrue(consolation.is_editable())
+        self.assertFalse(consolation.is_ready())
+        self.assertEqual(consolation.aka.name, "d")
+        self.assertEqual(consolation.shiro.name, "c")
+        
+        # Try editing locked match
+        m1.aka_won = False
+        self.assertRaises(ValueError, m1.save)
 
 class KumiteElim1BracketTestCase(TestCase):
     

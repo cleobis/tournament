@@ -49,7 +49,7 @@ class BracketGrid():
                 yield None
             else:
                 match_i = row // span // 2
-                match = self.bracket.get_match(round, match_i)
+                match = self.get_match(round, match_i)
                 
                 if row / span % 2 == 0:
                     is_aka = True
@@ -60,7 +60,11 @@ class BracketGrid():
                 yield {'match_i': match_i, 'match': match, 'round': round, 'span': span, 'person': p, 'is_aka': is_aka}
         
         if row == 0:
-            yield {'name': 'winner', 'match_i': 0, 'match': self.bracket.final_match, 'round': 0, 'span': self.n_row}
+            if self.consolation:
+                match = self.bracket.consolation_match
+            else:
+                match = self.bracket.final_match
+            yield {'match_i': 0, 'match': match, 'round': -1, 'span': self.n_row, 'person': match.winner()}
         else:
             yield None
 

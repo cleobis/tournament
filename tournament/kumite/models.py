@@ -1,10 +1,10 @@
+import math
+
 from django.db import models
 from django.db.models import Q, F
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.core.exceptions import MultipleObjectsReturned
-
-import math
 
 
 # Create your models here.
@@ -49,7 +49,7 @@ class KumiteMatch(models.Model):
             name = ", final"
         elif self.is_consolation():
             name = ", consolation"
-        return "{}, round {}, match {}, {}".format(self.bracket.name, self.round, self.order, name)
+        return "{}, round {}, match {}{}".format(self.bracket.name, self.round, self.order, name)
     
     
     def people(self):
@@ -81,15 +81,29 @@ class KumiteMatch(models.Model):
         return self.round == 0 and self.order == -1
     
     
+    def is_ready(self):
+        """Returns true if the match is ready to be run for the first time."""
+        return not self.done and self.is_editable()
+    
+    
+    def is_editable(self):
+        """Returns true if the match outcome can be changed without invalidating other completed matches."""
+        return (len(self.prev_matches.filter(done=False)) == 0
+            and (self.winner_match is None or not self.winner_match.done)
+            and (self.consolation_match is None or not self.consolation_match.done))
+    
+    
     def save(self, *args, **kwargs):
+        if self.done and not self.is_editable():
+            raise ValueError("Can't complete match if predecessor isn't complete.")
+        
         super(KumiteMatch, self).save(*args, **kwargs)
         
-        if self.done:
-            if self.winner_match:
-                self.winner_match.claim_people()
-            
-            if self.consolation_match:
-                self.consolation_match.claim_people()
+        if self.winner_match:
+            self.winner_match.claim_people()
+        
+        if self.consolation_match:
+            self.consolation_match.claim_people()
     
     @property
     def prev_matches(self):
@@ -126,31 +140,36 @@ class KumiteMatch(models.Model):
     
     
     def claim_people(self):
-        
-        if self.done:
-            raise Exception("Can't modify matches that are done.")
-        
         curr_ids = [x.id for x in self.people() if x is not None]
         attr_name = 'aka'
         for m in [self.prev_match_aka, self.prev_match_shiro]:
-            if m is not None and m.done:
-                if m.winner_match == self:
-                    p = m.winner()
-                elif m.consolation_match == self:
-                    p = m.loser()
+            if m is not None:
+                if m.done:
+                    if m.winner_match == self:
+                        p = m.winner()
+                    elif m.consolation_match == self:
+                        p = m.loser()
+                else:
+                    p = None
                 
                 curr_p = getattr(self, attr_name)
-                if curr_p is not None:
-                    if self.done and curr_p.name != p.name:
-                        raise Exception("Can't change participant after match is done.")
-                p = KumiteMatchPerson(name=p.name)
-                p.save()
-                setattr(self, attr_name, p)
-                self.save()
                 
-                if curr_p is not None:
-                    curr_p.delete()
-                
+                def same_person(p1,p2): #########################################TODO IMPROVE CHECK
+                    return (p1 is None and p2 is None) or (p1 is not None and p2 is not None and p1.name == p2.name)
+                if not same_person(curr_p, p):
+                    if self.done:
+                        raise ValueError("Can't modify people if the match is done.")
+                    
+                    if p is not None:
+                        p = KumiteMatchPerson(name=p.name)
+                        p.save()
+                    
+                    setattr(self, attr_name, p)
+                    self.save()
+                    
+                    if curr_p is not None:
+                        curr_p.delete()
+            
             attr_name = 'shiro'
 
 
@@ -196,6 +215,15 @@ class KumiteElim1Bracket(models.Model):
         if len(self.kumitematch_set.all()) > 0:
             raise Exception("Bracket has already been built.")
         
+        # Consolation Match
+        consolation = KumiteMatch()
+        consolation.bracket = self
+        consolation.str = "consolation"
+        consolation.round = 0
+        consolation.order = -1
+        consolation.save()
+        
+        # Build tree recursively
         def build_helper(bracket, round, match, parent, order):
             
             if len(order) > 2:
@@ -238,6 +266,11 @@ class KumiteElim1Bracket(models.Model):
             else:
                 raise Exception("Bracket is too big for number of participents.")
             
+            if round == 1:
+                # Connect consolation match
+                m.consolation_match = consolation
+                m.save()
+            
             return m
         
         n_person = len(self.people.all())
@@ -248,14 +281,6 @@ class KumiteElim1Bracket(models.Model):
         order = self.get_seed_order()
         round = 0
         m = build_helper(self, round, 0, None, order)
-        
-        # Consolation Match
-        m = KumiteMatch()
-        m.bracket = self
-        m.str = "consolation"
-        m.round = round
-        m.order = -1
-        m.save()
         
         self.save()
     
