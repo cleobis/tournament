@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, ModelFormMixin, FormView
 from django.core.urlresolvers import reverse
-from django.http.response import HttpResponseRedirect
+from django.http.response import HttpResponseRedirect, HttpResponseForbidden
 
 import math
 
@@ -87,7 +87,6 @@ class KumiteMatchUpdate(UpdateView):
             'aka': self.object.aka,
             'shiro': self.object.shiro,
         })
-        # raise Exception(kwargs.__str__())
         return kwargs
     
     
@@ -95,4 +94,9 @@ class KumiteMatchUpdate(UpdateView):
         
         return reverse('bracket')
     
+    
+    def dispatch(self, *args, **kwargs):
+        if not self.get_object().is_editable():
+            return HttpResponseForbidden()
+        return super(KumiteMatchUpdate,self).dispatch(*args, **kwargs)
         

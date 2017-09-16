@@ -63,6 +63,15 @@ class KumiteMatch(models.Model):
             return None
     
     
+    def infer_winner(self):
+        if self.done:
+            if self.aka.disqualified or self.shiro.disqualified:
+                raise ValueError("Disqualifications not implemented") #################################
+            if self.aka.points == self.shiro.points:
+                raise ValueError("Ties not implemented") #############################################
+            self.aka_won = self.aka.points > self.shiro.points
+    
+    
     def loser(self):
         if self.done:
             p = self.shiro if self.aka_won else self.aka

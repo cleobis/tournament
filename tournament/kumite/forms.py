@@ -1,5 +1,6 @@
 from django import forms
 from django.core.urlresolvers import reverse
+from django.core.exceptions import ValidationError
 
 from betterforms.multiform import MultiModelForm
 
@@ -24,3 +25,26 @@ class KumiteMatchCombinedForm(MultiModelForm):
         'aka': KumiteMatchPersonForm,
         'shiro': KumiteMatchPersonForm,
     }
+    
+    
+    def clean(self):
+        super(KumiteMatchCombinedForm, self).clean()
+        
+        # Determine match.done from which button was clicked
+        if 'btn_done' in self.data:
+            done = True
+        elif 'btn_not_done' in self.data:
+            done = False
+        else:
+            raise ValidationError('Unexpected submit button.', code='done_missing')
+        self['match'].cleaned_data['done'] = done
+        self['match'].instance.done = done
+        
+        # Determine who won
+        if done:
+            try:
+                self['match'].instance.infer_winner()
+            except ValueError as err:
+                raise ValidationError(*err.args, code="infer_winer")
+            self['match'].cleaned_data['aka_won'] = self['match'].instance.aka_won
+

@@ -166,8 +166,10 @@ class KumiteMatchTestCase(TestCase):
         #      _____
         #           \_
         #      __c__/
-        m2.aka_won = True
+        m2.aka.points = 1
+        m2.aka.save()
         m2.done = True
+        m2.infer_winner()
         m2.save()
         
         final = b.final_match
@@ -199,8 +201,10 @@ class KumiteMatchTestCase(TestCase):
         #      __a__
         #           \_
         #      __c__/
-        m1.aka_won = False
+        m1.shiro.points = 1 ;
         m1.done = True
+        m1.infer_winner()
+        m1.shiro.save()
         m1.save()
         
         final = b.final_match
@@ -232,7 +236,6 @@ class KumiteMatchTestCase(TestCase):
         #      _____
         #           \_
         #      __c__/
-        m1.aka_won = True
         m1.done = False
         m1.save()
         
@@ -265,8 +268,10 @@ class KumiteMatchTestCase(TestCase):
         #      __d__
         #           \_
         #      __c__/
-        m1.aka_won = True
+        m1.aka.points = 4
         m1.done = True
+        m1.infer_winner()
+        m1.aka.save()
         m1.save()
         
         final = b.final_match
@@ -298,8 +303,10 @@ class KumiteMatchTestCase(TestCase):
         #      __d__
         #           \__d__
         #      __c__/
-        consolation.aka_won = True
+        consolation.aka.points = 1
         consolation.done = True
+        consolation.infer_winner()
+        consolation.aka.save()
         consolation.save()
         
         final = b.final_match

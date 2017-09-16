@@ -147,8 +147,11 @@
 			margin-right: 5px;
 		}
 		
-		.buttons button#submit {
+		.buttons button:nth-last-child(2) {
 			margin-left: auto;
+    }
+    
+    .buttons button:last-child {
 			margin-right: 0;
 		}
 		
@@ -159,9 +162,9 @@
 
 <div class="v10">
 	<form action="{{ request.path }}" method="post">
-    {{ form.match }}
+    {{ form.non_field_errors }}
+    {# form.match #}
     {% csrf_token %}
-<div style="width:50%">a</div>
 </div>
 
 <div class="people">
@@ -227,7 +230,13 @@
     <button id="plus" type="button">Plus</button>
     <button id="minus" type="button">Minus</button>
     <button id="reset" type="button">Reset</button>
-    <button id="submit" type="submit">Save</button>
+    {% if form.match.done.value %}
+    <button id="clear" type="submit" name="btn_not_done">Clear Match</button>
+    <button id="submit" type="submit" name="btn_done">Change Score</button>
+    {% else %}
+    <button id="clear" type="submit" name="btn_not_done">Cancel</button>
+    <button id="submit" type="submit" name="btn_done">Done</button>
+    {% endif %}
 </div>
 </form>
 
