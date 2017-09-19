@@ -19,7 +19,7 @@ class BracketGrid():
         else:
             self.n_row = int(math.pow(2, self.bracket.rounds))
             self.n_col = self.bracket.rounds + 1
-
+    
     
     def headers(self):
         for i in range(self.n_col-1):
@@ -71,7 +71,8 @@ class BracketGrid():
 
 def test_bracket(request):
     bracket = KumiteElim1Bracket.objects.all()[0]
-    context = {'bracket': bracket, 'grid': BracketGrid(bracket), 'consolation_grid': BracketGrid(bracket, consolation=True)}
+    context = {'bracket': bracket, 'grid': BracketGrid(bracket), 'consolation_grid': BracketGrid(bracket, consolation=True),
+        'next': bracket.get_next_match(), 'on_deck': bracket.get_on_deck_match()}
     return render(request, "kumite/bracket.html", context)
 
 

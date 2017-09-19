@@ -152,6 +152,9 @@ class KumiteMatchTestCase(TestCase):
         self.assertIsNone(consolation.aka)
         self.assertIsNone(consolation.shiro)
         
+        self.assertEqual(m1, b.get_next_match())
+        self.assertEqual(m2, b.get_on_deck_match())
+        
         # Test editing a non-editable match
         final.done = True
         self.assertRaises(ValueError, final.save)
@@ -192,6 +195,9 @@ class KumiteMatchTestCase(TestCase):
         self.assertFalse(consolation.is_ready())
         self.assertIsNone(consolation.aka)
         self.assertEqual(consolation.shiro.name, "c")
+        
+        self.assertEqual(m1, b.get_next_match())
+        self.assertEqual(consolation, b.get_on_deck_match())
         
         # Set first winner
         # a --\__d__

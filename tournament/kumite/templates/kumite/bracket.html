@@ -1,3 +1,14 @@
+{% if next is not None %}
+<h1>Next Match</h1>
+<p>{% firstof next.aka.name "?" %} vs {% firstof next.shiro.name "?" %} (<a href="match/{{ next.pk }}/edit/">start</a>)</p>
+{% endif %}
+
+{% if on_deck is not None %}
+<h1>On Deck</h1>
+<p>{% firstof on_deck.aka.name "?" %} vs {% firstof on_deck.shiro.name "?" %}</p>
+{% endif %}
+
+<h1>Main Bracket</h1>
 <table border="1px">
   <thead>
     {% for h in grid.headers %}

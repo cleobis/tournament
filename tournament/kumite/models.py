@@ -219,6 +219,22 @@ class KumiteElim1Bracket(models.Model):
             raise MultipleObjectsReturned('Multiple consolation matches.')
     
     
+    def get_next_match(self):
+        m = self.kumitematch_set.filter(done=False)
+        if len(m) == 0:
+            return None
+        m = m[0]
+        assert m.is_ready(), "Next match {} isn't ready.".format(m)
+        return m
+    
+    
+    def get_on_deck_match(self):
+        m = self.kumitematch_set.filter(done=False)
+        if len(m) < 2:
+            return None
+        return m[1]
+    
+    
     def build(self):
         
         if len(self.kumitematch_set.all()) > 0:
