@@ -14,6 +14,10 @@ class Event(models.Model):
 
     def __str__(self):
         return self.name
+    
+    
+    def get_orphan_links(self):
+        return EventLink.objects.filter(event=self, division__isnull=True)
 
 
 class Rank(models.Model):
@@ -103,6 +107,10 @@ class Rank(models.Model):
 
 
 class Division(models.Model):
+    """A division is a group of people who will compete against eachother in a single event.
+    
+    
+    """
     event = models.ForeignKey(Event, on_delete=models.PROTECT)
     gender = models.CharField(max_length=2, choices=(('M', 'Male'), ('F', 'Female'), ('MF', 'Combined')))
     start_age = models.PositiveSmallIntegerField()
@@ -135,7 +143,7 @@ class Division(models.Model):
     
     @staticmethod
     def claim_all():
-        EventLink.objects.update(division=None)
+        EventLink.objects.filter(person__isnull=False).update(division=None)
         for d in Division.objects.all():
             d.claim()
     
@@ -196,13 +204,37 @@ class Person(models.Model):
 
 
 class EventLink(models.Model):
-    person = models.ForeignKey(Person, on_delete=models.CASCADE)
+    """A person participating in a Division.
+    
+    If a person participates in multiple divisions, there will be multiple EventLinks.
+    
+    Usually an EventLink links back to a Person registration. To support less 
+    sophisticated configurations or persons registering at ring-side, the
+    EventLink may be created with only a name (manual_name) and no linked
+    Person.
+    """
+    
+    person = models.ForeignKey(Person, on_delete=models.CASCADE, blank=True, null=True)
+    manual_name = models.CharField(max_length=100, blank=True)
     event = models.ForeignKey(Event, on_delete=models.PROTECT)
     division = models.ForeignKey(Division, on_delete=models.SET_NULL, blank=True, null=True)
+    
     
     def save(self, *args, **kwargs):
         self.update_division()
         super(EventLink, self).save(*args, **kwargs)
     
+    
     def update_division(self):
-        self.division = Division.find_eventlink_division(self)
+        if self.person is not None:
+            self.division = Division.find_eventlink_division(self)
+    
+    
+    @property
+    def is_manual(self):
+        return self.person is None
+    
+    
+    @property
+    def name(self):
+        return str(self.person) if not self.is_manual else self.manual_name
