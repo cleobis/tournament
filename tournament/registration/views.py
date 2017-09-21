@@ -1,12 +1,14 @@
 from django.http import HttpResponse
+from django.http.response import HttpResponseRedirect, HttpResponseForbidden
 from django.shortcuts import render
-from django.core.urlresolvers import reverse_lazy
+from django.core.urlresolvers import reverse_lazy, reverse
+from django.core.exceptions import PermissionDenied
 
 from django.views import generic
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, ModelFormMixin
 
 from .models import Person, Rank, EventLink, Division
-from .forms import PersonForm
+from .forms import PersonForm, ManualEventLinkForm
 
 # Create your views here.
 def index(request):
@@ -65,3 +67,70 @@ class DivisionList(generic.ListView):
         context = super(DivisionList, self).get_context_data(**kwargs)
         context['no_division_eventlist'] = EventLink.objects.filter(division=None)
         return context
+
+
+class DivisionInfoDispatch(generic.View):
+    
+    def get(self, request, *args, **kwargs):
+        view = DivisionInfo.as_view()
+        return view(request, *args, **kwargs)
+    
+    
+    def post(self, request, *args, **kwargs):
+        
+        view = DivisionAddManualPerson.as_view()
+        return view(request, *args, **kwargs)
+
+
+class DivisionInfo(generic.DetailView):
+    model = Division
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        context['form'] = ManualEventLinkForm()
+        
+        return context
+
+
+class DivisionAddManualPerson(generic.detail.SingleObjectMixin, generic.FormView):
+    template_name = 'registration/division_detail.html'
+    form_class = ManualEventLinkForm
+    model = Division
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['division'] = self.object
+        return kwargs
+    
+    def form_valid(self, form):
+        
+        # raise Exception(str(form.instance.__dict__))
+        form.instance.save()
+        return super().form_valid(form)
+    
+    
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        return super().post(request, *args, **kwargs)
+    
+    def get_success_url(self):
+        return reverse('division-detail', kwargs={'pk': self.object.pk})
+
+
+class DivisionDeleteManaualPerson(generic.DeleteView):
+    template_name = 'registration/division_detail.html'
+    model = EventLink
+    
+    def get_object(self):
+      obj = super().get_object()
+      if obj.is_manual:
+        return obj
+      raise PermissionDenied
+    
+    def get_success_url(self):
+        return reverse('division-detail', kwargs={'pk': self.object.division.pk})
+    
+    def get(self, *args, **kwargs):
+        return HttpResponseForbidden()
+
