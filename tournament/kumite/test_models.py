@@ -24,14 +24,17 @@ def match_person_gen(n=None):
 
 
 def make_bracket(n):
+    
     b = KumiteElim1Bracket()
     b.name = "asdf"
     b.save()
     
-    for p in match_person_gen(n):
-        b.people.add(p)
+    class FakeEventLink:
+        def __init__(self, name):
+            self.name = name
+    people = [FakeEventLink(chr(ord("a")+i)) for i in range(n)]
     
-    b.build()
+    b.build(people)
     
     # for round in range(2,-1,-1):
     #     print("round = {}".format(round))

@@ -3,6 +3,15 @@ from django.core.exceptions import ObjectDoesNotExist
 from .models import Person, Rank, EventLink, Division, Event
 
 # Create your tests here.
+class EventTestCase(TestCase):
+    
+    def test_get_format(self):
+        from kumite.models import KumiteElim1Bracket
+        e = Event(name="asfd", format=Event.EventFormat.elim1)
+        self.assertEqual(e.get_format_class(10), KumiteElim1Bracket)
+
+
+
 class RankTestCase(TestCase):
     
     def test_get_kyu(self):

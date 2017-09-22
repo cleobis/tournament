@@ -1,0 +1,69 @@
+{% load division_person_list %}
+
+<h1>{{ object }}</h1>
+
+{% division_person_list object.eventlink_set.all %}
+
+<hr />
+
+<style>
+  table, th, td {
+    border: 1px solid black;
+  }
+</style>
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Age</th>
+      <th>Gender</th>
+      <th>Rank</th>
+      <th>Delete</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% if object.eventlink_set.all %}
+      {% for el in object.eventlink_set.all %}
+      <tr>
+        <td>{{ el.name }}</td>
+        <td>{{ el.person.age }}</td>
+        <td>{{ el.person.gender }}</td>
+        <td>{{ el.person.rank }}</td>
+        <td>
+          {% if el.is_manual %}
+            <form action="{{ request.path }}delete/{{el.pk}}/" method="post">
+              {% csrf_token %}
+              
+              <button type="submit">delete</button>
+            </form>
+          {% else %}
+            Can't delete
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    {% else %}
+      <tr>
+        <td colspan="5">No participents</td>
+      </tr>
+    {% endif %}
+    <tr>
+      <td colspan="5">
+        <form action="{{ request.path }}" method="post">
+          {% csrf_token %}
+          {{ form.non_field_errors }}
+          {{ form.manual_name.errors }}
+          <label for="{{ form.manual_name.id_for_label }}">{{ form.manual_name.label }}:</label>
+          {{ form.manual_name }}
+          <button type="submit">+</button>
+        </form>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<form action="{{ request.path }}build" method="post">
+  {% csrf_token %}
+  <button type="submit">Build</button>
+</form>

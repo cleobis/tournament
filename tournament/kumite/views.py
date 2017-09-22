@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.views.generic import DetailView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, ModelFormMixin, FormView
 from django.core.urlresolvers import reverse
 from django.http.response import HttpResponseRedirect, HttpResponseForbidden
@@ -69,11 +70,20 @@ class BracketGrid():
             yield None
 
 
-def test_bracket(request):
-    bracket = KumiteElim1Bracket.objects.all()[0]
-    context = {'bracket': bracket, 'grid': BracketGrid(bracket), 'consolation_grid': BracketGrid(bracket, consolation=True),
-        'next': bracket.get_next_match(), 'on_deck': bracket.get_on_deck_match()}
-    return render(request, "kumite/bracket.html", context)
+class BracketDetails(DetailView):
+    model = KumiteElim1Bracket
+    
+    
+    def get_context_object_name(self, object):
+        return 'bracket'
+    
+    
+    def get_context_data(self, object=object):
+        
+        context = super().get_context_data(object=object)
+        context.update({'bracket': object, 'grid': BracketGrid(object), 'consolation_grid': BracketGrid(object, consolation=True),
+            'next': object.get_next_match(), 'on_deck': object.get_on_deck_match()})
+        return context
 
 
 class KumiteMatchUpdate(UpdateView):
@@ -92,8 +102,7 @@ class KumiteMatchUpdate(UpdateView):
     
     
     def get_success_url(self):
-        
-        return reverse('bracket')
+        return self.object['match'].bracket.get_absolute_url()
     
     
     def dispatch(self, *args, **kwargs):

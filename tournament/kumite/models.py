@@ -5,7 +5,7 @@ from django.db.models import Q, F
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.core.exceptions import MultipleObjectsReturned
-
+from django.core.urlresolvers import reverse, reverse_lazy
 
 # Create your models here.
 
@@ -50,6 +50,10 @@ class KumiteMatch(models.Model):
         elif self.is_consolation():
             name = ", consolation"
         return "{}, round {}, match {}{}".format(self.bracket.name, self.round, self.order, name)
+    
+    
+    def get_absolute_url(self):
+        return reverse('kumite:match', args=[self.id])
     
     
     def people(self):
@@ -195,7 +199,7 @@ class KumiteElim1Bracket(models.Model):
     people = models.ManyToManyField(KumiteMatchPerson)
     name = models.CharField(max_length=250)
     rounds = models.PositiveSmallIntegerField(default=0)
-    
+    division = models.ForeignKey('registration.Division', on_delete=models.PROTECT, related_name='+', null=True)
     
     @property
     def final_match(self):
@@ -235,7 +239,11 @@ class KumiteElim1Bracket(models.Model):
         return m[1]
     
     
-    def build(self):
+    def get_absolute_url(self):
+        return reverse('kumite:bracket', args=[self.id])
+    
+    
+    def build(self, people):
         
         if len(self.kumitematch_set.all()) > 0:
             raise Exception("Bracket has already been built.")
@@ -266,11 +274,11 @@ class KumiteElim1Bracket(models.Model):
                 build_helper(bracket, round + 1, 2 * match + 1, m, order[split:])
                 
             elif len(order) == 2:
-                people = bracket.people.all()
                 
-                if order[1] >= len(bracket.people.all()):
+                if order[1] >= len(people):
                     # Competetor gets a buy
-                    m = people[order[0]]
+                    m = KumiteMatchPerson(name=people[order[0]].name)
+                    m.save()
                     if match % 2 == 0:
                         parent.aka = m
                     else:
@@ -284,8 +292,12 @@ class KumiteElim1Bracket(models.Model):
                     m.round = round
                     m.order = match
                     m.winner_match = parent
-                    m.aka = people[order[0]]
-                    m.shiro = people[order[1]]
+                    p = KumiteMatchPerson(name=people[order[0]].name)
+                    p.save()
+                    m.aka = p
+                    p = KumiteMatchPerson(name=people[order[1]].name)
+                    p.save()
+                    m.shiro = p
                     m.save()
                 
             else:
@@ -298,7 +310,7 @@ class KumiteElim1Bracket(models.Model):
             
             return m
         
-        n_person = len(self.people.all())
+        n_person = len(people)
         if n_person < 4:
             raise ValueError("Minimum 4 competetors.")
         self.rounds = math.ceil(math.log2(n_person))

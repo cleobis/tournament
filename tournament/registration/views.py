@@ -7,6 +7,9 @@ from django.core.exceptions import PermissionDenied
 from django.views import generic
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, ModelFormMixin
 
+from django.utils.decorators import method_decorator
+from django.views.decorators.http import require_POST
+
 from .models import Person, Rank, EventLink, Division
 from .forms import PersonForm, ManualEventLinkForm
 
@@ -71,6 +74,8 @@ class DivisionList(generic.ListView):
 
 class DivisionInfoDispatch(generic.View):
     
+    # See https://docs.djangoproject.com/en/1.8/topics/class-based-views/mixins/#using-formmixin-with-detailview
+    
     def get(self, request, *args, **kwargs):
         view = DivisionInfo.as_view()
         return view(request, *args, **kwargs)
@@ -134,3 +139,17 @@ class DivisionDeleteManaualPerson(generic.DeleteView):
     def get(self, *args, **kwargs):
         return HttpResponseForbidden()
 
+
+@method_decorator(require_POST, name='dispatch')
+class DivisionBuild(generic.detail.SingleObjectMixin, generic.View):
+    model = Division
+    
+    def post(self, request, *args, **kwargs):
+        
+        div = self.get_object()
+        fmt = div.get_format()
+        if fmt is None:
+            fmt = div.build_format()
+        
+        return HttpResponseRedirect(fmt.get_absolute_url())
+        

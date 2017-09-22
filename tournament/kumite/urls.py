@@ -2,9 +2,10 @@ from django.conf.urls import url
 
 from . import views
 
+app_name = 'kumite'
 urlpatterns = [
-    url(r'^$', views.test_bracket, name='bracket'),
-    url(r'^match/(?P<pk>[0-9]+)/edit/', views.KumiteMatchUpdate.as_view(), name='update')
+    url(r'^(?P<pk>[0-9]+)/$', views.BracketDetails.as_view(), name='bracket'),
+    url(r'^match/(?P<pk>[0-9]+)/edit/', views.KumiteMatchUpdate.as_view(), name='match')
     # url(r'^person/add/$', views.PersonCreate.as_view(), name='create'),
     # url(r'^person/(?P<pk>[0-9]+)/$', views.DetailView.as_view(), name='detail'),
     # url(r'^person/(?P<pk>[0-9]+)/edit/$', views.PersonUpdate.as_view(), name='update'),

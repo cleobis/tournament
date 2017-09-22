@@ -11,4 +11,5 @@ urlpatterns = [
     url(r'^division/$', views.DivisionList.as_view(), name='divisions'),
     url(r'^division/(?P<pk>[0-9]+)/$', views.DivisionInfoDispatch.as_view(), name='division-detail'),
     url(r'^division/(?P<pk_div>[0-9]+)/delete/(?P<pk>[0-9]+)/$', views.DivisionDeleteManaualPerson.as_view()),
+    url(r'^division/(?P<pk>[0-9]+)/build$', views.DivisionBuild.as_view()),
 ]

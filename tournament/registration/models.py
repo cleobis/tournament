@@ -4,20 +4,47 @@ from datetime import date
 from django.core.urlresolvers import reverse
 
 from phonenumber_field.modelfields import PhoneNumberField
+from djchoices import DjangoChoices, ChoiceItem
+
+from kumite.models import KumiteElim1Bracket
 
 # Create your models here.
 
 class Event(models.Model):
     """The events at the tournament in which you can compete. E.g. Kata or Kumite."""
     
+    class EventFormat(DjangoChoices):
+        kata = ChoiceItem("A")
+        elim1 = ChoiceItem("B")
+    
+    
     name = models.CharField(max_length=100)
-
+    format = models.CharField(max_length=1, choices=EventFormat.choices, default=EventFormat.kata)
+    
+    
     def __str__(self):
         return self.name
     
     
     def get_orphan_links(self):
         return EventLink.objects.filter(event=self, division__isnull=True)
+    
+    
+    def get_format_class(self, n_people):
+        
+        if self.format == self.EventFormat.kata:
+            raise Exception("Kata not implemented.")
+        elif self.format == self.EventFormat.elim1:
+            if n_people == 2:
+                raise Exception("Best of 3 not implemented")
+            elif n_people == 3:
+                raise Exception("Round robin not implemented.")
+            elif n_people > 3:
+                return KumiteElim1Bracket
+            else:
+                raise Exception("Unexpected number of people {}.".format(n_people))
+        else:
+            raise Exception("Unexpected format.")
 
 
 class Rank(models.Model):
@@ -118,9 +145,11 @@ class Division(models.Model):
     start_rank = models.ForeignKey(Rank, on_delete=models.PROTECT, related_name='+')
     stop_rank = models.ForeignKey(Rank, on_delete=models.PROTECT, related_name='+')
     
+    
     def __str__(self):
         return "{} - Age {}-{}, {}-{}".format(self.event, self.start_age,
             self.stop_age, self.start_rank.name, self.stop_rank.name)
+    
     
     def claim(self):
         "Put people into this division."
@@ -137,15 +166,18 @@ class Division(models.Model):
             raise Exception("Unexpected gender '{}' in Division {}.".format(self.gender, self.id))
         links.update(division=self)
     
+    
     def save(self, *args, **kwargs):
         super(Division, self).save(*args, **kwargs)
         Division.claim_all()
+    
     
     @staticmethod
     def claim_all():
         EventLink.objects.filter(person__isnull=False).update(division=None)
         for d in Division.objects.all():
             d.claim()
+    
     
     @staticmethod
     def find_eventlink_division(eventlink):
@@ -164,6 +196,33 @@ class Division(models.Model):
             # Should really do something about multiple divisions.
             d = d[0]
         return d
+    
+    
+    def build_format(self):
+        fmt = self.get_format()
+        if fmt is not None:
+            raise Exception("Already build.")
+        
+        people = self.eventlink_set.all()
+        fmt = self.event.get_format_class(len(people))(division=self)
+        fmt.save()
+        fmt.build(people)
+        return fmt
+    
+    
+    def get_format(self):
+        
+        classes = [KumiteElim1Bracket, ]
+        
+        for c in classes:
+            fmt = c.objects.filter(division=self)
+            if len(fmt) == 1:
+                return fmt[0]
+            elif len(fmt) > 1:
+                return fmt[0] # Should really do some error handeling
+        
+        return None
+        
 
 
 class Person(models.Model):

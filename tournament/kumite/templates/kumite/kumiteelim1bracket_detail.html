@@ -1,14 +1,23 @@
+<h1>{{ bracket.division }}</h1>
+
 {% if next is not None %}
-<h1>Next Match</h1>
-<p>{% firstof next.aka.name "?" %} vs {% firstof next.shiro.name "?" %} (<a href="match/{{ next.pk }}/edit/">start</a>)</p>
+<h2>Next Match</h2>
+<p>{% firstof next.aka.name "?" %} vs {% firstof next.shiro.name "?" %} (<a href="{{ next.get_absolute_url }}">start</a>)</p>
+{% else %}
+<h2>Winners</h2>
+<ol>
+  <li>{{ bracket.final_match.winner }}</li>
+  <li>{{ bracket.final_match.loser }}</li>
+  <li>{{ bracket.consolation_match.winner }}</li>
+</ol>
 {% endif %}
 
 {% if on_deck is not None %}
-<h1>On Deck</h1>
+<h2>On Deck</h2>
 <p>{% firstof on_deck.aka.name "?" %} vs {% firstof on_deck.shiro.name "?" %}</p>
 {% endif %}
 
-<h1>Main Bracket</h1>
+<h2>Main Bracket</h2>
 <table border="1px">
   <thead>
     {% for h in grid.headers %}
@@ -30,9 +39,9 @@
                 {% if cell.person is not None %}{{ cell.person }}{% else %}?{% endif %}
                 {% if not cell.is_aka and cell.match.is_editable %}
                   {% if cell.match.is_ready %}
-                    (<a href="match/{{ cell.match.pk }}/edit/">start</a>)
+                    (<a href="{{ cell.match.get_absolute_url }}">start</a>)
                   {% else %}
-                    (<a href="match/{{ cell.match.pk }}/edit/">edit</a>)
+                    (<a href="{{ cell.match.get_absolute_url }}">edit</a>)
                   {% endif %}
                 {% endif %}
               {% endif %}
@@ -46,7 +55,7 @@
   </tbody>
 </table>
 
-<h1>Consolation Round</h1>
+<h2>Consolation Round</h2>
 <table border="1px">
   <thead>
     {% for h in consolation_grid.headers %}
@@ -68,9 +77,9 @@
                     {% if cell.person is not None %}{{ cell.person }}{% else %}?{% endif %}
                     {% if not cell.is_aka and cell.match.is_editable %}
                       {% if cell.match.is_ready %}
-                        (<a href="match/{{ cell.match.pk }}/edit/">start</a>)
+                        (<a href="{{ cell.match.get_absolute_url }}">start</a>)
                       {% else %}
-                        (<a href="match/{{ cell.match.pk }}/edit/">edit</a>)
+                        (<a href="{{ cell.match.get_absolute_url }}">edit</a>)
                       {% endif %}
                     {% endif %}
                   {% endif %}
@@ -83,4 +92,3 @@
     {% endfor %}
   </tbody>
 </table>
-

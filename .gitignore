@@ -2,3 +2,6 @@ venv
 *.sqlite
 __pycache__
 *.sqlite3
+.coverage
+htmlcov
+.vscode

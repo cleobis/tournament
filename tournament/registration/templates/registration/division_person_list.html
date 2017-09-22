@@ -1,0 +1,24 @@
+{% if people %}
+<table>
+  <thead>
+    <tr>
+      <td>Name</td>
+      <td>Age</td>
+      <td>Gender</td>
+      <td>Rank</td>
+    </tr>
+  </thead>
+  <tbody>
+    {% for el in people %}
+    <tr>
+      <td>{{ el.person.full_name }}</td>
+      <td>{{ el.person.age }}</td>
+      <td>{{ el.person.gender }}</td>
+      <td>{{ el.person.rank }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>No participents</p>
+{% endif %}
