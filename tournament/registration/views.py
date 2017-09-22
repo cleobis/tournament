@@ -120,7 +120,7 @@ class DivisionAddManualPerson(generic.detail.SingleObjectMixin, generic.FormView
         return super().post(request, *args, **kwargs)
     
     def get_success_url(self):
-        return reverse('division-detail', kwargs={'pk': self.object.pk})
+        return reverse('registration:division-detail', kwargs={'pk': self.object.pk})
 
 
 class DivisionDeleteManaualPerson(generic.DeleteView):
@@ -134,7 +134,7 @@ class DivisionDeleteManaualPerson(generic.DeleteView):
       raise PermissionDenied
     
     def get_success_url(self):
-        return reverse('division-detail', kwargs={'pk': self.object.division.pk})
+        return reverse('registration:division-detail', kwargs={'pk': self.object.division.pk})
     
     def get(self, *args, **kwargs):
         return HttpResponseForbidden()

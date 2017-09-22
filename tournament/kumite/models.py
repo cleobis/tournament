@@ -7,22 +7,34 @@ from django.dispatch import receiver
 from django.core.exceptions import MultipleObjectsReturned
 from django.core.urlresolvers import reverse, reverse_lazy
 
+# from registration.models import AbstractFormat
+
 # Create your models here.
 
 class KumiteMatchPerson(models.Model):
-    name = models.CharField(max_length=250)
+    eventlink = models.ForeignKey('registration.EventLink', on_delete=models.PROTECT, related_name='+')
     points = models.PositiveSmallIntegerField(default=0)
     warnings = models.PositiveSmallIntegerField(default=0)
     disqualified = models.BooleanField(default=False)
     
     
     def __str__(self):
-        return self.name
+        return self.eventlink.name
+    
+    
+    @property
+    def name(self):
+        return self.eventlink.name
     
     
     @property
     def kumitematch(self):
         return KumiteMatch.objects.get(Q(aka=self.id) | Q(shiro=self.id))
+    
+    
+    @staticmethod
+    def same_person(p1,p2):
+        return (p1 is None and p2 is None) or (p1 is not None and p2 is not None and p1.eventlink == p2.eventlink)
 
 
 class KumiteMatch(models.Model):
@@ -167,14 +179,12 @@ class KumiteMatch(models.Model):
                 
                 curr_p = getattr(self, attr_name)
                 
-                def same_person(p1,p2): #########################################TODO IMPROVE CHECK
-                    return (p1 is None and p2 is None) or (p1 is not None and p2 is not None and p1.name == p2.name)
-                if not same_person(curr_p, p):
+                if not KumiteMatchPerson.same_person(curr_p, p):
                     if self.done:
                         raise ValueError("Can't modify people if the match is done.")
                     
                     if p is not None:
-                        p = KumiteMatchPerson(name=p.name)
+                        p = KumiteMatchPerson(eventlink=p.eventlink)
                         p.save()
                     
                     setattr(self, attr_name, p)
@@ -239,6 +249,14 @@ class KumiteElim1Bracket(models.Model):
         return m[1]
     
     
+    def get_winners(self):
+        
+        unwrap = lambda x: x.eventlink if x is not None else None
+        return ((1, unwrap(self.final_match.winner())),
+            (2, unwrap(self.final_match.loser())), 
+            (3, unwrap(self.consolation_match.winner())))
+    
+    
     def get_absolute_url(self):
         return reverse('kumite:bracket', args=[self.id])
     
@@ -277,7 +295,7 @@ class KumiteElim1Bracket(models.Model):
                 
                 if order[1] >= len(people):
                     # Competetor gets a buy
-                    m = KumiteMatchPerson(name=people[order[0]].name)
+                    m = KumiteMatchPerson(eventlink=people[order[0]])
                     m.save()
                     if match % 2 == 0:
                         parent.aka = m
@@ -292,10 +310,10 @@ class KumiteElim1Bracket(models.Model):
                     m.round = round
                     m.order = match
                     m.winner_match = parent
-                    p = KumiteMatchPerson(name=people[order[0]].name)
+                    p = KumiteMatchPerson(eventlink=people[order[0]])
                     p.save()
                     m.aka = p
-                    p = KumiteMatchPerson(name=people[order[1]].name)
+                    p = KumiteMatchPerson(eventlink=people[order[1]])
                     p.save()
                     m.shiro = p
                     m.save()
@@ -412,5 +430,4 @@ class KumiteElim1Bracket(models.Model):
                 break
         
         return m
-
 

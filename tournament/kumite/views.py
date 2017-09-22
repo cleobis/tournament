@@ -109,4 +109,19 @@ class KumiteMatchUpdate(UpdateView):
         if not self.get_object().is_editable():
             return HttpResponseForbidden()
         return super(KumiteMatchUpdate,self).dispatch(*args, **kwargs)
-        
+
+
+class KumiteMatchManual(FormView):
+    mocel = KumiteMatch
+    form_class = KumiteMatchCombinedForm
+    template_name = 'kumite/kumitematch_form.html'
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(read_only=True)
+        # kwargs.update(instance={
+#             'match': self.object,
+#             'aka': self.object.aka,
+#             'shiro': self.object.shiro,
+#         })
+        return kwargs

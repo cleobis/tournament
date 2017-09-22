@@ -1,5 +1,6 @@
 from django.test import TestCase
 
+from registration.models import Event, EventLink
 from .models import KumiteElim1Bracket, KumiteMatchPerson, KumiteMatch
 
 import math
@@ -25,14 +26,16 @@ def match_person_gen(n=None):
 
 def make_bracket(n):
     
+    e = Event(name="test event")
+    e.save()
+    
     b = KumiteElim1Bracket()
     b.name = "asdf"
     b.save()
     
-    class FakeEventLink:
-        def __init__(self, name):
-            self.name = name
-    people = [FakeEventLink(chr(ord("a")+i)) for i in range(n)]
+    people = [EventLink(manual_name=chr(ord("a")+i), event=e) for i in range(n)]
+    for p in people:
+        p.save()
     
     b.build(people)
     
@@ -56,14 +59,16 @@ class KumiteMatchPersonTestCase(TestCase):
         
         b = make_bracket(4)
         
-        p = KumiteMatchPerson.objects.get(name="a")
+        p = KumiteMatchPerson.objects.get(eventlink__manual_name="a")
         self.assertEqual(p.kumitematch, b.get_match(1,0))
-        p = KumiteMatchPerson.objects.get(name="b")
+        p = KumiteMatchPerson.objects.get(eventlink__manual_name="b")
         self.assertEqual(p.kumitematch, b.get_match(1,1))
-        p = KumiteMatchPerson.objects.get(name="c")
+        p = KumiteMatchPerson.objects.get(eventlink__manual_name="c")
         self.assertEqual(p.kumitematch, b.get_match(1,1))
-        p = KumiteMatchPerson.objects.get(name="d")
+        p = KumiteMatchPerson.objects.get(eventlink__manual_name="d")
         self.assertEqual(p.kumitematch, b.get_match(1,0))
+        
+        self.assertEqual(p.name, "d")
         
         b.delete()
 
@@ -89,12 +94,17 @@ class KumiteMatchTestCase(TestCase):
     
     def test_winner_loser(self):
         
-        aka = KumiteMatchPerson()
-        aka.name = "aka"
+        e = Event(name="test event")
+        e.save()
+        
+        el = EventLink(manual_name="aka", event=e)
+        el.save()
+        aka = KumiteMatchPerson(eventlink=el)
         aka.save()
         
-        shiro = KumiteMatchPerson()
-        shiro.name = "shiro"
+        el = EventLink(manual_name="shiro", event=e)
+        el.save()
+        shiro = KumiteMatchPerson(eventlink=el)
         shiro.save()
         
         m = KumiteMatch() ;
@@ -158,6 +168,8 @@ class KumiteMatchTestCase(TestCase):
         self.assertEqual(m1, b.get_next_match())
         self.assertEqual(m2, b.get_on_deck_match())
         
+        self.assertEqual(b.get_winners(), ((1, None), (2, None), (3, None)))
+        
         # Test editing a non-editable match
         final.done = True
         self.assertRaises(ValueError, final.save)
@@ -202,6 +214,8 @@ class KumiteMatchTestCase(TestCase):
         self.assertEqual(m1, b.get_next_match())
         self.assertEqual(consolation, b.get_on_deck_match())
         
+        self.assertEqual(b.get_winners(), ((1, None), (2, None), (3, None)))
+        
         # Set first winner
         # a --\__d__
         # d --/     \__
@@ -236,7 +250,9 @@ class KumiteMatchTestCase(TestCase):
         self.assertTrue(consolation.is_ready())
         self.assertEqual(consolation.aka.name, "a")
         self.assertEqual(consolation.shiro.name, "c")
-
+        
+        self.assertEqual(b.get_winners(), ((1, None), (2, None), (3, None)))
+        
         # Undo first winner
         # a --\_____
         # d --/     \__
@@ -268,6 +284,8 @@ class KumiteMatchTestCase(TestCase):
         self.assertFalse(consolation.is_ready())
         self.assertIsNone(consolation.aka)
         self.assertEqual(consolation.shiro.name, "c")
+        
+        self.assertEqual(b.get_winners(), ((1, None), (2, None), (3, None)))
         
         # Redo first winner
         # a --\__a__
@@ -304,6 +322,8 @@ class KumiteMatchTestCase(TestCase):
         self.assertEqual(consolation.aka.name, "d")
         self.assertEqual(consolation.shiro.name, "c")
         
+        self.assertEqual(b.get_winners(), ((1, None), (2, None), (3, None)))
+        
         # Set consolation first winner
         # a --\__a__
         # d --/     \__
@@ -339,10 +359,52 @@ class KumiteMatchTestCase(TestCase):
         self.assertEqual(consolation.aka.name, "d")
         self.assertEqual(consolation.shiro.name, "c")
         
+        self.assertEqual(b.get_winners(), ((1, None), (2, None), (3, EventLink.objects.get(manual_name="d", division=b.division))))
+        
         # Try editing locked match
         m1.aka_won = False
         self.assertRaises(ValueError, m1.save)
-
+        
+        # Set final winner
+        # a --\__a__
+        # d --/     \__a__
+        # b --\__b__/
+        # c --/
+        #      __d__
+        #           \__d__
+        #      __c__/
+        final.aka.points = 1
+        final.done = True
+        final.infer_winner()
+        final.aka.save()
+        final.save()
+        
+        final = b.final_match
+        consolation = b.consolation_match
+        m1 = b.get_match(1,0)
+        m2 = b.get_match(1,1)
+        
+        self.assertFalse(m1.is_editable())
+        self.assertFalse(m1.is_ready())
+        
+        self.assertFalse(m2.is_editable())
+        self.assertFalse(m2.is_ready())
+        
+        self.assertTrue(final.is_editable())
+        self.assertFalse(final.is_ready())
+        self.assertEqual(final.aka.name, "a")
+        self.assertEqual(final.shiro.name, "b")
+        
+        self.assertTrue(consolation.is_editable())
+        self.assertFalse(consolation.is_ready())
+        self.assertEqual(consolation.aka.name, "d")
+        self.assertEqual(consolation.shiro.name, "c")
+        
+        self.assertEqual(b.get_winners(), (
+            (1, EventLink.objects.get(manual_name="a", division=b.division)),
+            (2, EventLink.objects.get(manual_name="b", division=b.division)),
+            (3, EventLink.objects.get(manual_name="d", division=b.division))))
+        
 class KumiteElim1BracketTestCase(TestCase):
     
     def setUp(self):

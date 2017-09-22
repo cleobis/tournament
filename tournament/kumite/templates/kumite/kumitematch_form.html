@@ -56,7 +56,7 @@
 		.people h2 {
 			height: 15vh;
 			font-size: 6vh;
-			overflow: scroll;
+			overflow: auto;
 			width: calc(100% - 10px);
 			margin: 0;
 			padding: 0 5px;
@@ -133,7 +133,7 @@
 		.buttons {
 			height: 10vh;
 			display: flex;
-			overflow: scroll;
+			overflow: auto;
 		}
 		
 		.buttons button {
@@ -147,7 +147,7 @@
 			margin-right: 5px;
 		}
 		
-		.buttons button:nth-last-child(2) {
+		.buttons button.right_btn {
 			margin-left: auto;
     }
     
@@ -230,12 +230,16 @@
     <button id="plus" type="button">Plus</button>
     <button id="minus" type="button">Minus</button>
     <button id="reset" type="button">Reset</button>
-    {% if form.match.done.value %}
-    <button id="clear" type="submit" name="btn_not_done">Clear Match</button>
-    <button id="submit" type="submit" name="btn_done">Change Score</button>
+    {% if form.read_only %}
+      <button id="clear" type="reset" class="right_btn">Clear</button>
     {% else %}
-    <button id="clear" type="submit" name="btn_not_done">Cancel</button>
-    <button id="submit" type="submit" name="btn_done">Done</button>
+      {% if form.match.done.value %}
+      <button id="clear" type="submit" name="btn_not_done" class="right_btn">Clear Match</button>
+      <button id="submit" type="submit" name="btn_done">Change Score</button>
+      {% else %}
+      <button id="clear" type="submit" name="btn_not_done" class="right_btn">Cancel</button>
+      <button id="submit" type="submit" name="btn_done">Done</button>
+      {% endif %}
     {% endif %}
 </div>
 </form>
@@ -244,7 +248,7 @@
 <script lang="text/javascript">
 function CountDownTimer(duration, granularity) {
   this.duration = duration;
-  this.granularity = granularity || 1000;
+  this.granularity = granularity || 1;
   this.tickFtns = [];
   this.running = false;
   
@@ -274,11 +278,11 @@ CountDownTimer.prototype.start = function() {
 	diff_round = Math.round(diff / that.granularity) * that.granularity;
 	
     if (diff > 0) {
-    	var dt = diff - Math.floor(diff / that.granularity) * that.granularity;
+    	var dt = diff - diff_round - that.granularity;
     	if (dt <= 0) {
     		dt = that.granularity;
     	}
-    	console.info(dt);
+    	console.info(diff);
     	setTimeout(timer, dt * 1000);
     } else {
       that.running = false;
@@ -302,12 +306,12 @@ CountDownTimer.prototype.remaining = function () {
 };
 
 CountDownTimer.prototype.notify = function (diff) {
-	diff = diff | Math.round(this.remaining() / this.granularity) * this.granularity;
-	
-    var obj = CountDownTimer.parse(diff);
-    this.tickFtns.forEach(function(ftn) {
-      ftn.call(this, obj.minutes, obj.seconds);
-    }, this);
+  diff = diff || Math.round(this.remaining() / this.granularity) * this.granularity;
+  console.log(diff)
+  var obj = this.parse(diff);
+  this.tickFtns.forEach(function(ftn) {
+    ftn.call(this, obj.minutes, obj.seconds, obj.sub_seconds);
+  }, this);
 };
 
 CountDownTimer.prototype.stop = function () {
@@ -337,11 +341,17 @@ CountDownTimer.prototype.expired = function() {
   return !this.running;
 };
 
-CountDownTimer.parse = function(seconds) {
-	var min = Math.floor(seconds / 60);
+CountDownTimer.prototype.parse = function(seconds) {
+  var sub_sec = Math.round(seconds / this.granularity);
+  seconds = Math.floor(sub_sec * this.granularity)
+  sub_sec = sub_sec - seconds / this.granularity;
+  var min = Math.floor(seconds / 60);
+  seconds = seconds - min * 60;
+  sub_sec = (this.granularity >= 1) ? '' : '.' + sub_sec;
   return {
     'minutes': min,
-    'seconds': seconds - min * 60
+    'seconds': seconds,
+    'sub_seconds': sub_sec
   };
 };
 </script>
@@ -351,7 +361,7 @@ CountDownTimer.parse = function(seconds) {
 window.onload = function () {
     var display = document.querySelector('#time'),
         display_box = display.parentElement,
-        timer = new CountDownTimer(8.1);
+        timer = new CountDownTimer(90);
     
     timer.onTick(format);
     timer.notify();
@@ -378,23 +388,24 @@ window.onload = function () {
         timer.notify();
     });
     
-    function format(minutes, seconds) {
+    function format(minutes, seconds, sub_sec) {
         minutes = minutes < 10 ? "0" + minutes : minutes;
         seconds = seconds < 10 ? "0" + seconds : seconds;
-        display.textContent = minutes + ':' + seconds;
+        display.textContent = minutes + ':' + seconds + sub_sec;
         
         soon = minutes == 0 && seconds <= 10;
         if (display_box.classList.contains("timer_soon")) {
         	if (!soon) {
         		display_box.classList.remove("timer_soon");
         	}
-		} else {
-    		if (soon) {
-        		display_box.classList.add("timer_soon");
-        	}
-		}
+      } else {
+        if (soon) {
+            display_box.classList.add("timer_soon");
+        }
+      }
     };
     
+    /* Configure +/- buttons for points and warnings */
     var objs = document.querySelectorAll(".input_pm button");
     generator = function (id, do_inc) {
     	if (do_inc) {
@@ -402,15 +413,11 @@ window.onload = function () {
     	} else {
     		return function(){dec(id)};
     	}
-	};
-    console.info(objs);
-    for(obj in objs) {
-    	obj = objs[obj];
-     	console.info(obj);
+    };
+    objs.forEach(function(obj){
     	var id = obj.parentElement.querySelector("input").id;
     	obj.onclick = generator(id, obj.innerText == '+');
-    	console.info(obj);
-    };
+    });
 };
 
 function inc(id) {

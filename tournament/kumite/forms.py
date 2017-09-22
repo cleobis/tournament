@@ -27,8 +27,15 @@ class KumiteMatchCombinedForm(MultiModelForm):
     }
     
     
+    def __init__(self, read_only=False, **kwargs):
+        self.read_only = read_only
+        super().__init__(**kwargs)
+    
     def clean(self):
         super(KumiteMatchCombinedForm, self).clean()
+        
+        if (self.read_only):
+            raise ValidationError('Can\'t save manual form.')
         
         # Determine match.done from which button was clicked
         if 'btn_done' in self.data:

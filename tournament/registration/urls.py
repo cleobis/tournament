@@ -2,6 +2,7 @@ from django.conf.urls import url
 
 from . import views
 
+app_name = 'registration'
 urlpatterns = [
     url(r'^$', views.IndexView.as_view(), name='index'),
     url(r'^person/add/$', views.PersonCreate.as_view(), name='create'),

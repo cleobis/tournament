@@ -1,3 +1,5 @@
+from abc import ABC, abstractmethod
+
 from django.db import models
 from datetime import date
 
@@ -5,8 +7,6 @@ from django.core.urlresolvers import reverse
 
 from phonenumber_field.modelfields import PhoneNumberField
 from djchoices import DjangoChoices, ChoiceItem
-
-from kumite.models import KumiteElim1Bracket
 
 # Create your models here.
 
@@ -31,6 +31,7 @@ class Event(models.Model):
     
     
     def get_format_class(self, n_people):
+        from kumite.models import KumiteElim1Bracket
         
         if self.format == self.EventFormat.kata:
             raise Exception("Kata not implemented.")
@@ -45,6 +46,22 @@ class Event(models.Model):
                 raise Exception("Unexpected number of people {}.".format(n_people))
         else:
             raise Exception("Unexpected format.")
+
+
+# class AbstractFormat(ABC):
+#
+#     @abstractmethod
+#     def build(self, people):
+#         pass
+#
+#     @abstractmethod
+#     def asdf(self):
+#         pass
+#
+#     @property
+#     @abstractmethod
+#     def winners(self):
+#         pass
 
 
 class Rank(models.Model):
@@ -139,16 +156,25 @@ class Division(models.Model):
     
     """
     event = models.ForeignKey(Event, on_delete=models.PROTECT)
+    name = models.CharField(max_length=100, blank=True)
     gender = models.CharField(max_length=2, choices=(('M', 'Male'), ('F', 'Female'), ('MF', 'Combined')))
     start_age = models.PositiveSmallIntegerField()
     stop_age = models.PositiveSmallIntegerField()
     start_rank = models.ForeignKey(Rank, on_delete=models.PROTECT, related_name='+')
     stop_rank = models.ForeignKey(Rank, on_delete=models.PROTECT, related_name='+')
     
+    class State(DjangoChoices):
+        ready = ChoiceItem("1")
+        running = ChoiceItem("4")
+        done = ChoiceItem("7")
+    state = models.CharField(max_length=1, choices=State.choices, default=State.ready)
     
     def __str__(self):
-        return "{} - Age {}-{}, {}-{}".format(self.event, self.start_age,
-            self.stop_age, self.start_rank.name, self.stop_rank.name)
+        if self.name:
+            return "{} - {}".format(self.event, self.name)
+        else:
+            return "{} - Age {}-{}, {}-{}".format(self.event, self.start_age,
+                self.stop_age, self.start_rank.name, self.stop_rank.name)
     
     
     def claim(self):
@@ -211,6 +237,8 @@ class Division(models.Model):
     
     
     def get_format(self):
+        
+        from kumite.models import KumiteElim1Bracket
         
         classes = [KumiteElim1Bracket, ]
         
