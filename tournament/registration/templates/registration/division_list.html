@@ -10,4 +10,13 @@
 {% for div in object_list %}
 <h2>{{ div }} (<a href="{{ div.pk }}/">start</a>)</h2>
 {% division_person_list div.eventlink_set.all %}
+
+<h3>Winners</h3>
+<ul>
+{% for position, person in div.get_format.get_winners %}
+  <li>{{ position }}. {{ person.name }}</li>
 {% endfor %}
+</ul>
+{% endfor %}
+
+<a href="/admin">Admin</a>

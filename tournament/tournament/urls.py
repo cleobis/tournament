@@ -15,8 +15,10 @@ Including another URLconf
 """
 from django.conf.urls import url, include
 from django.contrib import admin
+from django.http.response import HttpResponseRedirect
 
 urlpatterns = [
+    url(r'^$', lambda r: HttpResponseRedirect('registration/division/')),
     url(r'^registration/', include('registration.urls')),
     url(r'^tmp/', include('tmp.urls')),
     url(r'^kata/', include('kata.urls')),
