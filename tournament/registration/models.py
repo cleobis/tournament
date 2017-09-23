@@ -177,6 +177,9 @@ class Division(models.Model):
                 self.stop_age, self.start_rank.name, self.stop_rank.name)
     
     
+    def get_absolute_url(self):
+        return reverse('registration:division-detail', args=[self.id,])
+    
     def claim(self):
         "Put people into this division."
         links = EventLink.objects.filter(person__age__gte=self.start_age,

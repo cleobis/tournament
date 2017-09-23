@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.views.generic import DetailView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, ModelFormMixin, FormView
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, reverse_lazy
 from django.http.response import HttpResponseRedirect, HttpResponseForbidden
 
 import math
@@ -84,6 +84,14 @@ class BracketDetails(DetailView):
         context.update({'bracket': object, 'grid': BracketGrid(object), 'consolation_grid': BracketGrid(object, consolation=True),
             'next': object.get_next_match(), 'on_deck': object.get_on_deck_match()})
         return context
+
+
+class BracketDelete(DeleteView):
+    model = KumiteElim1Bracket
+    
+    
+    def get_success_url(self):
+        return self.object.division.get_absolute_url()
 
 
 class KumiteMatchUpdate(UpdateView):

@@ -1,14 +1,13 @@
 {% load division_person_list %}
 
-<h1>{{ object }}</h1>
+<h1><a href="{% url 'registration:divisions' %}">&lt;</a> {{ object }}</h1>
 
-{% division_person_list object.eventlink_set.all %}
-
-<hr />
+{#{% division_person_list object.eventlink_set.all %}#}
 
 <style>
   table, th, td {
     border: 1px solid black;
+    border-collapse: collapse;
   }
 </style>
 
@@ -31,7 +30,7 @@
         <td>{{ el.person.gender }}</td>
         <td>{{ el.person.rank }}</td>
         <td>
-          {% if el.is_manual %}
+          {% if el.is_manual and object.get_format is None %}
             <form action="{{ request.path }}delete/{{el.pk}}/" method="post">
               {% csrf_token %}
               
@@ -48,6 +47,7 @@
         <td colspan="5">No participents</td>
       </tr>
     {% endif %}
+    {% if object.get_format is None %}
     <tr>
       <td colspan="5">
         <form action="{{ request.path }}" method="post">
@@ -60,10 +60,15 @@
         </form>
       </td>
     </tr>
+    {% endif %}
   </tbody>
 </table>
 
+{% if object.get_format %}
+<h1><a href="{{ object.get_format.get_absolute_url }}">> Bracket</a></h1>
+{% else %}
 <form action="{{ request.path }}build" method="post">
   {% csrf_token %}
   <button type="submit">Build</button>
 </form>
+{% endif %}

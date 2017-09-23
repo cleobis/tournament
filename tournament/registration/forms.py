@@ -22,6 +22,7 @@ class ManualEventLinkForm(forms.ModelForm):
     def __init__(self, division=None, **kwargs):
         self.division = division
         super().__init__(**kwargs)
+        self.fields['manual_name'].widget.attrs.update({'autofocus': 'autofocus'})
     
     
     def clean_manual_name(self):

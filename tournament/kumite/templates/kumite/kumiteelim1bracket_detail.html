@@ -114,6 +114,7 @@ td:first-child {
   </tbody>
 </table>
 
+<h1>Reset</h1>
 <form action="{% url 'kumite:bracket-delete' bracket.id %}" method="post">
   {% csrf_token %}
   <button type="submit">Delete</button>
