@@ -1,5 +1,26 @@
 <h1><a href="{% url 'registration:divisions' %}">&lt;</a> {{ bracket.division }}</h1>
 
+<style>
+table, td, th {
+  border: 1px solid black;
+  border-collapse: collapse;
+}
+td, th {
+  height: 30px;
+  padding: 2px 6px;
+}
+td {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' viewBox='0 0 10 20' preserveAspectRatio='none'><text x='0' y='15' font-size='20'>}</text></svg>");
+  background-repeat: no-repeat;
+  background-size: 20px 100%;
+  padding-left: 20px;
+}
+td:first-child {
+  background-image: none;
+  padding-left: 2px;
+}
+</style>
+
 {% if next is not None %}
 <h2>Next Match</h2>
 <p>{% firstof next.aka.name "?" %} vs {% firstof next.shiro.name "?" %} (<a href="{{ next.get_absolute_url }}">start</a>)</p>
@@ -18,10 +39,10 @@
 {% endif %}
 
 <h2>Main Bracket</h2>
-<table border="1px">
+<table>
   <thead>
     {% for h in grid.headers %}
-    <td>{{ h }}</td>
+    <th>{{ h }}</th>
     {% endfor %}
   </thead>
   <tbody>
@@ -35,7 +56,7 @@
               {% if cell.round == -1 %}
                 {% if cell.person is not None %}{{ cell.person }}{% else %}?{% endif %}
               {% else %}
-                {# {% if cell.is_aka %} round {{ cell.round }}, match {{ cell.match_i|floatformat }}<br />{% else %}vs {% endif %} #}
+                {% if cell.is_aka %}{#  round {{ cell.round }}, match {{ cell.match_i|floatformat }}<br /> #}{% else %}vs {% endif %}
                 {% if cell.person is not None %}{{ cell.person }}{% else %}?{% endif %}
                 {% if not cell.is_aka and cell.match.is_editable %}
                   {% if cell.match.is_ready %}
@@ -56,10 +77,10 @@
 </table>
 
 <h2>Consolation Round</h2>
-<table border="1px">
+<table>
   <thead>
     {% for h in consolation_grid.headers %}
-    <td>{{ h }}</td>
+    <th>{{ h }}</th>
     {% endfor %}
   </thead>
   <tbody>
@@ -73,7 +94,7 @@
                   {% if cell.round == -1 %}
                     {% if cell.person is not None %}{{ cell.person }}{% else %}?{% endif %}
                   {% else %}
-                    {# {% if cell.is_aka %} round {{ cell.round }}, match {{ cell.match_i|floatformat }}<br />{% else %}vs {% endif %} #}
+                    {% if cell.is_aka %}{#  round {{ cell.round }}, match {{ cell.match_i|floatformat }}<br /> #}{% else %}vs {% endif %}
                     {% if cell.person is not None %}{{ cell.person }}{% else %}?{% endif %}
                     {% if not cell.is_aka and cell.match.is_editable %}
                       {% if cell.match.is_ready %}
@@ -92,3 +113,8 @@
     {% endfor %}
   </tbody>
 </table>
+
+<form action="{% url 'kumite:bracket-delete' bracket.id %}" method="post">
+  {% csrf_token %}
+  <button type="submit">Delete</button>
+</form>

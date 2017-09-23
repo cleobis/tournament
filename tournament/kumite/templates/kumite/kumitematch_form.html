@@ -13,7 +13,7 @@
 			height: 10vh;
 			font-size: 8vh;
 			line-height: 10vh;
-			overflow: scroll;
+			overflow: auto;
 			margin: 0;
 		}
 		
@@ -133,7 +133,7 @@
 		.buttons {
 			height: 10vh;
 			display: flex;
-			overflow: auto;
+			overflow: scroll;
 		}
 		
 		.buttons button {
@@ -158,7 +158,11 @@
 	</style>
 	</head>
 <body>
+{% if not form.read_only %}
 <h1>Round {{ form.match.instance.round }} Match {{ form.match.instance.order }}</h1>
+{% else %}
+<h1><a href="{% url 'registration:divisions' %}">&lt;</a> Manual Match</a></h1>
+{% endif %}
 
 <div class="v10">
 	<form action="{{ request.path }}" method="post">
@@ -382,11 +386,13 @@ window.onload = function () {
         timer.add(-10);
     });
     
-    document.querySelector('#reset').addEventListener('click', function () {
+    var reset = function () {
     	timer.stop();
-        timer.duration = 90;
-        timer.notify();
-    });
+      timer.duration = 90;
+      timer.notify();
+    } ;
+    document.querySelector('#reset').addEventListener('click', reset);
+    document.querySelector('#clear').addEventListener('click', reset);
     
     function format(minutes, seconds, sub_sec) {
         minutes = minutes < 10 ? "0" + minutes : minutes;
