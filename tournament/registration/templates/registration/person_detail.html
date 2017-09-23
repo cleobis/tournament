@@ -1,6 +1,6 @@
 <h1>{{ person.full_name }}</h1>
 
-<p><a href="{% url 'index' %}">Back</a> | <a href="{% url 'update' person.pk %}">Update</a> | <a href="{% url 'delete' person.pk %}">Delete</a></p>
+<p><a href="{% url 'registration:index' %}">Back</a> | <a href="{% url 'registration:update' person.pk %}">Update</a> | <a href="{% url 'registration:delete' person.pk %}">Delete</a></p>
 
 <ul>
   <li>Gender: {{ person.gender }}</li>

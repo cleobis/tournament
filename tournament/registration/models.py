@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
-
-from django.db import models
 from datetime import date
 
+from django.db import models
 from django.core.urlresolvers import reverse
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
 
 from phonenumber_field.modelfields import PhoneNumberField
 from djchoices import DjangoChoices, ChoiceItem
@@ -180,6 +181,7 @@ class Division(models.Model):
     def get_absolute_url(self):
         return reverse('registration:division-detail', args=[self.id,])
     
+    
     def claim(self):
         "Put people into this division."
         links = EventLink.objects.filter(person__age__gte=self.start_age,
@@ -253,7 +255,14 @@ class Division(models.Model):
                 return fmt[0] # Should really do some error handeling
         
         return None
-        
+
+
+@receiver(pre_delete, sender=Division)
+def Division_post_delete(sender, instance, **kwargs):
+    
+    # Remove manually added people since we can't automatically assign them to a division.
+    el = EventLink.objects.filter(division=instance, person__isnull=True)
+    el.delete()
 
 
 class Person(models.Model):
@@ -284,7 +293,7 @@ class Person(models.Model):
         return self.full_name()
     
     def get_absolute_url(self):
-        return reverse('detail', kwargs={'pk': self.pk})
+        return reverse('registration:detail', kwargs={'pk': self.pk})
     
     def save(self, *args, **kwargs):
         super(Person, self).save(*args, **kwargs)

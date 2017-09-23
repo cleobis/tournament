@@ -32,12 +32,11 @@ class PersonCreate(CreateView):
     
     def form_valid(self, form):
         self.object = form.save(commit=False)
-        for event in form.cleaned_data['events2']:
-            link = EventLink()
-            link.person = self.object
-            link.event = event
+        self.object.save()
+        for event in form.cleaned_data['events']:
+            link = EventLink(event=event, person=self.object)
             link.save()
-        return super(ModelFormMixin, self).form_valid(form)
+        return HttpResponseRedirect(self.get_success_url())
     
 
 class PersonUpdate(UpdateView):
@@ -50,16 +49,14 @@ class PersonUpdate(UpdateView):
         if 'events' in form.changed_data:
             self.object.events.clear() # Remove existing links and recreate
             for event in form.cleaned_data['events']:
-                link = EventLink()
-                link.person = self.object
-                link.event = event
+                link = EventLink(event=event, person=self.object)
                 link.save()
-        return super(ModelFormMixin, self).form_valid(form)
+        return HttpResponseRedirect(self.get_success_url())
 
 
 class PersonDelete(DeleteView):
     model = Person
-    success_url = reverse_lazy('index')
+    success_url = reverse_lazy('registration:index')
     
     
 class DivisionList(generic.ListView):

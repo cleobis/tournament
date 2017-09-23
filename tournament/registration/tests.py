@@ -127,15 +127,19 @@ class DivisionTestCase(TestCase):
         Division(event=e, gender='F', start_age=19, stop_age = 99, start_rank=  bb1, stop_rank=  bb9).save()
         self.assertEqual(div_summary(), ([["a a"], ["b b", "m"], ["c c"], ["d d"], ["e e"], ["f f"], ["g g"], ["h h"]], []))
         
-        # Delete a division as part of a merge
+        # Delete a division
+        Division.objects.filter(event=e)[7].delete()
+        self.assertEqual(div_summary(), ([["a a"], ["b b", "m"], ["c c"], ["d d"], ["e e"], ["f f"], ["g g"]], ["h h"]))
+        
+        # Delete a division as part of a merge. Manually added "m" will be dropped.
         d = Division.objects.filter(event=e)[1].delete()
-        self.assertEqual(div_summary(), ([["a a"], ["c c"], ["d d"], ["e e"], ["f f"], ["g g"], ["h h"]], ["b b", "m"]))
+        self.assertEqual(div_summary(), ([["a a"], ["c c"], ["d d"], ["e e"], ["f f"], ["g g"]], ["b b", "h h"]))
         
         # Expand a division as part of a merge
         d = Division.objects.filter(event=e)[2]
         d.gender = 'MF'
         d.save()
-        self.assertEqual(div_summary(), ([["a a"], ["c c"], ["b b", "d d"], ["e e"], ["f f"], ["g g"], ["h h"]], ["m"]))
+        self.assertEqual(div_summary(), ([["a a"], ["c c"], ["b b", "d d"], ["e e"], ["f f"], ["g g"]], ["h h"]))
 
 
 class EventLinkTestCase(TestCase):
