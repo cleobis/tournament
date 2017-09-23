@@ -1,5 +1,13 @@
 {% load division_person_list %}
 
+<style>
+  table, td, th {
+    border: 1px solid black;
+    border-collapse: collapse;
+    padding: 2px 6px;
+  }
+</style>
+
 <h1>Divisions</h1>
 
 {% if no_division_eventlist %}
@@ -11,12 +19,14 @@
 <h2>{{ div }} (<a href="{{ div.pk }}/">start</a>)</h2>
 {% division_person_list div.eventlink_set.all %}
 
+{% if div.get_format %}
 <h3>Winners</h3>
 <ul>
 {% for position, person in div.get_format.get_winners %}
   <li>{{ position }}. {{ person.name }}</li>
 {% endfor %}
 </ul>
+{% endif %}
 {% endfor %}
 
 <h1><a href="{% url 'kumite:manual-match' %}">Manual</a></h1>

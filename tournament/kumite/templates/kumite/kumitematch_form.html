@@ -198,7 +198,7 @@
   </div>
   
   <div class="shiro">
-    <h2>Shiro: {{ form.shiro.instance.name }}</h2>
+    <h2>Ao: {{ form.shiro.instance.name }}</h2>
     <!-- {{ form.shiro.disqualified }} {{ form.shiro.disqualified.label_tag }}
     {{ form.shiro.disqualified.errors }}-->
     <div class="points">
@@ -365,7 +365,7 @@ CountDownTimer.prototype.parse = function(seconds) {
 window.onload = function () {
     var display = document.querySelector('#time'),
         display_box = display.parentElement,
-        timer = new CountDownTimer(90);
+        timer = new CountDownTimer(120);
     
     timer.onTick(format);
     timer.notify();
