@@ -63,7 +63,11 @@ class KumiteMatch(models.Model):
             name = ", final"
         elif self.is_consolation():
             name = ", consolation"
-        return "{}, round {}, match {}{}".format(self.bracket.name, self.round, self.order, name)
+        if self.bracket.division:
+            prefix = self.bracket.division.name
+        else:
+            prefix = ''
+        return "{}, round {}, match {}{}".format(prefix, self.round, self.order, name)
     
     
     @property
@@ -219,7 +223,7 @@ class KumiteElim1Bracket(models.Model):
     
     
     def get_absolute_url(self):
-        return reverse('kumite:bracket', args=[self.id])
+        return reverse('kumite:bracket-n', args=[self.id])
     
     
     def build(self, people):
@@ -391,7 +395,6 @@ class KumiteElim1Bracket(models.Model):
                 break
         
         return m
-        
     
     
     def match_callback(self, match):
@@ -466,14 +469,14 @@ class Kumite2PeopleBracket(models.Model):
     division = models.ForeignKey('registration.Division', on_delete=models.PROTECT, related_name='+', null=True)
     winner = models.ForeignKey('registration.EventLink', on_delete=models.PROTECT, related_name='+', null=True)
     loser = models.ForeignKey('registration.EventLink', on_delete=models.PROTECT, related_name='+', null=True)
-    
+    rounds = 1
     
     def get_winners(self):
         return ((1, self.winner), (2, self.loser))
     
     
     def get_absolute_url(self):
-        pass
+        return reverse('kumite:bracket-2', args=[self.id,])
     
     
     def get_next_match(self):
@@ -512,6 +515,7 @@ class Kumite2PeopleBracket(models.Model):
         # - First 2 matches done and no tie => assign winner.
         # - First 2 matches tied => Create new match.
         # - First 2 matches no longer tied => Delete extra match and assign winner.
+        
         matches = self.kumitematch_set.all()
         p1 = matches[0].aka.eventlink
         p2 = matches[0].shiro.eventlink
@@ -560,7 +564,22 @@ class Kumite2PeopleBracket(models.Model):
         self.save()
     
     
-    def get_match(self, match_i):
+    def get_num_match_in_round(self, round=None):
+        n = len(self.kumitematch_set.all())
+        if round is None:
+            # Can't pass argument from template. Return array.
+            return [n]
+        else:
+            if round == 0:
+                return n
+            elif round == 1:
+                return n * 2
+            else:
+                raise ValueError('Invalid round number {}.'.format(n))
+    
+    def get_match(self, round, match_i):
+        if round != 0:
+            raise ValueError("Only 1 round")
         return self.kumitematch_set.get(order=match_i)
 
 

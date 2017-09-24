@@ -21,9 +21,9 @@ class KumiteMatchForm(forms.ModelForm):
 
 class KumiteMatchCombinedForm(MultiModelForm):
     form_classes = {
-        'match': KumiteMatchForm,
         'aka': KumiteMatchPersonForm,
         'shiro': KumiteMatchPersonForm,
+        'match': KumiteMatchForm,   # Must be last so its save() is called last.
     }
     
     

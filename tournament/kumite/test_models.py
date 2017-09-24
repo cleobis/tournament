@@ -568,8 +568,8 @@ class Kumite2PeopleBracketTestCase(TestCase):
         # a:? - b:?
         # b:? - a:?
         self.assertEqual(len(b.kumitematch_set.all()), 2)
-        m1 = b.get_match(0)
-        m2 = b.get_match(1)
+        m1 = b.get_match(0, 0)
+        m2 = b.get_match(0, 1)
         
         self.assertTrue(m1.is_editable())
         self.assertTrue(m1.is_ready())
@@ -596,8 +596,8 @@ class Kumite2PeopleBracketTestCase(TestCase):
         m1.save()
         
         self.assertEqual(len(b.kumitematch_set.all()), 2)
-        m1 = b.get_match(0)
-        m2 = b.get_match(1)
+        m1 = b.get_match(0, 0)
+        m2 = b.get_match(0, 1)
         
         self.assertTrue(m1.is_editable())
         self.assertFalse(m1.is_ready())
@@ -621,9 +621,9 @@ class Kumite2PeopleBracketTestCase(TestCase):
         m2.save()
         
         self.assertEqual(len(b.kumitematch_set.all()), 3)
-        m1 = b.get_match(0)
-        m2 = b.get_match(1)
-        m3 = b.get_match(2)
+        m1 = b.get_match(0, 0)
+        m2 = b.get_match(0, 1)
+        m3 = b.get_match(0, 2)
         
         self.assertFalse(m1.is_editable())
         self.assertFalse(m1.is_ready())
@@ -652,9 +652,9 @@ class Kumite2PeopleBracketTestCase(TestCase):
         m3.save()
         
         self.assertEqual(len(b.kumitematch_set.all()), 3)
-        m1 = b.get_match(0)
-        m2 = b.get_match(1)
-        m3 = b.get_match(2)
+        m1 = b.get_match(0, 0)
+        m2 = b.get_match(0, 1)
+        m3 = b.get_match(0, 2)
         
         self.assertFalse(m1.is_editable())
         self.assertFalse(m1.is_ready())
@@ -675,7 +675,7 @@ class Kumite2PeopleBracketTestCase(TestCase):
         m3.done = False
         m3.save()
         
-        m2 = b.get_match(1)
+        m2 = b.get_match(0, 1)
         m2.aka.points = 5
         m2.aka.save()
         m2.shiro.points = 2
@@ -683,8 +683,8 @@ class Kumite2PeopleBracketTestCase(TestCase):
         m2.save()
         
         self.assertEqual(len(b.kumitematch_set.all()), 2)
-        m1 = b.get_match(0)
-        m2 = b.get_match(1)
+        m1 = b.get_match(0, 0)
+        m2 = b.get_match(0, 1)
         
         self.assertFalse(m1.is_editable())
         self.assertFalse(m1.is_ready())

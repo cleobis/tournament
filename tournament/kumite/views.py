@@ -6,7 +6,7 @@ from django.http.response import HttpResponseRedirect, HttpResponseForbidden
 
 import math
 
-from .models import KumiteElim1Bracket, KumiteMatch, KumiteMatchPerson
+from .models import KumiteElim1Bracket, Kumite2PeopleBracket, KumiteMatch, KumiteMatchPerson
 from .forms import KumiteMatchCombinedForm, KumiteMatchForm, KumiteMatchPersonForm
 
 class BracketGrid():
@@ -18,7 +18,7 @@ class BracketGrid():
             self.n_row = 2
             self.n_col = 2
         else:
-            self.n_row = int(math.pow(2, self.bracket.rounds))
+            self.n_row = bracket.get_num_match_in_round(self.bracket.rounds)
             self.n_col = self.bracket.rounds + 1
     
     
@@ -47,6 +47,7 @@ class BracketGrid():
             round = self.n_col - col - 2
             span = math.pow(2, col)
             if not (row / span).is_integer():
+                match = None
                 yield None
             else:
                 match_i = row // span // 2
@@ -60,12 +61,9 @@ class BracketGrid():
                     p = match.shiro if match is not None else None
                 yield {'match_i': match_i, 'match': match, 'round': round, 'span': span, 'person': p, 'is_aka': is_aka}
         
-        if row == 0:
-            if self.consolation:
-                match = self.bracket.consolation_match
-            else:
-                match = self.bracket.final_match
-            yield {'match_i': 0, 'match': match, 'round': -1, 'span': self.n_row, 'person': match.winner()}
+        if (row / span / 2).is_integer():
+            span = math.pow(2, self.n_col - 1)
+            yield {'match_i': 0, 'match': match, 'round': -1, 'span': span, 'person': match.winner()}
         else:
             yield None
 
@@ -81,13 +79,39 @@ class BracketDetails(DetailView):
     def get_context_data(self, object=object):
         
         context = super().get_context_data(object=object)
-        context.update({'bracket': object, 'grid': BracketGrid(object), 'consolation_grid': BracketGrid(object, consolation=True),
-            'next': object.get_next_match(), 'on_deck': object.get_on_deck_match()})
+        context.update({'grid': BracketGrid(object), 'consolation_grid': BracketGrid(object, consolation=True),
+            'next': object.get_next_match(), 'on_deck': object.get_on_deck_match(),
+            'delete_url': reverse('kumite:bracket-n-delete', args=[object.id])})
         return context
 
 
 class BracketDelete(DeleteView):
     model = KumiteElim1Bracket
+    
+    
+    def get_success_url(self):
+        return self.object.division.get_absolute_url()
+
+
+class Bracket2PeopleDetails(DetailView):
+    model = Kumite2PeopleBracket
+    template_name = 'kumite/kumiteelim1bracket_detail.html'
+    
+    def get_context_object_name(self, object):
+        return 'bracket'
+    
+    
+    def get_context_data(self, object):
+        
+        context = super().get_context_data(object=object)
+        context.update({'grid': BracketGrid(object), 'consolation_grid': None,
+            'next': object.get_next_match(), 'on_dect': None,
+            'delete_url': reverse('kumite:bracket-2-delete', args=[object.id])})
+        return context
+
+
+class Bracket2PeopleDelete(DeleteView):
+    model = Kumite2PeopleBracket
     
     
     def get_success_url(self):

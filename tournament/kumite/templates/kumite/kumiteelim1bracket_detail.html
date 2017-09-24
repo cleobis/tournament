@@ -26,11 +26,11 @@ td:first-child {
 <p>{% firstof next.aka.name "?" %} vs {% firstof next.shiro.name "?" %} (<a href="{{ next.get_absolute_url }}">start</a>)</p>
 {% else %}
 <h2>Winners</h2>
-<ol>
-  <li>{{ bracket.final_match.winner }}</li>
-  <li>{{ bracket.final_match.loser }}</li>
-  <li>{{ bracket.consolation_match.winner }}</li>
-</ol>
+<ul>
+{% for rank, eventlink in bracket.get_winners %}
+  <li>{{ rank }}. {{ eventlink.name }}</li>
+{% endfor %}
+</ul>
 {% endif %}
 
 {% if on_deck is not None %}
@@ -76,6 +76,7 @@ td:first-child {
   </tbody>
 </table>
 
+{% if consolation_grid %}
 <h2>Consolation Round</h2>
 <table>
   <thead>
@@ -113,9 +114,10 @@ td:first-child {
     {% endfor %}
   </tbody>
 </table>
+{% endif %}
 
 <h1>Reset</h1>
-<form action="{% url 'kumite:bracket-delete' bracket.id %}" method="post">
+<form action="{{ delete_url }}" method="post">
   {% csrf_token %}
   <button type="submit">Delete</button>
 </form>
