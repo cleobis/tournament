@@ -61,7 +61,7 @@ class RankTestCase(TestCase):
 class DivisionTestCase(TestCase):
     
     def test_claim(self):
-        e = Event(name="event")
+        e = Event(name="event", format=Event.EventFormat.kata)
         e.save()
         
         # Create some divisions
@@ -149,7 +149,7 @@ class EventLinkTestCase(TestCase):
             rank=Rank.objects.get(order=1), instructor="Mr. Instructor")
         p.save()
         
-        e = Event(name="event")
+        e = Event(name="event", format=Event.EventFormat.kata)
         e.save()
         
         el = EventLink(manual_name='manual', event=e)

@@ -41,11 +41,13 @@ class KumiteMatch(models.Model):
     
     class Meta:
         ordering = ['-round', 'order']
-    
-    bracket = models.ForeignKey('KumiteElim1Bracket', on_delete=models.CASCADE)
+        
     round = models.SmallIntegerField()
     order = models.SmallIntegerField()
-
+    
+    bracket_elim1 = models.ForeignKey('KumiteElim1Bracket', on_delete=models.CASCADE, null=True)
+    bracket_2people = models.ForeignKey('Kumite2PeopleBracket', on_delete=models.CASCADE, null=True)
+    
     winner_match = models.ForeignKey('self', blank=True, null=True, on_delete=models.SET_NULL, related_name='+')
     consolation_match = models.ForeignKey('self', blank=True, null=True, on_delete=models.SET_NULL, related_name='+')
     aka = models.OneToOneField(KumiteMatchPerson, blank=True, null=True, on_delete=models.PROTECT, related_name='+')
@@ -62,6 +64,26 @@ class KumiteMatch(models.Model):
         elif self.is_consolation():
             name = ", consolation"
         return "{}, round {}, match {}{}".format(self.bracket.name, self.round, self.order, name)
+    
+    
+    @property
+    def bracket(self):
+        fields = ('bracket_elim1', 'bracket_2people')
+        for f in fields:
+            val = getattr(self, f)
+            if val is not None:
+                return val
+        return None
+    
+    
+    @bracket.setter
+    def bracket(self, val):
+        if isinstance(val, KumiteElim1Bracket):
+            self.bracket_elim1 = val
+        elif isinstance(val, Kumite2PeopleBracket):
+            self.bracket_2people = val
+        else:
+            raise ValueError('Unsupported class.')
     
     
     def get_absolute_url(self):
@@ -124,76 +146,16 @@ class KumiteMatch(models.Model):
         
         super(KumiteMatch, self).save(*args, **kwargs)
         
-        if self.winner_match:
-            self.winner_match.claim_people()
-        
-        if self.consolation_match:
-            self.consolation_match.claim_people()
+        self.bracket.match_callback(self)
     
     @property
     def prev_matches(self):
-        return KumiteMatch.objects.filter(bracket__id=self.bracket.id).filter(
-            Q(winner_match__id=self.id) | Q(consolation_match__id=self.id))
-    
-    
-    @property
-    def prev_match_aka(self):
-        # m = self.prev_matches.annotate(ordermod2=F('order') % 2).filter(ordermod2=0)
-        m = [m for m in self.prev_matches if m.order % 2 == 0]
-        if len(m) == 0:
-            return None
-        elif len(m) == 1:
-            return m[0]
-        else:
-            print(str(self.order))
-            for a in m:
-                print(a)
-            from django.core import exceptions
-            raise MultipleObjectsReturned()
-    
-    
-    @property
-    def prev_match_shiro(self):
-        # m = self.prev_matches.annotate(ordermod2=F('order') % 2).filter(ordermod2=1)
-        m = [m for m in self.prev_matches if m.order % 2 == 1]
-        if len(m) == 0:
-            return None
-        elif len(m) == 1:
-            return m[0]
-        else:
-            raise MultipleObjectsReturned()
-    
-    
-    def claim_people(self):
-        curr_ids = [x.id for x in self.people() if x is not None]
-        attr_name = 'aka'
-        for m in [self.prev_match_aka, self.prev_match_shiro]:
-            if m is not None:
-                if m.done:
-                    if m.winner_match == self:
-                        p = m.winner()
-                    elif m.consolation_match == self:
-                        p = m.loser()
-                else:
-                    p = None
-                
-                curr_p = getattr(self, attr_name)
-                
-                if not KumiteMatchPerson.same_person(curr_p, p):
-                    if self.done:
-                        raise ValueError("Can't modify people if the match is done.")
-                    
-                    if p is not None:
-                        p = KumiteMatchPerson(eventlink=p.eventlink)
-                        p.save()
-                    
-                    setattr(self, attr_name, p)
-                    self.save()
-                    
-                    if curr_p is not None:
-                        curr_p.delete()
-            
-            attr_name = 'shiro'
+        id_or_none = lambda x: x.id if x is not None else None
+        return KumiteMatch.objects.filter(
+                bracket_elim1__id=id_or_none(self.bracket_elim1),
+                bracket_2people__id=id_or_none(self.bracket_2people)
+            ).filter(
+                Q(winner_match__id=self.id) | Q(consolation_match__id=self.id))
 
 
 @receiver(post_delete, sender=KumiteMatch)
@@ -206,7 +168,6 @@ def kumite_match_post_delete(sender, instance, **kwargs):
 
 class KumiteElim1Bracket(models.Model):
     
-    people = models.ManyToManyField(KumiteMatchPerson)
     name = models.CharField(max_length=250)
     rounds = models.PositiveSmallIntegerField(default=0)
     division = models.ForeignKey('registration.Division', on_delete=models.PROTECT, related_name='+', null=True)
@@ -420,14 +381,186 @@ class KumiteElim1Bracket(models.Model):
             split = self.get_num_match_in_round(round - i_round - 1)
             if match_i < split:
                 # want top
-                m = m.prev_match_aka
+                m = self.prev_match_aka(m)
             elif match_i < 2 * split:
                 # want bottom
                 match_i -= split
-                m = m.prev_match_shiro
+                m = self.prev_match_shiro(m)
             
             if m is None:
                 break
         
         return m
+        
+    
+    
+    def match_callback(self, match):
+        
+        if match.winner_match:
+            self.claim_people(match.winner_match)
+        
+        if match.consolation_match:
+            self.claim_people(match.consolation_match)
+    
+    
+    def claim_people(self, match):
+        curr_ids = [x.id for x in match.people() if x is not None]
+        attr_name = 'aka'
+        for m in [self.prev_match_aka(match), self.prev_match_shiro(match)]:
+            if m is not None:
+                if m.done:
+                    if m.winner_match == match:
+                        p = m.winner()
+                    elif m.consolation_match == match:
+                        p = m.loser()
+                else:
+                    p = None
+                
+                curr_p = getattr(match, attr_name)
+                
+                if not KumiteMatchPerson.same_person(curr_p, p):
+                    if match.done:
+                        raise ValueError("Can't modify people if the match is done.")
+                    
+                    if p is not None:
+                        p = KumiteMatchPerson(eventlink=p.eventlink)
+                        p.save()
+                    
+                    setattr(match, attr_name, p)
+                    match.save()
+                    
+                    if curr_p is not None:
+                        curr_p.delete()
+            
+            attr_name = 'shiro'
+    
+    
+    def prev_match_aka(self, match):
+        # m = self.prev_matches.annotate(ordermod2=F('order') % 2).filter(ordermod2=0)
+        m = [m for m in match.prev_matches if m.order % 2 == 0]
+        if len(m) == 0:
+            return None
+        elif len(m) == 1:
+            return m[0]
+        else:
+            print(str(match.order))
+            for a in m:
+                print(a)
+            from django.core import exceptions
+            raise MultipleObjectsReturned()
+    
+    
+    def prev_match_shiro(self, match):
+        # m = self.prev_matches.annotate(ordermod2=F('order') % 2).filter(ordermod2=1)
+        m = [m for m in match.prev_matches if m.order % 2 == 1]
+        if len(m) == 0:
+            return None
+        elif len(m) == 1:
+            return m[0]
+        else:
+            raise MultipleObjectsReturned()
+
+
+class Kumite2PeopleBracket(models.Model):
+
+    division = models.ForeignKey('registration.Division', on_delete=models.PROTECT, related_name='+', null=True)
+    winner = models.ForeignKey('registration.EventLink', on_delete=models.PROTECT, related_name='+', null=True)
+    loser = models.ForeignKey('registration.EventLink', on_delete=models.PROTECT, related_name='+', null=True)
+    
+    
+    def get_winners(self):
+        return ((1, self.winner), (2, self.loser))
+    
+    
+    def get_absolute_url(self):
+        pass
+    
+    
+    def get_next_match(self):
+        m = self.kumitematch_set.filter(done=False)
+        if len(m) == 0:
+            return None
+        else:
+            return m[0]
+    
+    
+    def build(self, people):
+        
+        if len(people) != 2:
+            raise ValueError("Kumite2PeopleBracket only supports 2 competetors.")
+        
+        for i in range(2):
+            m = KumiteMatch(bracket=self, round=0, order=i)
+            p = KumiteMatchPerson(eventlink=people[i % 2])
+            p.save()
+            m.aka = p
+            p = KumiteMatchPerson(eventlink=people[(i+1) % 2])
+            p.save()
+            m.shiro = p
+            if i == 0:
+                m_prev = m
+            else:
+                m.save()
+                m_prev.winner_match = m
+                m_prev.consolation_match = m
+                m_prev.save()
+    
+    
+    def match_callback(self, match):
+        # Cases
+        # - First 2 matches are still in progress.
+        # - First 2 matches done and no tie => assign winner.
+        # - First 2 matches tied => Create new match.
+        # - First 2 matches no longer tied => Delete extra match and assign winner.
+        matches = self.kumitematch_set.all()
+        p1 = matches[0].aka.eventlink
+        p2 = matches[0].shiro.eventlink
+        points = {p1: 0, p2: 0}
+        all_done = True
+        have_winner = False
+        for im, m in enumerate(matches):
+            all_done = all_done and m.done
+            if m.done:
+                points[m.aka.eventlink] += m.aka.points
+                points[m.shiro.eventlink] += m.shiro.points
+            
+            if not all_done:
+                break
+            
+            have_winner = points[p1] != points[p2] and im >= 1
+                # Always have at least 2 rounds
+            if have_winner:
+                winner = p1 if points[p1] > points[p2] else p2
+                loser  = p2 if points[p1] > points[p2] else p1
+                for id in range(im+1, len(matches)):
+                    matches[id].delete()
+                break
+        
+        if all_done and have_winner:
+            self.winner = winner
+            self.loser = loser
+        else:
+            self.winner = None
+            self.loser = None
+            
+            if all_done:
+                # Create a tie break match
+                m2 = KumiteMatch(bracket=self, round=0, order=im+1)
+                p = KumiteMatchPerson(eventlink=m.shiro.eventlink)
+                p.save()
+                m2.aka = p
+                p = KumiteMatchPerson(eventlink=m.aka.eventlink)
+                p.save()
+                m2.shiro = p
+                m2.save()
+                
+                m.winner_match = m2
+                m.consolation_match = m2
+                m.save()
+        self.save()
+    
+    
+    def get_match(self, match_i):
+        return self.kumitematch_set.get(order=match_i)
+
 

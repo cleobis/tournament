@@ -5,6 +5,7 @@ from django.db import models
 from django.core.urlresolvers import reverse
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
+from django.core.exceptions import ValidationError
 
 from phonenumber_field.modelfields import PhoneNumberField
 from djchoices import DjangoChoices, ChoiceItem
@@ -20,11 +21,16 @@ class Event(models.Model):
     
     
     name = models.CharField(max_length=100)
-    format = models.CharField(max_length=1, choices=EventFormat.choices, default=EventFormat.kata)
+    format = models.CharField(max_length=1, choices=EventFormat.choices)
     
     
     def __str__(self):
         return self.name
+    
+    
+    def save(self):
+        self.full_clean() # Catch blank strings when creating objects manually.
+        super().save()
     
     
     def get_orphan_links(self):
@@ -32,13 +38,13 @@ class Event(models.Model):
     
     
     def get_format_class(self, n_people):
-        from kumite.models import KumiteElim1Bracket
+        from kumite.models import KumiteElim1Bracket, Kumite2PeopleBracket
         
         if self.format == self.EventFormat.kata:
             raise Exception("Kata not implemented.")
         elif self.format == self.EventFormat.elim1:
             if n_people == 2:
-                raise Exception("Best of 3 not implemented")
+                return Kumite2PeopleBracket
             elif n_people == 3:
                 raise Exception("Round robin not implemented.")
             elif n_people > 3:
@@ -243,9 +249,9 @@ class Division(models.Model):
     
     def get_format(self):
         
-        from kumite.models import KumiteElim1Bracket
+        from kumite.models import KumiteElim1Bracket, Kumite2PeopleBracket
         
-        classes = [KumiteElim1Bracket, ]
+        classes = [KumiteElim1Bracket, Kumite2PeopleBracket]
         
         for c in classes:
             fmt = c.objects.filter(division=self)
