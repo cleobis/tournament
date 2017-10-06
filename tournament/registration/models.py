@@ -38,7 +38,7 @@ class Event(models.Model):
     
     
     def get_format_class(self, n_people):
-        from kumite.models import KumiteElim1Bracket, Kumite2PeopleBracket
+        from kumite.models import KumiteElim1Bracket, KumiteRoundRobinBracket, Kumite2PeopleBracket
         
         if self.format == self.EventFormat.kata:
             raise Exception("Kata not implemented.")
@@ -46,7 +46,7 @@ class Event(models.Model):
             if n_people == 2:
                 return Kumite2PeopleBracket
             elif n_people == 3:
-                raise Exception("Round robin not implemented.")
+                return KumiteRoundRobinBracket
             elif n_people > 3:
                 return KumiteElim1Bracket
             else:
@@ -249,9 +249,9 @@ class Division(models.Model):
     
     def get_format(self):
         
-        from kumite.models import KumiteElim1Bracket, Kumite2PeopleBracket
+        from kumite.models import KumiteElim1Bracket, KumiteRoundRobinBracket, Kumite2PeopleBracket
         
-        classes = [KumiteElim1Bracket, Kumite2PeopleBracket]
+        classes = [KumiteElim1Bracket, KumiteRoundRobinBracket, Kumite2PeopleBracket]
         
         for c in classes:
             fmt = c.objects.filter(division=self)
@@ -323,6 +323,11 @@ class EventLink(models.Model):
     manual_name = models.CharField(max_length=100, blank=True)
     event = models.ForeignKey(Event, on_delete=models.PROTECT)
     division = models.ForeignKey(Division, on_delete=models.SET_NULL, blank=True, null=True)
+    
+    
+    def __str__(self):
+        div = self.division.event.name if self.division is not None else "No division"
+        return self.name + " - " + div
     
     
     def save(self, *args, **kwargs):

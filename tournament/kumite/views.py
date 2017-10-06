@@ -6,7 +6,7 @@ from django.http.response import HttpResponseRedirect, HttpResponseForbidden
 
 import math
 
-from .models import KumiteElim1Bracket, Kumite2PeopleBracket, KumiteMatch, KumiteMatchPerson
+from .models import KumiteElim1Bracket, KumiteRoundRobinBracket, Kumite2PeopleBracket, KumiteMatch, KumiteMatchPerson
 from .forms import KumiteMatchCombinedForm, KumiteMatchForm, KumiteMatchPersonForm
 
 class BracketGrid():
@@ -93,9 +93,36 @@ class BracketDelete(DeleteView):
         return self.object.division.get_absolute_url()
 
 
+class BracketRoundRobinDetails(DetailView):
+    model = KumiteRoundRobinBracket
+    template_name = 'kumite/kumiteelim1bracket_detail.html'
+    
+    
+    def get_context_object_name(self, object):
+        return 'bracket'
+    
+    
+    def get_context_data(self, object):
+        
+        context = super().get_context_data(object=object)
+        context.update({'grid': BracketGrid(object), 'consolation_grid': None,
+            'next': object.get_next_match(), 'on_dect': None,
+            'delete_url': reverse('kumite:bracket-rr-delete', args=[object.id])})
+        return context
+
+
+class BracketRoundRobinDelete(DeleteView):
+    model = KumiteRoundRobinBracket
+    
+    
+    def get_success_url(self):
+        return self.object.division.get_absolute_url()
+
+
 class Bracket2PeopleDetails(DetailView):
     model = Kumite2PeopleBracket
     template_name = 'kumite/kumiteelim1bracket_detail.html'
+    
     
     def get_context_object_name(self, object):
         return 'bracket'

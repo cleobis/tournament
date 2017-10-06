@@ -12,7 +12,7 @@ from django.core.urlresolvers import reverse, reverse_lazy
 # Create your models here.
 
 class KumiteMatchPerson(models.Model):
-    eventlink = models.ForeignKey('registration.EventLink', on_delete=models.PROTECT, related_name='+')
+    eventlink = models.ForeignKey('registration.EventLink', on_delete=models.PROTECT)
     points = models.PositiveSmallIntegerField(default=0)
     warnings = models.PositiveSmallIntegerField(default=0)
     disqualified = models.BooleanField(default=False)
@@ -46,12 +46,13 @@ class KumiteMatch(models.Model):
     order = models.SmallIntegerField()
     
     bracket_elim1 = models.ForeignKey('KumiteElim1Bracket', on_delete=models.CASCADE, null=True)
+    bracket_rr = models.ForeignKey('KumiteRoundRobinBracket', on_delete=models.CASCADE, null=True)
     bracket_2people = models.ForeignKey('Kumite2PeopleBracket', on_delete=models.CASCADE, null=True)
     
     winner_match = models.ForeignKey('self', blank=True, null=True, on_delete=models.SET_NULL, related_name='+')
     consolation_match = models.ForeignKey('self', blank=True, null=True, on_delete=models.SET_NULL, related_name='+')
-    aka = models.OneToOneField(KumiteMatchPerson, blank=True, null=True, on_delete=models.PROTECT, related_name='+')
-    shiro = models.OneToOneField(KumiteMatchPerson, blank=True, null=True, on_delete=models.PROTECT, related_name='+')
+    aka = models.OneToOneField(KumiteMatchPerson, blank=True, null=True, on_delete=models.PROTECT, related_name='match_aka')
+    shiro = models.OneToOneField(KumiteMatchPerson, blank=True, null=True, on_delete=models.PROTECT, related_name='match_shiro')
 
     done = models.BooleanField(default=False)
     aka_won = models.BooleanField(default=False)
@@ -71,8 +72,18 @@ class KumiteMatch(models.Model):
     
     
     @property
+    def bracket_field(self):
+        fields = ('bracket_elim1', 'bracket_rr', 'bracket_2people')
+        for f in fields:
+            val = getattr(self, f)
+            if val is not None:
+                return f
+        return None
+    
+    
+    @property
     def bracket(self):
-        fields = ('bracket_elim1', 'bracket_2people')
+        fields = ('bracket_elim1', 'bracket_rr', 'bracket_2people')
         for f in fields:
             val = getattr(self, f)
             if val is not None:
@@ -82,12 +93,11 @@ class KumiteMatch(models.Model):
     
     @bracket.setter
     def bracket(self, val):
-        if isinstance(val, KumiteElim1Bracket):
-            self.bracket_elim1 = val
-        elif isinstance(val, Kumite2PeopleBracket):
-            self.bracket_2people = val
-        else:
-            raise ValueError('Unsupported class.')
+        if val is not None:
+            self.bracket_elim1 = None
+            self.bracket_rr = None
+            self.bracket_2people = None
+        setattr(self, val.kumite_match_bracket_field, val)
     
     
     def get_absolute_url(self):
@@ -175,6 +185,14 @@ class KumiteElim1Bracket(models.Model):
     name = models.CharField(max_length=250)
     rounds = models.PositiveSmallIntegerField(default=0)
     division = models.ForeignKey('registration.Division', on_delete=models.PROTECT, related_name='+', null=True)
+    
+    kumite_match_bracket_field = 'bracket_elim1'
+    
+    
+    def __str__(self):
+        s = str(self.division) if self.division is not None else "Unbound"
+        return s + " - Elim 1"
+    
     
     @property
     def final_match(self):
@@ -469,7 +487,15 @@ class Kumite2PeopleBracket(models.Model):
     division = models.ForeignKey('registration.Division', on_delete=models.PROTECT, related_name='+', null=True)
     winner = models.ForeignKey('registration.EventLink', on_delete=models.PROTECT, related_name='+', null=True)
     loser = models.ForeignKey('registration.EventLink', on_delete=models.PROTECT, related_name='+', null=True)
+    
     rounds = 1
+    kumite_match_bracket_field = 'bracket_2people'
+    
+    
+    def __str__(self):
+        s = str(self.division) if self.division is not None else "Unbound"
+        return s + " - 2 People"
+    
     
     def get_winners(self):
         return ((1, self.winner), (2, self.loser))
@@ -577,9 +603,161 @@ class Kumite2PeopleBracket(models.Model):
             else:
                 raise ValueError('Invalid round number {}.'.format(n))
     
+    
     def get_match(self, round, match_i):
         if round != 0:
             raise ValueError("Only 1 round")
         return self.kumitematch_set.get(order=match_i)
 
 
+class KumiteRoundRobinBracket(models.Model):
+    # Round robin format for three people.
+    
+    division = models.ForeignKey('registration.Division', on_delete=models.PROTECT, related_name='+', null=True)
+    gold = models.ForeignKey('registration.EventLink', on_delete=models.PROTECT, related_name='+', null=True, blank=True)
+    silver = models.ForeignKey('registration.EventLink', on_delete=models.PROTECT, related_name='+', null=True, blank=True)
+    bronze = models.ForeignKey('registration.EventLink', on_delete=models.PROTECT, related_name='+', null=True, blank=True)
+    
+    rounds = 1
+    kumite_match_bracket_field = 'bracket_rr'
+    
+    
+    def __str__(self):
+        s = str(self.division) if self.division is not None else "Unbound"
+        return s + " - Round Robin"
+    
+    
+    def get_winners(self):
+        
+        return ((1, self.gold), (2, self.silver), (3, self.bronze))
+    
+    
+    def get_absolute_url(self):
+        return reverse('kumite:bracket-rr', args=[self.id])
+    
+    
+    def get_next_match(self):
+        raise NotImplementedError()
+    
+    
+    def get_next_match(self):
+        m = self.kumitematch_set.filter(done=False)
+        if len(m) == 0:
+            return None
+        else:
+            return m[0]
+    
+    
+    def build(self, people):
+        
+        if len(people) != 3:
+            raise ValueError("KumiteRoundRobinBracket only supports 3 people for now.")
+        
+        for i in range(len(people)):
+            m = KumiteMatch(bracket=self, round=0, order=i)
+            p = KumiteMatchPerson(eventlink=people[i])
+            p.save()
+            m.aka = p
+            p = KumiteMatchPerson(eventlink=people[(i+1) % len(people)])
+            p.save()
+            m.shiro = p
+            m.save()
+    
+    
+    def get_people(self):
+        from registration.models import EventLink
+        
+        matches = self.kumitematch_set.all()
+        people = EventLink.objects.filter(Q(kumitematchperson__match_aka__bracket_rr=self)
+            or Q(kumitematchperson__match_shiro__bracket_rr=self)).distinct()
+        return people
+    
+    
+    def match_callback(self, match):
+        
+        matches = self.kumitematch_set.all()
+        points = {p: [0, 0] for p in self.get_people()}
+        all_done = True
+        for im, m in enumerate(matches):
+            all_done = all_done and m.done
+            if m.done:
+                if m.aka_won:
+                    points[m.aka.eventlink][0] += 1
+                else:
+                    points[m.shiro.eventlink][0] += 1
+                diff = m.aka.points - m.shiro.points
+                points[m.aka.eventlink][1] += diff
+                points[m.shiro.eventlink][1] -= diff
+            
+            if not all_done:
+                break
+        
+        if all_done:
+            points = [(p, point) for p, point in points.items()]
+            points = sorted(points, key=lambda x: x[1], reverse=True)
+            
+            
+            ties = []
+            ranks = (x for x in ("gold", "silver", "bronze"))
+            prev_point = None
+            prev_person = None
+            for (p, point) in points:
+                if prev_person != None:
+                    if point != prev_point:
+                        setattr(self, ranks.__next__(), prev_person)
+                    else:
+                        ties.append(p)
+                
+                if len(ties) > 0:
+                    raise Exception("Ties not implemented.")
+                
+                prev_point = point
+                prev_person = p
+            
+            setattr(self, ranks.__next__(), prev_person)
+            self.save()
+            
+        else:
+            if None in (self.gold, self.silver, self.bronze):
+                self.gold = None
+                self.silver = None
+                self.bronze = None
+                self.save()
+                
+        #     if all_done:
+        #         # Create a tie break match
+        #         m2 = KumiteMatch(bracket=self, round=0, order=im+1)
+        #         p = KumiteMatchPerson(eventlink=m.shiro.eventlink)
+        #         p.save()
+        #         m2.aka = p
+        #         p = KumiteMatchPerson(eventlink=m.aka.eventlink)
+        #         p.save()
+        #         m2.shiro = p
+        #         m2.save()
+        #
+        #         m.winner_match = m2
+        #         m.consolation_match = m2
+        #         m.save()
+        # self.save()
+    
+    
+    def get_num_match_in_round(self, round=None):
+        n = len(self.kumitematch_set.all())
+        if round is None:
+            # Can't pass argument from template. Return array.
+            return [n]
+        else:
+            if round == 0:
+                return n
+            elif round == 1:
+                return n * 2
+            else:
+                raise ValueError('Invalid round number {}.'.format(n))
+    
+    
+    def get_match(self, round, match_i):
+        if round != 0:
+            raise ValueError("Only 1 round")
+        return self.kumitematch_set.get(order=match_i)
+    
+    

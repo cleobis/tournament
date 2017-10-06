@@ -1,3 +1,14 @@
+Next steps:
+Run on laptop
+Freeze run divisions
+Force registered people to be in a particular division
+No-shows
+Round nomenclature
+Kumite 2 - are ties allowed?
+NEED TO DEAL WITH TIES IN KUMITE ROUND ROBIN!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+
 Make venv:
 python3 -m venv venv
 source myvenv/bin/activate
@@ -6,7 +17,6 @@ deactivate
 pip3 install django
 
 django-admin startproject tournament
-
 
 Windows download:
 pip download -r requirements.txt --no-binary download

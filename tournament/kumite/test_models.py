@@ -1,7 +1,7 @@
 from django.test import TestCase
 
 from registration.models import Event, EventLink
-from .models import KumiteElim1Bracket, Kumite2PeopleBracket, KumiteMatchPerson, KumiteMatch
+from .models import KumiteElim1Bracket, KumiteRoundRobinBracket, Kumite2PeopleBracket, KumiteMatchPerson, KumiteMatch
 
 import math
 
@@ -444,9 +444,6 @@ class KumiteElim1BracketTestCase(TestCase):
                 m.shiro.name if m.shiro is not None else None
                 ) for m in matches] 
         
-        with self.assertRaises(Exception):
-            make_bracket(3)
-        
         b = make_bracket(4)
         self.assertEqual(b.rounds, 2)
         self.assertEqual(round_matches_list(1), [
@@ -512,6 +509,7 @@ class KumiteElim1BracketTestCase(TestCase):
                 self.assertFalse(m.is_final())
                 self.assertFalse(m.is_consolation())
     
+    
     def test_get_match(self):
         
         b = make_bracket(5)
@@ -556,6 +554,197 @@ class KumiteElim1BracketTestCase(TestCase):
             b.get_match(round, -2)
         with self.assertRaises(ValueError):
             b.get_match(round, 1)
+
+
+class KumiteRoundRobinBracketTestCase(TestCase):
+    
+    def test_run(self):
+        
+        b = make_bracket(3)
+        self.assertIsInstance(b, KumiteRoundRobinBracket)
+        
+        # # Test initial state
+        # a:? - b:?
+        # b:? - c:?
+        # c:? - a:?
+        self.assertEqual(len(b.kumitematch_set.all()), 3)
+        m1 = b.get_match(0, 0)
+        m2 = b.get_match(0, 1)
+        m3 = b.get_match(0, 2)
+        
+        self.assertTrue(m1.is_editable())
+        self.assertTrue(m1.is_ready())
+        self.assertEqual(m1.aka.name, "a")
+        self.assertEqual(m1.shiro.name, "b")
+        
+        self.assertTrue(m2.is_editable())
+        self.assertTrue(m2.is_ready())
+        self.assertEqual(m2.aka.name, "b")
+        self.assertEqual(m2.shiro.name, "c")
+        
+        self.assertTrue(m3.is_editable())
+        self.assertTrue(m3.is_ready())
+        self.assertEqual(m3.aka.name, "c")
+        self.assertEqual(m3.shiro.name, "a")
+        
+        self.assertEqual(m1, b.get_next_match())
+        
+        self.assertEqual(b.get_winners(), ((1, None), (2, None), (3, None)))
+        
+        # Finish one matches
+        # a:1 - b:0
+        # b:? - c:?
+        # c:? - a:?
+        m1.aka.points = 1
+        m1.aka.save()
+        m1.shiro.points = 0
+        m1.shiro.save()
+        m1.done = True
+        m1.infer_winner()
+        m1.save()
+        
+        self.assertEqual(len(b.kumitematch_set.all()), 3)
+        m1 = b.get_match(0, 0)
+        m2 = b.get_match(0, 1)
+        m3 = b.get_match(0, 2)
+        
+        self.assertTrue(m1.is_editable())
+        self.assertFalse(m1.is_ready())
+        self.assertEqual(m1.aka.name, "a")
+        self.assertEqual(m1.shiro.name, "b")
+        self.assertTrue(m1.aka_won)
+        
+        self.assertTrue(m2.is_editable())
+        self.assertTrue(m2.is_ready())
+        self.assertEqual(m2.aka.name, "b")
+        self.assertEqual(m2.shiro.name, "c")
+        
+        self.assertTrue(m3.is_editable())
+        self.assertTrue(m3.is_ready())
+        self.assertEqual(m3.aka.name, "c")
+        self.assertEqual(m3.shiro.name, "a")
+        
+        self.assertEqual(m2, b.get_next_match())
+        
+        self.assertEqual(b.get_winners(), ((1, None), (2, None), (3, None)))
+        
+        # Finish two matches
+        # a:1 - b:0
+        # b:? - c:?
+        # c:9 - a:0
+        m3.aka.points = 9
+        m3.aka.save()
+        m3.shiro.points = 0
+        m3.shiro.save()
+        m3.done = True
+        m3.infer_winner()
+        m3.save()
+        
+        self.assertEqual(len(b.kumitematch_set.all()), 3)
+        m1 = b.get_match(0, 0)
+        m2 = b.get_match(0, 1)
+        m3 = b.get_match(0, 2)
+        
+        self.assertTrue(m1.is_editable())
+        self.assertFalse(m1.is_ready())
+        self.assertEqual(m1.aka.name, "a")
+        self.assertEqual(m1.shiro.name, "b")
+        
+        self.assertTrue(m2.is_editable())
+        self.assertTrue(m2.is_ready())
+        self.assertEqual(m2.aka.name, "b")
+        self.assertEqual(m2.shiro.name, "c")
+        
+        self.assertTrue(m3.is_editable())
+        self.assertFalse(m3.is_ready())
+        self.assertEqual(m3.aka.name, "c")
+        self.assertEqual(m3.shiro.name, "a")
+        
+        self.assertEqual(m2, b.get_next_match())
+        
+        self.assertEqual(b.get_winners(), ((1, None), (2, None), (3, None)))
+        
+        # Finish all matches, winner tie break based on point differential
+        # a:1 - b:0
+        # b:3 - c:0
+        # c:9 - a:0
+        m2.aka.points = 3
+        m2.aka.save()
+        m2.shiro.points = 0
+        m2.shiro.save()
+        m2.done = True
+        m2.infer_winner()
+        m2.save()
+        
+        self.assertEqual(len(b.kumitematch_set.all()), 3)
+        m1 = b.get_match(0, 0)
+        m2 = b.get_match(0, 1)
+        m3 = b.get_match(0, 2)
+        
+        self.assertTrue(m1.is_editable())
+        self.assertFalse(m1.is_ready())
+        self.assertEqual(m1.aka.name, "a")
+        self.assertEqual(m1.shiro.name, "b")
+        
+        self.assertTrue(m2.is_editable())
+        self.assertFalse(m2.is_ready())
+        self.assertEqual(m2.aka.name, "b")
+        self.assertEqual(m2.shiro.name, "c")
+        
+        self.assertTrue(m3.is_editable())
+        self.assertFalse(m3.is_ready())
+        self.assertEqual(m3.aka.name, "c")
+        self.assertEqual(m3.shiro.name, "a")
+        
+        self.assertEqual(b.get_next_match(), None)
+        
+        self.assertEqual(b.get_winners(), ((1, m3.aka.eventlink), (2, m2.aka.eventlink), (3, m1.aka.eventlink)))
+        
+        # Winner by total wins, ignoring points
+        # a:1 - b:0
+        # b:9 - c:0
+        # c:0 - a:1
+        m2.aka.points = 9
+        m2.aka.save()
+        m2.shiro.points = 8
+        m2.shiro.save()
+        m2.done = True
+        m2.infer_winner()
+        m2.save()
+        
+        m3.aka.points = 0
+        m3.aka.save()
+        m3.shiro.points = 1
+        m3.shiro.save()
+        m3.done = True
+        m3.infer_winner()
+        m3.save()
+        
+        self.assertEqual(len(b.kumitematch_set.all()), 3)
+        m1 = b.get_match(0, 0)
+        m2 = b.get_match(0, 1)
+        m3 = b.get_match(0, 2)
+        
+        self.assertTrue(m1.is_editable())
+        self.assertFalse(m1.is_ready())
+        self.assertEqual(m1.aka.name, "a")
+        self.assertEqual(m1.shiro.name, "b")
+        
+        self.assertTrue(m2.is_editable())
+        self.assertFalse(m2.is_ready())
+        self.assertEqual(m2.aka.name, "b")
+        self.assertEqual(m2.shiro.name, "c")
+        
+        self.assertTrue(m3.is_editable())
+        self.assertFalse(m3.is_ready())
+        self.assertEqual(m3.aka.name, "c")
+        self.assertEqual(m3.shiro.name, "a")
+        
+        self.assertEqual(b.get_next_match(), None)
+        
+        self.assertEqual(b.get_winners(), ((1, m1.aka.eventlink), (2, m2.aka.eventlink), (3, m3.aka.eventlink)))
+        
+        #TODO: NEED TO DEAL WITH TIES!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 class Kumite2PeopleBracketTestCase(TestCase):
     
