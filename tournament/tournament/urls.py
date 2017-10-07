@@ -23,5 +23,6 @@ urlpatterns = [
     url(r'^tmp/', include('tmp.urls')),
     url(r'^kata/', include('kata.urls')),
     url(r'^kumite/', include('kumite.urls')),
+    url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
     url(r'^admin/', admin.site.urls),
 ]
