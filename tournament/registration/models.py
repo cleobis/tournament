@@ -39,9 +39,10 @@ class Event(models.Model):
     
     def get_format_class(self, n_people):
         from kumite.models import KumiteElim1Bracket, KumiteRoundRobinBracket, Kumite2PeopleBracket
+        from kata.models import KataBracket
         
         if self.format == self.EventFormat.kata:
-            raise Exception("Kata not implemented.")
+            return KataBracket
         elif self.format == self.EventFormat.elim1:
             if n_people == 2:
                 return Kumite2PeopleBracket
