@@ -6,7 +6,8 @@ No-shows
 Round nomenclature
 Kumite 2 - are ties allowed?
 NEED TO DEAL WITH TIES IN KUMITE ROUND ROBIN!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+Choose first round kumite matches
+Layout
 
 
 Make venv:

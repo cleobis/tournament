@@ -1,6 +1,7 @@
 from django.db import models
 from django.core import validators
 from django.core.exceptions import ValidationError
+from django.core.urlresolvers import reverse
 
 from registration.models import EventLink
 
@@ -11,6 +12,8 @@ from more_itertools import peekable
 def validate_score(score):
     if score < 0 or score > 10:
         raise ValidationError('{} is not a number between 0 and 10.'.format(score))
+    if round(score,1) != score:
+        raise ValidationError('Maximum 1 decimal place.')
 
 class Scoring(models.Model):
     name = models.CharField(max_length=200)
@@ -167,8 +170,10 @@ class KataRound(models.Model):
             return matches[0]
         else:
             return None
-        
-    def match_callback(self, match):
+    
+    
+    def match_callback(self, match=None):
+        # Match is none when adding or removing a person
         
         if self.locked:
             raise ValidationError("Can't modify round if locked.")
@@ -225,6 +230,9 @@ class KataBracket(models.Model):
         return str(self.division) + " - Kata"
     
     
+    def get_absolute_url(self):
+        return reverse('kata:bracket', args=[self.id])
+    
     @property
     def n_round(self):
         return self.kataround_set.all().aggregate(models.Max('round'))['round__max'] + 1
@@ -250,6 +258,16 @@ class KataBracket(models.Model):
         for p in people:
             m = KataMatch(eventlink=p, round=round)
             m.save()
+    
+    
+    def add_person(self, p):
+        
+        round = self.kataround_set.get(round=0)
+        if round.locked:
+            raise ValueError("Round is locked.")
+        m = KataMatch(eventlink=p, round=round)
+        m.save()
+        round.match_callback(m)
     
     
     def get_people(self):

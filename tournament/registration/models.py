@@ -251,8 +251,9 @@ class Division(models.Model):
     def get_format(self):
         
         from kumite.models import KumiteElim1Bracket, KumiteRoundRobinBracket, Kumite2PeopleBracket
+        from kata.models import KataBracket
         
-        classes = [KumiteElim1Bracket, KumiteRoundRobinBracket, Kumite2PeopleBracket]
+        classes = [KumiteElim1Bracket, KumiteRoundRobinBracket, Kumite2PeopleBracket, KataBracket]
         
         for c in classes:
             fmt = c.objects.filter(division=self)

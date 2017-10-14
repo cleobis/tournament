@@ -106,8 +106,6 @@ class DivisionAddManualPerson(generic.detail.SingleObjectMixin, generic.FormView
         return kwargs
     
     def form_valid(self, form):
-        
-        # raise Exception(str(form.instance.__dict__))
         form.instance.save()
         return super().form_valid(form)
     

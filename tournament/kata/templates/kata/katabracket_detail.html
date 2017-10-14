@@ -1,0 +1,106 @@
+<style>
+  td button, td form{
+    display:inline;
+  }
+</style>
+
+<h1><a href="{% url 'registration:divisions' %}">&lt;</a> {{ bracket }}</h1>
+
+{% if bracket.get_next_match is None %}
+<h2>Winners</h2>
+<ul>
+{% for rank, person in bracket.get_winners %}
+  <li>{{ rank }}. {{ person.name }}</li>
+{% endfor %}
+</ul>
+{% endif %}
+
+{% for round in bracket.rounds %}
+<h2>Round {{ round.round |add:1 }}</h2>
+
+{% if editing and round.id == form.instance.round.id %}
+<form action="{{ request.path }}" method="post">
+{% csrf_token %}
+{{ form.non_field_errors }}
+{% endif %}
+
+<table>
+  <thead>
+    <th>Name</th>
+    <th>Score 1</th>
+    <th>Score 2</th>
+    <th>Score 3</th>
+    <th>Score 4</th>
+    <th>Score 5</th>
+    <th>Combined Score</th>
+    <th>Tie Score</th>
+    <th>Options</th>
+  </thead>
+  <tbody>
+    {% for match in round.matches %}
+    {% if form.instance.id != match.id %}
+      <tr>
+        <td>{{ match.eventlink.name }}</td>
+        {% for score in match.scores %}
+        <td>{{ score |default:"" }}</td>
+        {% endfor %}
+        <td>{{ match.combined_score |floatformat |default:"" }}</td>
+        <td>{{ match.tie_score |floatformat |default:"" }}</td>
+        <td>
+          {% if editing or match.round.locked %}
+          Locked
+          {% else %}
+          <form method="get" action="{% url 'kata:bracket-match-edit' bracket.id match.id %}">
+          <button type="submit">Edit</button>
+          </form>
+          {% if round.round == 0 %}
+          <form method="post" action="{% url 'kata:bracket-match-delete' bracket.id match.id %}">
+          {% csrf_token %}
+          <button type="Delete">Delete</button>
+          </form>
+          {% endif %}
+          {% endif %}
+        </td>
+      </tr>
+    {% else %}
+      <tr>
+        <td>{{ match.eventlink.name }}</td>
+        {% for field in form %}
+        <td>
+          <div class="fieldWrapper">
+            {{ field.errors }}
+            {{ field }}
+            {% if field.help_text %}
+            <p class="help">{{ field.help_text|safe }}</p>
+            {% endif %}
+          </div>
+        </td>
+        {% endfor %}
+        <td></td>
+        <td></td>
+        <td>
+          <button name="save">Save</button>
+          <button onClick="window.location.href='{% url 'kata:bracket' bracket.id %}'" type="button">Cancel</button>
+          <button name="clear">Clear</button>
+        </td>
+      </tr>
+    {% endif %}
+    {% endfor %}
+  </tbody>
+</table>
+
+{% if editing and round.id == form.instance.round.id %}
+</form>
+{% endif %}
+
+{% if not editing and round.round == 0 and not round.locked %}
+<h2>Add competetor</h2>
+<form method="post" action="{% url 'kata:bracket-match-add' bracket.id %}">
+  {% csrf_token %}
+  {{ add_form }}
+  <button>Add</button>
+</form>
+{% endif %}
+
+{% endfor %}
+
