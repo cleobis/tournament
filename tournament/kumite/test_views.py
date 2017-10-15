@@ -67,7 +67,6 @@ class MatchViewTestCase(LiveServerTestCase):
             ]
         
         for c in caps:
-            print('Testing ' + str(c) + '\n')
             with self.subTest(cap=c):
                 self.config_driver(c)
                 try:

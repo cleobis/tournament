@@ -3,6 +3,6 @@ python:
   - 3.6
 cache: pip
 script:
-  - cd tournament && ./manage.py test
+  - cd tournament && travis_wait 30 ./manage.py test
 addons:
   sauce_connect: true
