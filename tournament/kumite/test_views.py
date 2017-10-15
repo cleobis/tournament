@@ -17,7 +17,7 @@ class MatchViewTestCase(LiveServerTestCase):
             self.selenium.implicitly_wait(5)
         else:
             desired_cap = {
-                'platform': "Mac OS X 10.9",
+                #'platform': "Mac OS X 10.9",
                 'browserName': "internet explorer", # safari, chrome, firefox, android, iphone
                 # 'version': "31",
                 'tunnel-identifier': os.environ['TRAVIS_JOB_NUMBER'],
