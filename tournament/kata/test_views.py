@@ -18,9 +18,11 @@ class MatchViewTestCase(LiveServerTestCase):
         else:
             desired_cap = {
                 'platform': "Mac OS X 10.9",
-                'browserName': "chrome",
-                'version': "31",
+                'browserName': "internet explorer", # safari, chrome, firefox, android, iphone
+                # 'version': "31",
                 'tunnel-identifier': os.environ.get['TRAVIS_JOB_NUMBER'],
+                'build': os.environ["TRAVIS_BUILD_NUMBER"],
+                'tags': [os.environ["TRAVIS_PYTHON_VERSION"], "CI"],
             }
             driver = webdriver.Remote(
                command_executor='http://' + username + ':' + password + '@ondemand.saucelabs.com:80/wd/hub',
