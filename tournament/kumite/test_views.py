@@ -8,6 +8,10 @@ from selenium.webdriver.common.keys import Keys
 class MatchViewTestCase(LiveServerTestCase):
 
     def setUp(self):
+        super().setUp()
+    
+    
+    def config_driver(self, desired_cap):
         from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
         
         username = os.environ.get('SAUCE_USERNAME')
@@ -16,11 +20,11 @@ class MatchViewTestCase(LiveServerTestCase):
             self.selenium = webdriver.Safari()
             self.selenium.implicitly_wait(5)
         else:
-            desired_cap = {
-                # 'platform': "Mac OS X 10.9",
-                'browserName': "internet explorer", # safari, chrome, firefox, android, iphone
-                # 'version': "31",
-            }
+            # desired_cap = {
+            #     # 'platform': "Mac OS X 10.9",
+            #     'browserName': "internet explorer", # safari, chrome, firefox, android, iphone
+            #     # 'version': "31",
+            # }
             job = os.environ.get('TRAVIS_JOB_NUMBER')
             if job is not None:
                 desired_cap['tunnel-identifier'] = job
@@ -33,16 +37,44 @@ class MatchViewTestCase(LiveServerTestCase):
             self.selenium = webdriver.Remote(
                command_executor='http://' + username + ':' + password + '@ondemand.saucelabs.com:80/wd/hub',
                desired_capabilities=desired_cap)
-
-        super().setUp()
     
     
     def tearDown(self):
-        self.selenium.quit()
+        # self.selenium.quit()
         super().tearDown()
     
     
     def test_manual_match(self):
+        
+        caps = [
+            {'browserName': "internet explorer", 'version': "8"},
+            {'browserName': "internet explorer", 'version': "9"},
+            {'browserName': "internet explorer", 'version': "10"},
+            {'browserName': "internet explorer", 'version': "11"},
+            {'browserName': 'MicrosoftEdge'},
+            {'browserName': 'Chrome'},
+            {'browserName': 'firefox'},
+            {'browserName': "Safari", 'version': "7"},
+            {'browserName': "Safari", 'version': "8"},
+            {'browserName': "Safari", 'version': "9"},
+            {'browserName': "Safari", 'version': "10"},
+            {'browserName': "Safari", 'platformVersion': "11"},
+            {'browserName': "Safari", 'platformVersion': "10.3"},
+            {'browserName': "Safari", 'platformVersion': "9.3"},
+            {'browserName': "Android", 'platformVersion': "4.4"},
+            {'browserName': "Android", 'platformVersion': "5.1"},
+            {'browserName': "Android", 'platformVersion': "6.0"},
+            ]
+        
+        for c in caps:
+            with self.subTest(cap=c):
+                self.config_driver(c)
+                try:
+                    self.helper()
+                finally:
+                    self.selenium.quit()
+        
+    def helper(self):
         selenium = self.selenium
         selenium.get(self.live_server_url + '/kumite/match/manual/edit/')
         
