@@ -1,9 +1,6 @@
 <html>
 	<head>
 		<meta name="viewport" content="width=device-width, initial-scale=1">
-    <script lang="text/javascript">
-      
-    </script>
 		<link rel="styesheet" href="normalize.css">
 		<!--<link rel="stylesheet" href="w3.css">-->
 	<style>
@@ -425,10 +422,11 @@ window.onload = function () {
     		return function(){dec(id)};
     	}
     };
-    objs.forEach(function(obj){
+    for (var i=0; i<objs.length; i++) {
+      obj = objs[i];
     	var id = obj.parentElement.querySelector("input").id;
     	obj.onclick = generator(id, obj.innerText == '+');
-    });
+    };
 };
 
 function inc(id) {

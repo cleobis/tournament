@@ -17,13 +17,19 @@ class MatchViewTestCase(LiveServerTestCase):
             self.selenium.implicitly_wait(5)
         else:
             desired_cap = {
-                #'platform': "Mac OS X 10.9",
+                # 'platform': "Mac OS X 10.9",
                 'browserName': "internet explorer", # safari, chrome, firefox, android, iphone
                 # 'version': "31",
-                'tunnel-identifier': os.environ['TRAVIS_JOB_NUMBER'],
-                'build': os.environ["TRAVIS_BUILD_NUMBER"],
-                'tags': [os.environ["TRAVIS_PYTHON_VERSION"], "CI"],
             }
+            job = os.environ.get('TRAVIS_JOB_NUMBER')
+            if job is not None:
+                desired_cap['tunnel-identifier'] = job
+            build = os.environ.get("TRAVIS_BUILD_NUMBER")
+            if build is not None:
+                desired_cap['build'] = build
+            tag = os.environ.get("TRAVIS_PYTHON_VERSION")
+            if tag is not None:
+                desired_cap['tags'] = [tag, "CI"]
             self.selenium = webdriver.Remote(
                command_executor='http://' + username + ':' + password + '@ondemand.saucelabs.com:80/wd/hub',
                desired_capabilities=desired_cap)
