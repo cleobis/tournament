@@ -24,7 +24,7 @@ class MatchViewTestCase(LiveServerTestCase):
                 'build': os.environ["TRAVIS_BUILD_NUMBER"],
                 'tags': [os.environ["TRAVIS_PYTHON_VERSION"], "CI"],
             }
-            driver = webdriver.Remote(
+            self.selenium = webdriver.Remote(
                command_executor='http://' + username + ':' + password + '@ondemand.saucelabs.com:80/wd/hub',
                desired_capabilities=desired_cap)
 
