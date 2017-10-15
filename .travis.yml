@@ -3,4 +3,5 @@ python:
   - 3.6
 script:
   - tournament/manage.py test
-    
+addons:
+  sauce_connect: true

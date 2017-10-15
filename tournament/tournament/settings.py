@@ -52,7 +52,7 @@ INSTALLED_APPS = [
     
     'django_extensions',
     
-    'lockdown',
+    # 'lockdown',
     
 ]
 
@@ -65,7 +65,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     
-    'lockdown.middleware.LockdownMiddleware',
+    # 'lockdown.middleware.LockdownMiddleware',
 ]
 
 ROOT_URLCONF = 'tournament.urls'
@@ -151,4 +151,4 @@ STATIC_URL = '/static/'
 # Phone numbers
 PHONENUMBER_DEFAULT_REGION = "CA"
 
-LOCKDOWN_PASSWORDS = ("asdf")
+# LOCKDOWN_PASSWORDS = ("asdf")
