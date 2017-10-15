@@ -1,6 +1,7 @@
 language: python
 python:
   - 3.6
+cache: pip
 script:
   - cd tournament && ./manage.py test
 addons:

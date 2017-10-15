@@ -20,7 +20,7 @@ class MatchViewTestCase(LiveServerTestCase):
                 'platform': "Mac OS X 10.9",
                 'browserName': "internet explorer", # safari, chrome, firefox, android, iphone
                 # 'version': "31",
-                'tunnel-identifier': os.environ.get['TRAVIS_JOB_NUMBER'],
+                'tunnel-identifier': os.environ['TRAVIS_JOB_NUMBER'],
                 'build': os.environ["TRAVIS_BUILD_NUMBER"],
                 'tags': [os.environ["TRAVIS_PYTHON_VERSION"], "CI"],
             }
