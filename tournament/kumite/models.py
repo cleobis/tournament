@@ -323,6 +323,12 @@ class KumiteElim1Bracket(models.Model):
         self.save()
     
     
+    def get_swappable_match_people(self):
+        return KumiteMatchPerson.objects.filter(
+            Q(match_aka__bracket_elim1=self) & Q(match_aka__done=False)
+            | Q(match_shiro__bracket_elim1=self) & Q(match_shiro__done=False))
+    
+    
     def get_seed_order(self, rounds=None):
         """
         Returns order for assigning participants to the initial round.
@@ -535,6 +541,12 @@ class Kumite2PeopleBracket(models.Model):
                 m_prev.save()
     
     
+    def get_swappable_match_people(self):
+        return KumiteMatchPrson.objects.filter(
+            Q(match_aka__bracket_2people=self) & Q(match_aka__done=False)
+            | Q(match_shiro__bracket_2people=self) & Q(match_shirt__done=False))
+    
+    
     def match_callback(self, match):
         # Cases
         # - First 2 matches are still in progress.
@@ -671,6 +683,12 @@ class KumiteRoundRobinBracket(models.Model):
         people = EventLink.objects.filter(Q(kumitematchperson__match_aka__bracket_rr=self)
             or Q(kumitematchperson__match_shiro__bracket_rr=self)).distinct()
         return people
+    
+    
+    def get_swappable_match_people(self):
+        return KumiteMatchPrson.objects.filter(
+            Q(match_aka__bracket_rr=self) & Q(match_aka__done=False)
+            | Q(match_shiro__bracket_rr=self) & Q(match_shirt__done=False))
     
     
     def match_callback(self, match):

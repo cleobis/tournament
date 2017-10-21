@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.views.generic import DetailView
+from django.views.generic.detail import SingleObjectMixin
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, ModelFormMixin, FormView
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.http.response import HttpResponseRedirect, HttpResponseForbidden
@@ -7,7 +8,7 @@ from django.http.response import HttpResponseRedirect, HttpResponseForbidden
 import math
 
 from .models import KumiteElim1Bracket, KumiteRoundRobinBracket, Kumite2PeopleBracket, KumiteMatch, KumiteMatchPerson
-from .forms import KumiteMatchCombinedForm, KumiteMatchForm, KumiteMatchPersonForm
+from .forms import KumiteMatchCombinedForm, KumiteMatchForm, KumiteMatchPersonForm, KumiteMatchPersonSwapForm
 
 class BracketGrid():
     
@@ -43,9 +44,10 @@ class BracketGrid():
     
     def row(self, row):
         
+        draggable = True
         for col in range(self.n_col - 1):
             round = self.n_col - col - 2
-            span = math.pow(2, col)
+            span = int(math.pow(2, col))
             if not (row / span).is_integer():
                 match = None
                 yield None
@@ -59,11 +61,18 @@ class BracketGrid():
                 else:
                     is_aka = False
                     p = match.shiro if match is not None else None
-                yield {'match_i': match_i, 'match': match, 'round': round, 'span': span, 'person': p, 'is_aka': is_aka}
+                
+                if match is not None and match.done:
+                    draggable = False
+                
+                yield {'match_i': match_i, 'match': match, 'round': round, 'span': span, 'person': p, 'is_aka': is_aka, 'col': col, 'draggable': draggable}
+                
+                if match is not None:
+                    draggable = False
         
         if (row / span / 2).is_integer():
-            span = math.pow(2, self.n_col - 1)
-            yield {'match_i': 0, 'match': match, 'round': -1, 'span': span, 'person': match.winner()}
+            span = int(math.pow(2, self.n_col - 1))
+            yield {'match_i': 0, 'match': match, 'round': -1, 'span': span, 'person': match.winner(), 'col': self.n_col-1, 'draggable': False}
         else:
             yield None
 
@@ -76,12 +85,14 @@ class BracketDetails(DetailView):
         return 'bracket'
     
     
-    def get_context_data(self, object=object):
+    def get_context_data(self, **kwargs):
         
-        context = super().get_context_data(object=object)
+        context = super().get_context_data(**kwargs)
+        object = context['object']
         context.update({'grid': BracketGrid(object), 'consolation_grid': BracketGrid(object, consolation=True),
             'next': object.get_next_match(), 'on_deck': object.get_on_deck_match(),
-            'delete_url': reverse('kumite:bracket-n-delete', args=[object.id])})
+            'delete_url': reverse('kumite:bracket-n-delete', args=[object.id]),
+            'swap_form': KumiteMatchPersonSwapForm(self.object)})
         return context
 
 
@@ -143,6 +154,59 @@ class Bracket2PeopleDelete(DeleteView):
     
     def get_success_url(self):
         return self.object.division.get_absolute_url()
+
+
+class KumiteMatchPersonSwapView(BracketDetails, FormView):
+    form_class = KumiteMatchPersonSwapForm
+    
+    
+    def get_context_data(self, form=None):
+        context = super().get_context_data(object=self.get_object())
+        context['swap_form'] = form
+        return context
+    
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['bracket'] = self.get_object()
+        return kwargs
+    
+    
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        return super().post(request, *args, **kwargs)
+    
+    
+    def form_valid(self, form):
+        
+        import logging
+        log = logging.getLogger()
+        
+        p1 = form.cleaned_data['src']
+        m1 = p1.kumitematch
+        attr1 = "aka" if p1 == m1.aka else "shiro"
+        
+        p2 = form.cleaned_data['tgt']
+        m2 = p2.kumitematch
+        attr2 = "aka" if p2 == m2.aka else "shiro"
+
+        if m2 == m1:
+            # If swapping aka and shiro on the same match, need to update same object.
+            m2 = m1
+        
+        setattr(m2, attr2, None)
+        m2.save()
+        
+        setattr(m1, attr1, p2)
+        m1.save()
+        
+        setattr(m2, attr2, p1)
+        m2.save()
+        
+        return super().form_valid(form)
+    
+    def get_success_url(self):
+        return self.object.get_absolute_url()
 
 
 class KumiteMatchUpdate(UpdateView):

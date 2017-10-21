@@ -1,25 +1,46 @@
-<h1><a href="{% url 'registration:divisions' %}">&lt;</a> {{ bracket.division }}</h1>
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Title</title>
 
-<style>
-table, td, th {
-  border: 1px solid black;
-  border-collapse: collapse;
-}
-td, th {
-  height: 30px;
-  padding: 2px 6px;
-}
-td {
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' viewBox='0 0 10 20' preserveAspectRatio='none'><text x='0' y='15' font-size='20'>}</text></svg>");
-  background-repeat: no-repeat;
-  background-size: 20px 100%;
-  padding-left: 20px;
-}
-td:first-child {
-  background-image: none;
-  padding-left: 2px;
-}
-</style>
+  <style>
+  table, td, th {
+    border: 1px solid black;
+    border-collapse: collapse;
+  }
+  td, th {
+    height: 30px;
+    padding: 2px 6px;
+  }
+  td {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' viewBox='0 0 10 20' preserveAspectRatio='none'><text x='0' y='15' font-size='20'>}</text></svg>");
+    background-repeat: no-repeat;
+    background-size: 20px 100%;
+    padding-left: 20px;
+  }
+  
+  td:first-child {
+    background-image: none;
+    padding-left: 2px;
+  }
+  
+  td.drag-target {
+    background-color: #CCCCCC;
+  }
+  
+  </style>
+  <script src="/static/drag-drop-polyfill/drag-drop-polyfill.min.js"></script>
+  <script>
+    if (!String.prototype.startsWith) {
+        String.prototype.startsWith = function(searchString, position){
+          return this.substr(position || 0, searchString.length) === searchString;
+      };
+    }
+  </script>
+</head>
+<body>
+
+<h1><a href="{% url 'registration:divisions' %}">&lt;</a> {{ bracket.division }}</h1>
 
 {% if next is not None %}
 <h2>Next Match</h2>
@@ -38,12 +59,52 @@ td:first-child {
 <p>{% firstof on_deck.aka.name "?" %} vs {% firstof on_deck.shiro.name "?" %}</p>
 {% endif %}
 
+<script>
+  var drag_prefix = "kumite match "
+  function dragstart_handler(ev, id) {
+    ev.dataTransfer.setData("text", drag_prefix + id);
+  } ;
+  
+  function dragenter_handler(ev, tgt) {
+    ev.preventDefault();
+    event.target.classList.add('drag-target');
+  };
+  
+  function dragover_handler(ev, tgt) {
+    ev.preventDefault();
+    ev.dataTransfer.dropEffect = "move";
+  };
+  
+  function dragleave_handler(ev) {
+    ev.target.classList.remove('drag-target');
+  };
+  
+  function drop_handler(ev, tgt) {
+    ev.target.classList.remove('drag-target');
+    
+    var src = ev.dataTransfer.getData("text");
+    if (!src.startsWith(drag_prefix)) {
+      return ;
+    }
+    ev.preventDefault();
+    
+    src = src.substr(drag_prefix.length);
+    src_input = document.getElementById('id_swap-src');
+    src_input.value = src;
+    tgt_input = document.getElementById('id_swap-tgt');
+    tgt_input.value = tgt;
+    src_input.form.submit()
+  };
+</script>
+
 <h2>Main Bracket</h2>
 <table>
   <thead>
-    {% for h in grid.headers %}
-    <th>{{ h }}</th>
-    {% endfor %}
+    <tr>
+      {% for h in grid.headers %}
+      <th>{{ h }}</th>
+      {% endfor %}
+    </tr>
   </thead>
   <tbody>
     {% for row in grid.rows %}
@@ -51,7 +112,15 @@ td:first-child {
       {% for cell in row %}
         {% if cell is not None %}
           {% if cell.match is not None %}
-            <td {% if cell.span != 1 %}rowspan="{{ cell.span }}"{% endif %}>
+            <td {% if cell.span != 1 %}rowspan="{{ cell.span }}"{% endif %}
+                {% if cell.draggable %}
+                  draggable="true"
+                  ondragstart="dragstart_handler(event, {{ cell.person.id }});"
+                  ondragenter="dragenter_handler(event, {{ cell.person.id }});"
+                  ondragleave="dragleave_handler(event, {{ cell.person.id }});"
+                  ondragover="dragover_handler(event, {{ cell.person.id }});"
+                  ondrop="drop_handler(event, {{ cell.person.id }});"
+                {% endif %}>
               {# {{ cell.match }} #}
               {% if cell.round == -1 %}
                 {% if cell.person is not None %}{{ cell.person }}{% else %}?{% endif %}
@@ -76,13 +145,20 @@ td:first-child {
   </tbody>
 </table>
 
+<form action="{% url 'kumite:bracket-n-swap' bracket.id %}" method="post">
+  {% csrf_token %}
+  {{ swap_form }}
+</form>
+
 {% if consolation_grid %}
 <h2>Consolation Round</h2>
 <table>
   <thead>
-    {% for h in consolation_grid.headers %}
-    <th>{{ h }}</th>
-    {% endfor %}
+    <tr>
+      {% for h in consolation_grid.headers %}
+      <th>{{ h }}</th>
+      {% endfor %}
+    </tr>
   </thead>
   <tbody>
     {% for row in consolation_grid.rows %}
@@ -121,3 +197,16 @@ td:first-child {
   {% csrf_token %}
   <button type="submit">Delete</button>
 </form>
+
+<script>
+  <!-- Enable drag and drop for mobile -->
+  DragDropPolyfill.polyfill({
+    dragImageTranslateOverride: DragDropPolyfill.scrollBehaviourDragImageTranslateOverride
+  });
+  <!-- Fix iOS drag and drop: https://github.com/metafizzy/flickity/issues/457#issuecomment-254501356 -->
+  window.addEventListener( 'touchmove', function() {})
+</script>
+
+
+</body>
+</html>

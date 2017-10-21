@@ -55,3 +55,35 @@ class KumiteMatchCombinedForm(MultiModelForm):
                 raise ValidationError(*err.args, code="infer_winer")
             self['match'].cleaned_data['aka_won'] = self['match'].instance.aka_won
 
+
+class KumiteMatchPersonSwapForm(forms.Form):
+    src = forms.ModelChoiceField(queryset=KumiteMatchPerson.objects.none(), widget=forms.HiddenInput())
+    tgt = forms.ModelChoiceField(queryset=KumiteMatchPerson.objects.none(), widget=forms.HiddenInput())
+    prefix = 'swap'
+    
+    def __init__(self, bracket=None, **kwargs):
+        
+        if bracket is None:
+            raise ValueError('bracket is required.')
+        self.bracket = bracket
+        
+        super().__init__(**kwargs)
+        
+        people = self.bracket.get_swappable_match_people()
+        self.fields['src'].queryset = people
+        self.fields['tgt'].queryset = people
+    
+    
+    def clean(self):
+        import logging
+        log = logging.getLogger()
+        
+        if 'src' not in self.cleaned_data or 'tgt' not in self.cleaned_data:
+            return
+        
+        if (self.cleaned_data['src'].kumitematch.bracket != self.bracket
+                or self.cleaned_data['tgt'].kumitematch.bracket != self.bracket):
+            raise forms.ValidationError("Person not in bracket.")
+        
+        if self.cleaned_data['src'] == self.cleaned_data['tgt']:
+            raise forms.ValidationError("Can't swap with themselves.")

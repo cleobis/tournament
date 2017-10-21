@@ -1,12 +1,13 @@
 Next steps:
+Choose first round kumite matches - Done. Just need tests
+
 Run on laptop
 Freeze run divisions
 Force registered people to be in a particular division
 No-shows
 Round nomenclature
 Kumite 2 - are ties allowed?
-NEED TO DEAL WITH TIES IN KUMITE ROUND ROBIN!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-Choose first round kumite matches
+NEED TO DEAL WITH TIES IN KUMITE ROUND ROBIN
 Layout
 
 

@@ -5,3 +5,7 @@ __pycache__
 .coverage
 htmlcov
 .vscode
+tournament/node_modules
+venv2
+wvenv
+django-master
