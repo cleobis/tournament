@@ -554,7 +554,76 @@ class KumiteElim1BracketTestCase(TestCase):
             b.get_match(round, -2)
         with self.assertRaises(ValueError):
             b.get_match(round, 1)
-
+            
+            
+    
+    
+    def test_swap(self):
+        
+        #       a ---\___
+        #  d --\_____/    \____
+        #  e --/          /
+        #       b ---\___/
+        #       c ---/
+        
+        b = make_bracket(5)
+        
+        get_matches = lambda: [(
+                m.aka.name if m.aka is not None else "",
+                m.aka.is_swappable() if m.aka is not None else False,
+                m.shiro.name if m.shiro is not None else "",
+                m.shiro.is_swappable() if m.shiro is not None else False
+            ) for m in b.kumitematch_set.all()]
+        get_people = lambda: [p.name for p in b.get_swappable_match_people()] 
+        
+        self.assertEqual(get_people(), ["a", "d", "e", "b", "c"])
+        self.assertEqual(get_matches(), [('d', True, 'e', True), ('a', True, '', False), 
+            ('b', True, 'c', True), ('', False, '', False), ('', False, '', False)])
+        
+        #       a ---\___
+        #  d --\_____/    \___
+        #  e --/          /
+        #       b ---\_b_/
+        #       c ---/
+        #             -c-\___
+        #             ---/
+        m = b.get_match(1, 1)
+        m.done = True
+        m.aka_won = True
+        m.save()
+        self.assertEqual(get_people(), ["a", "d", "e"])
+        self.assertEqual(get_matches(), [('d', True, 'e', True), ('a', True, '', False), 
+            ('b', False, 'c', False), ('', False, 'c', False), ('', False, 'b', False)])
+        
+        #       a ---\___
+        #  d --\___e_/    \___
+        #  e --/          /
+        #       b ---\_b_/
+        #       c ---/
+        #             ---\___
+        #             -c-/
+        m = b.get_match(2, 1)
+        m.done = True
+        m.aka_won = False
+        m.save()
+        self.assertEqual(get_people(), ["a"])
+        self.assertEqual(get_matches(), [('d', False, 'e', False), ('a', True, 'e', False), 
+            ('b', False, 'c', False), ('', False, 'c', False), ('', False, 'b', False)])
+        
+        #       a ---\_a_
+        #  d --\___e_/    \___
+        #  e --/          /
+        #       b ---\_b_/
+        #       c ---/
+        #             -e-\___
+        #             -c-/
+        m = b.get_match(1, 0)
+        m.done = True
+        m.aka_won = True
+        m.save()
+        self.assertEqual(get_people(), [])
+        self.assertEqual(get_matches(), [('d', False, 'e', False), ('a', False, 'e', False), 
+            ('b', False, 'c', False), ('e', False, 'c', False), ('a', False, 'b', False)])
 
 class KumiteRoundRobinBracketTestCase(TestCase):
     

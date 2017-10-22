@@ -4,6 +4,8 @@ from django.views.generic.detail import SingleObjectMixin
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, ModelFormMixin, FormView
 from django.core.urlresolvers import reverse, reverse_lazy
 from django.http.response import HttpResponseRedirect, HttpResponseForbidden
+from django.utils.decorators import method_decorator
+from django.views.decorators.http import require_POST
 
 import math
 
@@ -44,7 +46,6 @@ class BracketGrid():
     
     def row(self, row):
         
-        draggable = True
         for col in range(self.n_col - 1):
             round = self.n_col - col - 2
             span = int(math.pow(2, col))
@@ -62,17 +63,12 @@ class BracketGrid():
                     is_aka = False
                     p = match.shiro if match is not None else None
                 
-                if match is not None and match.done:
-                    draggable = False
+                yield {'match_i': match_i, 'match': match, 'round': round, 'span': span, 'person': p, 'is_aka': is_aka, 'col': col}
                 
-                yield {'match_i': match_i, 'match': match, 'round': round, 'span': span, 'person': p, 'is_aka': is_aka, 'col': col, 'draggable': draggable}
-                
-                if match is not None:
-                    draggable = False
         
         if (row / span / 2).is_integer():
             span = int(math.pow(2, self.n_col - 1))
-            yield {'match_i': 0, 'match': match, 'round': -1, 'span': span, 'person': match.winner(), 'col': self.n_col-1, 'draggable': False}
+            yield {'match_i': 0, 'match': match, 'round': -1, 'span': span, 'person': match.winner(), 'col': self.n_col-1}
         else:
             yield None
 
@@ -156,6 +152,7 @@ class Bracket2PeopleDelete(DeleteView):
         return self.object.division.get_absolute_url()
 
 
+@method_decorator(require_POST, name='dispatch')
 class KumiteMatchPersonSwapView(BracketDetails, FormView):
     form_class = KumiteMatchPersonSwapForm
     
@@ -204,6 +201,7 @@ class KumiteMatchPersonSwapView(BracketDetails, FormView):
         m2.save()
         
         return super().form_valid(form)
+    
     
     def get_success_url(self):
         return self.object.get_absolute_url()

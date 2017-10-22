@@ -16,6 +16,7 @@ class KumiteMatchPerson(models.Model):
     points = models.PositiveSmallIntegerField(default=0)
     warnings = models.PositiveSmallIntegerField(default=0)
     disqualified = models.BooleanField(default=False)
+    is_first_match = models.BooleanField(default=False)
     
     
     def __str__(self):
@@ -30,6 +31,21 @@ class KumiteMatchPerson(models.Model):
     @property
     def kumitematch(self):
         return KumiteMatch.objects.get(Q(aka=self.id) | Q(shiro=self.id))
+    
+    
+    def is_swappable(self):
+        if not isinstance(self.kumitematch.bracket, KumiteElim1Bracket):
+            return False
+        
+        return self.is_first_match and not self.kumitematch.done
+    
+    
+    def is_aka(self):
+        return self.kumitematch.aka == self
+    
+    
+    def is_shiro(self):
+        return self.kumitematch.shiro == self
     
     
     @staticmethod
@@ -162,6 +178,7 @@ class KumiteMatch(models.Model):
         
         self.bracket.match_callback(self)
     
+    
     @property
     def prev_matches(self):
         id_or_none = lambda x: x.id if x is not None else None
@@ -278,7 +295,7 @@ class KumiteElim1Bracket(models.Model):
                 
                 if order[1] >= len(people):
                     # Competetor gets a buy
-                    m = KumiteMatchPerson(eventlink=people[order[0]])
+                    m = KumiteMatchPerson(eventlink=people[order[0]], is_first_match=True)
                     m.save()
                     if match % 2 == 0:
                         parent.aka = m
@@ -293,10 +310,10 @@ class KumiteElim1Bracket(models.Model):
                     m.round = round
                     m.order = match
                     m.winner_match = parent
-                    p = KumiteMatchPerson(eventlink=people[order[0]])
+                    p = KumiteMatchPerson(eventlink=people[order[0]], is_first_match=True)
                     p.save()
                     m.aka = p
-                    p = KumiteMatchPerson(eventlink=people[order[1]])
+                    p = KumiteMatchPerson(eventlink=people[order[1]], is_first_match=True)
                     p.save()
                     m.shiro = p
                     m.save()
@@ -324,7 +341,7 @@ class KumiteElim1Bracket(models.Model):
     
     
     def get_swappable_match_people(self):
-        return KumiteMatchPerson.objects.filter(
+        return KumiteMatchPerson.objects.filter(is_first_match=True).filter(
             Q(match_aka__bracket_elim1=self) & Q(match_aka__done=False)
             | Q(match_shiro__bracket_elim1=self) & Q(match_shiro__done=False))
     

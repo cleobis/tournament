@@ -74,16 +74,30 @@ class KumiteMatchPersonSwapForm(forms.Form):
         self.fields['tgt'].queryset = people
     
     
+    def clean_src(self):
+        # This should never actually get used because the get_swappable_match_people() queryset limits the choices.
+        value = self.cleaned_data['src']
+        if not value.is_swappable():
+            raise forms.ValidationError("Can't be swapped.")
+        if value.kumitematch.bracket != self.bracket:
+            raise forms.ValidationError("Person not in bracket.")
+        return value
+    
+    
+    def clean_tgt(self):
+        # This should never actually get used because the get_swappable_match_people() queryset limits the choices.
+        value = self.cleaned_data['tgt']
+        if not value.is_swappable():
+            raise forms.ValidationError("Can't be swapped.")
+        if value.kumitematch.bracket != self.bracket:
+            raise forms.ValidationError("Person not in bracket.")
+        return value
+    
+    
     def clean(self):
-        import logging
-        log = logging.getLogger()
         
         if 'src' not in self.cleaned_data or 'tgt' not in self.cleaned_data:
             return
         
-        if (self.cleaned_data['src'].kumitematch.bracket != self.bracket
-                or self.cleaned_data['tgt'].kumitematch.bracket != self.bracket):
-            raise forms.ValidationError("Person not in bracket.")
-        
         if self.cleaned_data['src'] == self.cleaned_data['tgt']:
-            raise forms.ValidationError("Can't swap with themselves.")
+            raise forms.ValidationError("Can't swap with themselves.", code='swap_self')
