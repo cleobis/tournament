@@ -554,8 +554,6 @@ class KumiteElim1BracketTestCase(TestCase):
             b.get_match(round, -2)
         with self.assertRaises(ValueError):
             b.get_match(round, 1)
-            
-            
     
     
     def test_swap(self):

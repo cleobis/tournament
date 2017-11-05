@@ -1,9 +1,21 @@
-<style>
-  td button, td form{
-    display:inline;
-  }
-</style>
+{% extends 'tournament/__base_styled.html' %}
 
+{% block title %}
+  {{ bracket }} | {{ block.super }}
+{% endblock %}
+
+{% block stylesheets %}
+  {{ block.super }}
+  <style>
+    td button, td form{
+      display:inline;
+    }
+    td input {width: 60px;}
+  </style>
+{% endblock %}
+
+
+{% block content %}
 <h1><a href="{% url 'registration:divisions' %}">&lt;</a> {{ bracket }}</h1>
 
 {% if bracket.get_next_match is None %}
@@ -104,3 +116,4 @@
 
 {% endfor %}
 
+{% endblock %}

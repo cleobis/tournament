@@ -1,0 +1,31 @@
+{# See https://oncampus.oberlin.edu/webteam/2012/09/architecture-django-templates for some help #}
+<!DOCTYPE html>
+
+{% load staticfiles %}
+
+<html>
+    <head>
+        {% block meta_tags %}{% endblock %}
+        <title>
+            {% block title %}Shikomu Tournament{% endblock %}
+        </title>
+        {% block stylesheets %}
+            {#<link rel="stylesheet" href="{% static "gazette/css/base.css" %}" type="text/css" />#}
+        {% endblock %}
+        {% block javascript %}
+            {#<script src="{% static "gazette/js/jquery-1.7.2.min.js" %}" type="text/javascript"></script>#}
+        {% endblock %}
+        {% block extra_head %}{% endblock %}
+    </head>
+    <body>
+        <header class="navbar navbar-fixed-top">
+            {% include "gazette/_navigation.html" %}
+        </header>
+        <div id="main" role="main">
+            <div class="container">
+                {% block content %}
+                {% endblock %}
+            </div>
+        </div>
+    </body>
+</html>

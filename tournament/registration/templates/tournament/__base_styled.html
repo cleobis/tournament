@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+
+{% load staticfiles %}
+
+<html lang="en-US">
+  <head>
+    {% block meta_tags %}
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <meta charset="UTF-8">
+      <meta http-equiv="X-UA-Compatible" content="IE=10">
+      <meta name="msapplication-TileImage" content="https://i1.wp.com/www.shikomukarate.com/wp-content/uploads/2017/02/cropped-logo.png?fit=270%2C270&#038;ssl=1" />
+    {% endblock %}
+    
+    <link rel="profile" href="http://gmpg.org/xfn/11">
+    <link rel="pingback" href="https://www.shikomukarate.com/xmlrpc.php">
+    <title>
+      {% block title %}Shikomu Karate Club{% endblock %}
+    </title>
+    <link rel='dns-prefetch' href='//s0.wp.com'>
+    <link rel='dns-prefetch' href='//maxcdn.bootstrapcdn.com'>
+    <link rel='dns-prefetch' href='//s.w.org'>
+    
+    {% block stylesheets %}
+      <link type="text/css" media="all" href="https://www.shikomukarate.com/wp-content/cache/autoptimize/css/autoptimize_2adb775538addee4a5821e43d0640ee0.css" rel="stylesheet">
+      <style type="text/css" media="screen">
+  #footer-widgets .widget{width:33.333%}#masthead-widgets .widget{width:100%}
+      </style>
+      <link rel='stylesheet' id='cff-font-awesome-css'  href='https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css?ver=4.5.0' type='text/css' media='all' />
+      <style>
+        table, td, th {
+          border: 1px solid black;
+          border-collapse: collapse;
+          padding: 2px 6px;
+        }
+      </style>
+    {% endblock %}
+    
+    {% block javascript %}
+      <!--[if lt IE 9]> <script type='text/javascript' src='https://www.shikomukarate.com/wp-content/themes/vantage/js/html5.min.js?ver=3.7.3'></script> <![endif]-->
+      <script type='text/javascript'>var mobileNav = {"search":{"url":"https:\/\/www.shikomukarate.com","placeholder":"Search"},"text":{"navigate":"Menu","back":"Back","close":"Close"},"nextIconUrl":"https:\/\/www.shikomukarate.com\/wp-content\/themes\/vantage\/inc\/mobilenav\/images\/next.png","mobileMenuClose":"<i class=\"fa fa-times\"></i>"};</script> 
+    {% endblock %}
+    
+    <link rel="icon" href="https://i1.wp.com/www.shikomukarate.com/wp-content/uploads/2017/02/cropped-logo.png?fit=32%2C32&#038;ssl=1" sizes="32x32" />
+    <link rel="icon" href="https://i1.wp.com/www.shikomukarate.com/wp-content/uploads/2017/02/cropped-logo.png?fit=192%2C192&#038;ssl=1" sizes="192x192" />
+    <link rel="apple-touch-icon-precomposed" href="https://i1.wp.com/www.shikomukarate.com/wp-content/uploads/2017/02/cropped-logo.png?fit=180%2C180&#038;ssl=1" />
+    {% block extra_head %}{% endblock %}
+    </head>
+    <body class="page-template-default page page-id-284 wp-custom-logo siteorigin-panels siteorigin-panels-before-js responsive layout-boxed no-js has-sidebar has-menu-search page-layout-no-sidebar mobilenav photonic-ie">
+    <div id="page-wrapper">
+      <header id="masthead" class="site-header" role="banner">
+        <div class="hgroup full-container masthead-sidebar">
+          <div id="masthead-widgets" class="full-container">
+            <aside id="sow-editor-7" class="widget widget_sow-editor">
+              <div class="so-widget-sow-editor so-widget-sow-editor-base">
+                <div class="siteorigin-widget-tinymce textwidget">
+                  <p><img class="aligncenter size-full wp-image-109" src="https://i1.wp.com/www.shikomukarate.com/wp-content/uploads/2017/01/GanIDSiPFXQAAAABJRU5ErkJggg.png?resize=207%2C62&#038;ssl=1" alt="Shikomu Karate Club Logo" data-recalc-dims="1" /></p>
+                  <p style="text-align: center;">A community martial arts club in Burlington, Ontario</p>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </div>
+        <nav role="navigation" class="site-navigation main-navigation primary use-sticky-menu">
+          <div class="full-container">
+            <div id="so-mobilenav-standard-1" data-id="1" class="so-mobilenav-standard"></div>
+            <div class="menu-default-menu-container">
+              {% include "tournament/_navigation.html" %}
+            </div>
+            <div id="so-mobilenav-mobile-1" data-id="1" class="so-mobilenav-mobile"></div>
+            <div class="menu-mobilenav-container">
+              <ul id="mobile-nav-item-wrap-1" class="menu">
+                <li><a href="#" class="mobilenav-main-link" data-id="1"><span class="mobile-nav-icon"></span>Menu</a></li>
+              </ul>
+            </div>
+          </div>
+        </nav>
+      </header>
+      <div id="main" class="site-main">
+        <div class="full-container">
+          <div id="primary" class="content-area">
+            <div id="content" class="site-content" role="main">
+              <article id="post-284" class="post-284 page type-page status-publish post">
+                <div class="entry-main">
+                  {#<header class="entry-header"><h1 class="entry-title">About</h1></header>#}
+                  <div class="entry-content">
+                    {% block content %}
+                    {% endblock %}
+                  </div>
+                </div>
+              </article>
+            </div>
+          </div>
+        </div>
+      </div>
+      <footer id="colophon" class="site-footer" role="contentinfo"><div id="footer-widgets" class="full-container"><aside id="sow-editor-3" class="widget widget_sow-editor">
+        <div class="so-widget-sow-editor so-widget-sow-editor-base">
+          <h3 class="widget-title">Contact</h3>
+          <div class="siteorigin-widget-tinymce textwidget">
+            <p></p>
+            <p>Email: <a href="mailto:info@shikomukarate.com">info@shikomukarate.com</a></p>
+            <p>The Fitness Firm Health Club<br /> 15 Plains Road West, Burlington, Ontario</p>
+            <p><a href="https://www.facebook.com/ShikomuKarate/"><img class="alignnone size-full wp-image-219" src="https://i0.wp.com/www.shikomukarate.com/wp-content/uploads/2017/02/facebook-bw-100.png?resize=100%2C19&#038;ssl=1" alt="" data-recalc-dims="1" /></a></p>
+          </div>
+        </div>
+      </aside>
+      <aside id="widget_sp_image-6" class="widget widget_sp_image">
+        <h3 class="widget-title">Hombu dojo of Traditional Karate Arts Canada</h3>
+        <a href="http://www.tkac.ca" target="_self" class="widget_sp_image-image-link" title="Traditional Karate Arts Canada"><img width="100" height="100" alt="Traditional Karate Arts Canada" class="attachment-full aligncenter" style="max-width: 100%;" src="https://i0.wp.com/www.shikomukarate.com/wp-content/uploads/2017/02/TKAC-logo-100.png?fit=100%2C100&amp;ssl=1" /></a>
+      </aside>
+      <aside id="text-11" class="widget widget_text">
+      </aside>
+    </div>
+    <div id="site-info"> &copy; 2017 Shikomu Karate Club</div>
+    <div id="theme-attribution">A <a href="https://siteorigin.com">SiteOrigin</a> Theme</div>
+  </footer>
+</div>
+<script type="text/javascript">var cfflinkhashtags = "true";</script>
+<a href="#" id="scroll-to-top" class="scroll-to-top" title="Back To Top"><span class="vantage-icon-arrow-up"></span></a>
+<script type='text/javascript' src='https://s0.wp.com/wp-content/js/devicepx-jetpack.js?ver=201741'></script>
+<script type='text/javascript'>var panelsStyles = {"fullContainer":"#main"};</script>
+<script type="text/javascript">document.body.className = document.body.className.replace("siteorigin-panels-before-js","");</script>
+<script type='text/javascript' src='https://stats.wp.com/e-201741.js' async defer></script>
+<script type="text/javascript" defer src="https://www.shikomukarate.com/wp-content/cache/autoptimize/js/autoptimize_e6fc81e9c18da382dfd1f5a55dfe041d.js"></script>
+</body>
+</html>

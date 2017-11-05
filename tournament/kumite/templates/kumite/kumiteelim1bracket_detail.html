@@ -1,34 +1,38 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Title</title>
+{% extends 'tournament/__base_styled.html' %}
 
+{% block title %}
+  {{ bracket }} | {{ block.super }}
+{% endblock %}
+
+{% block stylesheets %}
+  {{ block.super }}
   <style>
-  table, td, th {
-    border: 1px solid black;
-    border-collapse: collapse;
-  }
-  td, th {
+  .bracket td, .bracket th {
     height: 30px;
     padding: 2px 6px;
+    vertical-align: middle;
   }
-  td {
+  .bracket td {
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' viewBox='0 0 10 20' preserveAspectRatio='none'><text x='0' y='15' font-size='20'>}</text></svg>");
     background-repeat: no-repeat;
     background-size: 20px 100%;
     padding-left: 20px;
   }
   
-  td:first-child {
+  .bracket td:first-child {
     background-image: none;
     padding-left: 2px;
   }
   
-  td.drag-target {
+  .bracket td.drag-target {
     background-color: #CCCCCC;
   }
   
   </style>
+{% endblock %}
+
+{% block javascript %}
+  {{ block.super }}
   <script src="/static/drag-drop-polyfill/drag-drop-polyfill.min.js"></script>
   <script>
     if (!String.prototype.startsWith) {
@@ -37,10 +41,11 @@
       };
     }
   </script>
-</head>
-<body>
+{% endblock %}
 
-<h1><a href="{% url 'registration:divisions' %}">&lt;</a> {{ bracket.division }}</h1>
+
+{% block content %}
+<h1>{{ bracket.division }}</h1>
 
 {% if next is not None %}
 <h2>Next Match</h2>
@@ -98,7 +103,7 @@
 </script>
 
 <h2>Main Bracket</h2>
-<table>
+<table class="bracket">
   <thead>
     <tr>
       {% for h in grid.headers %}
@@ -113,7 +118,7 @@
         {% if cell is not None %}
           {% if cell.match is not None %}
             <td {% if cell.span != 1 %}rowspan="{{ cell.span }}"{% endif %}
-                {% if cell.draggable %}
+                {% if cell.person.is_swappable %}
                   draggable="true"
                   ondragstart="dragstart_handler(event, {{ cell.person.id }});"
                   ondragenter="dragenter_handler(event, {{ cell.person.id }});"
@@ -152,7 +157,7 @@
 
 {% if consolation_grid %}
 <h2>Consolation Round</h2>
-<table>
+<table class="bracket">
   <thead>
     <tr>
       {% for h in consolation_grid.headers %}
@@ -207,6 +212,4 @@
   window.addEventListener( 'touchmove', function() {})
 </script>
 
-
-</body>
-</html>
+{% endblock %}

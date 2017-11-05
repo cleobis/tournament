@@ -1,3 +1,11 @@
+{% extends 'tournament/__base_styled.html' %}
+
+{% block title %}
+  Registration | {{ block.super }}
+{% endblock %}
+
+
+{% block content %}
 <h1>Register</h1>
 
 <form action="{{ request.path }}" method="post">
@@ -7,3 +15,5 @@
   </table>
   <input type="submit" value="Register">
 </form>
+
+{% endblock %}

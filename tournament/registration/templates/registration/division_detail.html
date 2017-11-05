@@ -1,15 +1,9 @@
+{% extends 'tournament/__l_single_col.html' %}
+
 {% load division_person_list %}
 
+{% block content %}
 <h1><a href="{% url 'registration:divisions' %}">&lt;</a> {{ object }}</h1>
-
-{#{% division_person_list object.eventlink_set.all %}#}
-
-<style>
-  table, th, td {
-    border: 1px solid black;
-    border-collapse: collapse;
-  }
-</style>
 
 <table>
   <thead>
@@ -72,3 +66,5 @@
   <button type="submit">Build</button>
 </form>
 {% endif %}
+
+{% endblock %}

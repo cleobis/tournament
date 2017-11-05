@@ -4,11 +4,12 @@ Choose first round kumite matches - Done. Just need tests
 Run on laptop
 Freeze run divisions
 Force registered people to be in a particular division
-No-shows
 Round nomenclature
 Kumite 2 - are ties allowed?
 NEED TO DEAL WITH TIES IN KUMITE ROUND ROBIN
 Layout
+Check-in workflow
+Security permissions
 
 
 Make venv:
@@ -21,9 +22,9 @@ pip3 install django
 django-admin startproject tournament
 
 Windows download:
-pip download -r requirements.txt --no-binary download
-pip download -r requirements.txt --only-binary=:all: --python-version 34 --platform win32 --implementation py download
-
+pip download -r ../requirements.txt --no-binary download
+pip download -r ../requirements.txt --only-binary=:all: --python-version 34 --platform win_amd64 --implementation py download
+pip install -r requirements.txt -no-index --find-links download
 
 UML diagram:
   ./manage.py graph_models -o models.png kata kumite registration
