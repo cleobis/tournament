@@ -7,7 +7,7 @@ from .models import Person, Rank, EventLink
 class PersonForm(forms.ModelForm):
     class Meta:
         model = Person
-        fields = ['first_name', 'last_name', 'gender', 'age', 'rank', 'instructor', 'phone_number', 'email', 'events', 'notes']
+        fields = ['first_name', 'last_name', 'gender', 'age', 'rank', 'instructor', 'phone_number', 'email', 'paid', 'events', 'notes']
         widgets = {
             'events': forms.CheckboxSelectMultiple(),
         }
@@ -41,3 +41,11 @@ class ManualEventLinkForm(forms.ModelForm):
         
         self.instance.event = self.division.event
         self.instance.division = self.division
+
+
+class PersonFilterForm(forms.Form):
+    name = forms.CharField(required=False)
+    paid = forms.TypedChoiceField(required=False, choices=((None, 'Any'), (True, 'Yes'), (False, 'No'),), 
+        coerce=lambda x: True if x == 'True' else False if x == 'False' else None, empty_value=None)
+    
+    

@@ -45,8 +45,7 @@ class DivisionAdmin(admin.ModelAdmin):
 
 class DivisionInline(admin.TabularInline):
     model = EventLink
-    extra = 3
-    readonly_fields = ('division',)
+    extra = 1
 
 
 class PersonAdmin(admin.ModelAdmin):

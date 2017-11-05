@@ -5,17 +5,108 @@
 {% endblock %}
 
 
+{% block stylesheets %}
+  {{ block.super }}
+  <style>
+  /* Tooltip container */
+  .tooltip {
+      position: relative;
+      display: inline-block;
+/*      border-bottom: 1px dotted black; /* If you want dots under the hoverable text */
+  }
+
+  /* Tooltip text */
+  .tooltip .tooltiptext {
+      visibility: hidden;
+      top: -5px;
+      left: 120%;
+      width: 300px;
+      background-color: black;
+      color: #fff;
+      text-align: center;
+      padding: 5px 0;
+      border-radius: 6px;
+      opacity: 0;
+      transition: opacity 1s;
+ 
+      /* Position the tooltip text - see examples below! */
+      position: absolute;
+      z-index: 1;
+  }
+  
+  .tooltip .tooltiptext::after {
+    content: " ";
+    position: absolute;
+    top: 50%;
+    right: 100%; /* To the left of the tooltip */
+    margin-top: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent black transparent transparent;
+  }
+
+  /* Show the tooltip text when you mouse over the tooltip container */
+  .tooltip:hover .tooltiptext {
+      visibility: visible;
+      opacity: .75;
+  }
+  </style>
+{% endblock %}
+
+
 {% block content %}
 <h1>Registered participants</h1>
 
-<p><a href="{% url 'registration:create' %}">Register</a></p>
+<p>
+  <form action="{% url 'registration:index' %}" method="get" style="display: inline">
+    {{ form }}
+    <button>Filter</button>
+  </form>
+  {% if form.has_changed %}
+    <form action="{% url 'registration:index' %}" method="get" style="display: inline">
+      <button>Clear</button>
+    </form>
+  {% endif %}
+</p>
 
-<ul>
-  {% for p in object_list %}
-      <li><a href="{% url 'registration:detail' p.id %}">{{ p.full_name }}</a></li>
-  {% empty %}
-      <li>No registrations yet.</li>
-  {% endfor %}
-</ul>
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Age</th>
+      <th>Rank</th>
+      <th>Instructor</th>
+      <th>Events</th>
+      <th>Paid</th>
+      <th>Checked in</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in object_list %}
+      <tr>
+        <td><a href="{% url 'registration:detail' p.id %}">{{ p.full_name }}</a> {{ p.namea }}</td>
+        <td>{{ p.age }}</td>
+        <td>{{ p.rank }}</td>
+        <td>{{ p.instructor }}</td>
+        <td>
+          {% for e in p.eventlink_set.all %}
+            {% if e.division.id %}
+              <a href="{% url 'registration:division-detail' e.division.id %}" class="tooltip">{{ e.event }}<span class="tooltiptext">{{ e.division }}</span></a>{% if not forloop.last %}, {% endif %}
+            {% else %}
+              {{ e.event }}{% if not forloop.last %}, {% endif %}
+            {% endif %}
+          {% endfor %}
+        </td>
+        <td>{{ p.paid |yesno }}</td>
+        <td><button>checked in?</button></td>
+      </tr>
+    {% empty %}
+      <tr>
+        <td colspan="7">No matching registrations.</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
 
 {% endblock %}

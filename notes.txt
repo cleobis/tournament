@@ -10,6 +10,7 @@ NEED TO DEAL WITH TIES IN KUMITE ROUND ROBIN
 Layout
 Check-in workflow
 Security permissions
+black belt numeric suffixes
 
 
 Make venv:

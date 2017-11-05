@@ -3,6 +3,8 @@ from django.http.response import HttpResponseRedirect, HttpResponseForbidden
 from django.shortcuts import render
 from django.core.urlresolvers import reverse_lazy, reverse
 from django.core.exceptions import PermissionDenied
+from django.db.models import F, Q, Value
+from django.db.models.functions import Concat
 
 from django.views import generic
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, ModelFormMixin
@@ -11,15 +13,60 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST
 
 from .models import Person, Rank, EventLink, Division
-from .forms import PersonForm, ManualEventLinkForm
+from .forms import PersonForm, ManualEventLinkForm, PersonFilterForm
 
 # Create your views here.
 def index(request):
     return HttpResponse("Hello, world. You're at the index.")
 
 
-class IndexView(generic.ListView):
+class IndexView(generic.ListView, generic.edit.FormMixin):
     model = Person
+    form_class = PersonFilterForm
+    
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.form = None
+    
+    
+    def get_form_kwargs(self):
+        
+        kwargs = {
+            'initial': self.get_initial(),
+            'prefix': self.get_prefix(),
+        }
+        if self.request.method in ('POST', 'PUT'):
+            kwargs.update({
+                'data': self.request.POST,
+            })
+        elif self.request.method in ('GET', ):
+            kwargs.update({
+                'data': self.request.GET,
+            })
+        return kwargs
+    
+    
+    
+    def get(self, request, *args, **kwargs):
+        self.form = self.get_form()
+        return super().get(request, *args, **kwargs)
+    
+    
+    def get_queryset(self):
+        
+        qs = self.model.objects.all()
+        
+        if self.form.is_valid():
+            if len(self.form.cleaned_data['name']) > 0:
+                qs = qs.annotate(name=Concat(F('first_name'), Value(' '), F('last_name'))
+                    ).filter(name__contains=self.form.cleaned_data['name'])
+            if self.form.cleaned_data['paid'] is not None:
+                qs = qs.filter(paid=self.form.cleaned_data['paid'])
+                
+        return qs
+    
+    
 
 
 class DetailView(generic.DetailView):

@@ -327,6 +327,10 @@ class EventLink(models.Model):
     division = models.ForeignKey(Division, on_delete=models.SET_NULL, blank=True, null=True)
     
     
+    class Meta:
+        ordering = ('event__name',)
+    
+    
     def __str__(self):
         div = self.division.event.name if self.division is not None else "No division"
         return self.name + " - " + div
