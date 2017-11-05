@@ -5,6 +5,7 @@ from . import views
 app_name = 'registration'
 urlpatterns = [
     url(r'^$', views.IndexView.as_view(), name='index'),
+    url(r'^table/$', views.IndexViewTable.as_view(), name='index-table'),
     url(r'^person/add/$', views.PersonCreate.as_view(), name='create'),
     url(r'^person/(?P<pk>[0-9]+)/$', views.DetailView.as_view(), name='detail'),
     url(r'^person/(?P<pk>[0-9]+)/edit/$', views.PersonUpdate.as_view(), name='update'),

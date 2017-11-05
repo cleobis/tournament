@@ -1,6 +1,8 @@
 {
   "dependencies": {
-    "drag-drop-polyfill": "^2.0.0-rc.0"
+    "drag-drop-polyfill": "^2.0.0-rc.0",
+    "intercooler": "^1.1.2",
+    "jquery": "^3.2.1"
   },
   "name": "tournament",
   "version": "1.0.0",

@@ -3,8 +3,6 @@ from django.http.response import HttpResponseRedirect, HttpResponseForbidden
 from django.shortcuts import render
 from django.core.urlresolvers import reverse_lazy, reverse
 from django.core.exceptions import PermissionDenied
-from django.db.models import F, Q, Value
-from django.db.models.functions import Concat
 
 from django.views import generic
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, ModelFormMixin
@@ -58,16 +56,13 @@ class IndexView(generic.ListView, generic.edit.FormMixin):
         qs = self.model.objects.all()
         
         if self.form.is_valid():
-            if len(self.form.cleaned_data['name']) > 0:
-                qs = qs.annotate(name=Concat(F('first_name'), Value(' '), F('last_name'))
-                    ).filter(name__contains=self.form.cleaned_data['name'])
-            if self.form.cleaned_data['paid'] is not None:
-                qs = qs.filter(paid=self.form.cleaned_data['paid'])
-                
+            qs = self.form.filter(qs)
+        
         return qs
-    
-    
 
+
+class IndexViewTable(IndexView):
+    template_name = "registration/person_list_table.html"
 
 class DetailView(generic.DetailView):
     model = Person

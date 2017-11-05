@@ -5,3 +5,11 @@
 drag-drop-polyfill@^2.0.0-rc.0:
   version "2.0.0-rc.0"
   resolved "https://registry.yarnpkg.com/drag-drop-polyfill/-/drag-drop-polyfill-2.0.0-rc.0.tgz#b38801d5b5f78e95fc8bd5b0652650d9bc0d40b8"
+
+intercooler@^1.1.2:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/intercooler/-/intercooler-1.1.2.tgz#31256de240909d1fa9c52e0e7b9401c2f0387073"
+
+jquery@^3.2.1:
+  version "3.2.1"
+  resolved "https://registry.yarnpkg.com/jquery/-/jquery-3.2.1.tgz#5c4d9de652af6cd0a770154a631bba12b015c787"

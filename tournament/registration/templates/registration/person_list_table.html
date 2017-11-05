@@ -1,0 +1,36 @@
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Age</th>
+      <th>Rank</th>
+      <th>Instructor</th>
+      <th>Events</th>
+      <th>Paid</th>
+      <th>Checked in</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in object_list %}
+      <tr>
+        <td><a href="{% url 'registration:detail' p.id %}">{{ p.full_name }}</a> {{ p.namea }}</td>
+        <td>{{ p.age }}</td>
+        <td>{{ p.rank }}</td>
+        <td>{{ p.instructor }}</td>
+        <td>
+          {% for e in p.eventlink_set.all %}
+            {% if e.division.id %}
+              <a href="{% url 'registration:division-detail' e.division.id %}" class="tooltip">{{ e.event }}<span class="tooltiptext">{{ e.division }}</span></a>{% if not forloop.last %}, {% endif %}
+            {% else %}
+              {{ e.event }}{% if not forloop.last %}, {% endif %}
+            {% endif %}
+          {% endfor %}
+        </td>
+        <td>{{ p.paid |yesno }}</td>
+        <td><button>checked in?</button></td>
+      </tr>
+    {% empty %}
+      <tr>
+        <td colspan="7">No matching registrations.</td>
+      </tr>
+    {% endfor %}
+  </tbody>
