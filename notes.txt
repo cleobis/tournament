@@ -1,13 +1,11 @@
 Next steps:
-Choose first round kumite matches - Done. Just need tests
 
 Run on laptop
+Rework kumite match display
 Freeze run divisions
 Force registered people to be in a particular division
 Round nomenclature
-Kumite 2 - are ties allowed?
 NEED TO DEAL WITH TIES IN KUMITE ROUND ROBIN
-Layout
 Check-in workflow
 Security permissions
 black belt numeric suffixes

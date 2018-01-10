@@ -2,16 +2,22 @@
 <table>
   <thead>
     <tr>
-      <td>Name</td>
-      <td>Age</td>
-      <td>Gender</td>
-      <td>Rank</td>
+      <th>Name</th>
+      {% if show_event %}
+        <th>Event</th>
+      {% endif %}
+      <th>Age</th>
+      <th>Gender</th>
+      <th>Rank</th>
     </tr>
   </thead>
   <tbody>
     {% for el in people %}
     <tr>
-      <td>{{ el.name }}</td>
+      <td><a href="{% url 'registration:detail' el.person.id %}">{{ el.person.last_name }}, {{ el.person.first_name }}</a></td>
+      {% if show_event %}
+        <td>{{ el.event }}</td>
+      {% endif %}
       <td>{{ el.person.age }}</td>
       <td>{{ el.person.gender }}</td>
       <td>{{ el.person.rank }}</td>

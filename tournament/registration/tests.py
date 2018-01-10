@@ -161,4 +161,39 @@ class EventLinkTestCase(TestCase):
         self.assertFalse(el.is_manual)
         self.assertEqual(el.name, "asdf qwerty")
         
+
+def create_random_people(n):
+    import names
+    import random
+    
+    kata = Event.objects.get(name='Kata')
+    kumite = Event.objects.get(name='Kumite')
+    
+    def rand_rank():
+        r = random.randint(-9,4)
+        if r >= 0:
+            r += 1 # 0 not allowed
+        return Rank.objects.get(order=r)
+    
+    for i in range(n):
+        p = Person()
+        if random.random() > 0.5:
+            p.first_name = names.get_first_name(gender='male')
+            p.gender = 'M'
+        else:
+            p.first_name = names.get_first_name(gender='female')
+            p.gender = 'F'
+        p.last_name = names.get_last_name()
+        p.paid = random.random() > 0.5
+        p.age = random.randint(6,30)
+        p.rank = rand_rank()
+        p.save()
+        
+        events = random.randint(1,3)
+        if events == 1 or events == 3:
+            el = EventLink(person=p,event=kata)
+            el.save()
+        if events == 2 or events == 3:
+            el = EventLink(person=p,event=kumite)
+            el.save()
         

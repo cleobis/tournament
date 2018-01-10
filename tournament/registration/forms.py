@@ -60,7 +60,8 @@ class PersonFilterForm(forms.Form):
             'ic-indicator':"#indicator",
             'ic-include':'#filter_table',
             }
-        self.fields['name'].widget.attrs.update({'ic-trigger-on':'keyup changed', 'ic-trigger-delay':"250ms"})
+        self.fields['name'].widget.attrs.update({'ic-trigger-on':'keyup', 'ic-trigger-delay':"250ms"})
+        # self.fields['name'].widget.attrs.update({'ic-trigger-on':'keyup changed', 'ic-trigger-delay':"250ms"})
         self.fields['name'].widget.attrs.update(common_attrs)
         self.fields['paid'].widget.attrs.update({'ic-trigger-on':'change'})
         self.fields['paid'].widget.attrs.update(common_attrs)

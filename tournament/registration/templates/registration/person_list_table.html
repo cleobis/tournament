@@ -12,7 +12,7 @@
   <tbody>
     {% for p in object_list %}
       <tr>
-        <td><a href="{% url 'registration:detail' p.id %}">{{ p.full_name }}</a> {{ p.namea }}</td>
+        <td><a href="{% url 'registration:detail' p.id %}">{{ p.last_name }}, {{ p.first_name }}</a></td>
         <td>{{ p.age }}</td>
         <td>{{ p.rank }}</td>
         <td>{{ p.instructor }}</td>

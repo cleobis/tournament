@@ -177,12 +177,16 @@ class Division(models.Model):
         done = ChoiceItem("7")
     state = models.CharField(max_length=1, choices=State.choices, default=State.ready)
     
+    
+    class Meta:
+        ordering = ['start_age', 'start_rank', 'event']
+    
     def __str__(self):
         if self.name:
             return "{} - {}".format(self.event, self.name)
         else:
-            return "{} - Age {}-{}, {}-{}".format(self.event, self.start_age,
-                self.stop_age, self.start_rank.name, self.stop_rank.name)
+            return "{} - Age {}-{}, {}-{}, {}".format(self.event, self.start_age,
+                self.stop_age, self.start_rank.name, self.stop_rank.name, self.get_gender_display())
     
     
     def get_absolute_url(self):
@@ -280,7 +284,7 @@ class Person(models.Model):
     age = models.PositiveSmallIntegerField()
     rank = models.ForeignKey(Rank, on_delete=models.PROTECT)
     instructor = models.CharField(max_length=200)
-    phone_number = PhoneNumberField()
+    phone_number = models.CharField(max_length=200, blank=True)
     # address
     email = models.EmailField(blank=True)
     
@@ -292,6 +296,9 @@ class Person(models.Model):
     
     notes = models.TextField(max_length=512, blank=True)
     
+    
+    class Meta:
+        ordering = ['last_name', 'first_name']
     
     def full_name(self):
         return self.first_name + " " + self.last_name
@@ -354,3 +361,26 @@ class EventLink(models.Model):
     @property
     def name(self):
         return str(self.person) if not self.is_manual else self.manual_name
+
+
+def create_divisions():
+    ages = [6, 9, 14, 18, 31, 100]
+    kata = Event.objects.get(name='Kata')
+    kumite = Event.objects.get(name='Kumite')
+    def ranks():
+        starts = [-9, -6, -4, 1, 11]
+        for i in range(len(starts)-1):
+            r1 = starts[i]
+            r2 = starts[i+1]-1
+            if r2 == 0:
+                r2 -= 1
+            yield (Rank.objects.get(order=r1), Rank.objects.get(order=r2))
+    
+    for ia in range(len(ages)-1):
+        for r1, r2 in ranks():
+            d = Division(event=kata, gender='MF', start_rank=r1, stop_rank=r2, start_age=ages[ia], stop_age=ages[ia+1]-1)
+            d.save()
+            d = Division(event=kumite, gender='M', start_rank=r1, stop_rank=r2, start_age=ages[ia], stop_age=ages[ia+1]-1)
+            d.save()
+            d = Division(event=kumite, gender='F', start_rank=r1, stop_rank=r2, start_age=ages[ia], stop_age=ages[ia+1]-1)
+            d.save()
