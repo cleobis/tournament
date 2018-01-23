@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.core.exceptions import ObjectDoesNotExist
-from .models import Person, Rank, EventLink, Division, Event
+from .models import Person, Rank, EventLink, Division, Event, import_registrations
 
 # Create your tests here.
 class EventTestCase(TestCase):
@@ -56,6 +56,16 @@ class RankTestCase(TestCase):
         
         self.assertJSONEqual(db, filename)
         self.assertJSONEqual(db, fun)
+    
+    
+    def test_parse(self):
+        
+        for r in Rank.objects.all():
+            r2 = Rank.parse(str(r))
+            self.assertEqual(r2,r)
+        
+        with self.assertRaises(ValueError):
+            Rank.parse("asdflaksjdf")
 
 
 class DivisionTestCase(TestCase):
@@ -161,6 +171,96 @@ class EventLinkTestCase(TestCase):
         self.assertFalse(el.is_manual)
         self.assertEqual(el.name, "asdf qwerty")
         
+
+class ImportRegistrationTestCase(TestCase):
+    
+    def test_import_registration(self):
+        import io
+        
+        input = io.StringIO("""Timestamp,First Name,Last Name,Gender,Age,Rank,Instructor,Phone number,Email,Events,Notes,Address,City,Province,Postal Code,Waiver,Email Address,Name of parent or guardian (competitors under 18 years),Address
+1/8/2018 18:46:43,Hunter,Pratt,Male,15,Purple (4th kyu),Francisco Salazar,5196853680,,"Kumite",,40 Woolley Street,Cambridge,Ontario,N1R 5J8,I agree,am_pratt@hotmail.com,Ann Pratt,
+1/10/2018 14:39:21,Sean,Garcia,Male,30,Nidan (2nd dan black belt),Sandy Rooney/ Kim Dunn/ Tom Okura,9058186599,,"Kata, Kumite",,50 Glen Road,Hamilton,ON,L8S4N3,I agree,seansqgarcia@gmail.com,,""", newline='')
+        
+        self.assertEqual(len(Person.objects.all()), 0)
+        
+        Event(name="Kata", format=Event.EventFormat.elim1).save()
+        Event(name="Kumite", format=Event.EventFormat.elim1).save()
+        
+        import_registrations(input)
+        
+        def person2str(p):
+            fields = ('first_name', 'last_name', 'gender', 'age', 'rank', 'instructor', 'phone_number', 'email', 'parent', 'reg_date', 'paid', 'notes', 'eventlink_set')
+            str = ""
+            for f in fields:
+                if f == "eventlink_set":
+                    v = ", ".join(el.event.name for el in p.eventlink_set.all())
+                elif f == "reg_date":
+                    v = p.reg_date.strftime("%Y-%m-%d %H:%M:%S")
+                else:
+                    v = getattr(p, f)
+                str = str + "{} => {}\n".format(f, v)
+            return str
+        
+        people = Person.objects.order_by("reg_date")
+        self.assertEqual(len(people), 2)
+        # self.maxDiff = None
+        self.assertEqual(person2str(people[0]), """first_name => Hunter
+last_name => Pratt
+gender => Male
+age => 15
+rank => Purple (4th kyu)
+instructor => Francisco Salazar
+phone_number => 5196853680
+email => am_pratt@hotmail.com
+parent => Ann Pratt
+reg_date => 2018-01-08 18:46:43
+paid => False
+notes => 
+eventlink_set => Kumite
+""")
+
+        self.assertEqual(person2str(people[1]), """first_name => Sean
+last_name => Garcia
+gender => Male
+age => 30
+rank => Nidan (2nd dan black belt)
+instructor => Sandy Rooney/ Kim Dunn/ Tom Okura
+phone_number => 9058186599
+email => seansqgarcia@gmail.com
+parent => 
+reg_date => 2018-01-10 14:39:21
+paid => False
+notes => 
+eventlink_set => Kata, Kumite
+""")
+
+
+        input = io.StringIO("""Timestamp,First Name,Last Name,Gender,Age,Rank,Instructor,Phone number,Email,Events,Notes,Address,City,Province,Postal Code,Waiver,Email Address,Name of parent or guardian (competitors under 18 years),Address
+1/8/2018 18:46:43,Hunter,Pratt,Male,15,Purple (4th kyu),Francisco Salazar,5196853680,,"Kumite",,40 Woolley Street,Cambridge,Ontario,N1R 5J8,I agree,am_pratt@hotmail.com,Ann Pratt,
+1/10/2018 14:39:21,Sean,Garcia,Male,30,Nidan (2nd dan black belt),Sandy Rooney/ Kim Dunn/ Tom Okura,9058186599,,"Kata, Kumite",,50 Glen Road,Hamilton,ON,L8S4N3,I agree,seansqgarcia@gmail.com,,
+1/11/2018 21:31:54,Charlotte,Robertson,Female,11,Blue (5th kyu),Roney,905 637 8309,,"Kata, Kumite","Hello
+there",683 Demaris Crt.,Burlington,Ontario,L7L 5C9,I agree,cg.robertson06@icloud.com,Gordon Robertson,""", newline='')
+
+        people = Person.objects.order_by("reg_date")
+        import_registrations(input)
+        self.assertEqual(len(people), 3)
+        self.maxDiff = None
+        self.assertEqual(person2str(people[2]), """first_name => Charlotte
+last_name => Robertson
+gender => Female
+age => 11
+rank => Blue (5th kyu)
+instructor => Roney
+phone_number => 905 637 8309
+email => cg.robertson06@icloud.com
+parent => Gordon Robertson
+reg_date => 2018-01-11 21:31:54
+paid => False
+notes => Hello
+there
+eventlink_set => Kata, Kumite
+""")
+# NOTES
 
 def create_random_people(n):
     import names

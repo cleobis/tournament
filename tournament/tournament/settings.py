@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 """
 
 import os
+import datetime
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -47,10 +48,11 @@ INSTALLED_APPS = [
     'django.contrib.admindocs',
     
     'address',
-    'phonenumber_field',
     'betterforms',
-    
+    'constance',
+    'constance.backends.database',
     'django_extensions',
+    'phonenumber_field',
     
     # 'lockdown',
     
@@ -131,7 +133,7 @@ USE_I18N = True
 
 USE_L10N = True
 
-USE_TZ = True
+USE_TZ = False
 
 
 # Update database configuration with $DATABASE_URL.
@@ -150,6 +152,11 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "node_modules"),
 ]
 
+CONSTANCE_BACKEND = 'constance.backends.database.DatabaseBackend'
+CONSTANCE_CONFIG = {
+    'SIGNUP_IMPORT_LAST_TSTAMP': (datetime.datetime.min,
+        'Registration date of last person from registration date import. Used to prevent duplicate imports'),
+}
 
 # Phone numbers
 PHONENUMBER_DEFAULT_REGION = "CA"

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from datetime import date
+from datetime import datetime
 
 from django.db import models
 from django.core.urlresolvers import reverse
@@ -7,8 +7,9 @@ from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 from django.core.exceptions import ValidationError
 
-from phonenumber_field.modelfields import PhoneNumberField
+from constance import config
 from djchoices import DjangoChoices, ChoiceItem
+from phonenumber_field.modelfields import PhoneNumberField
 
 # Create your models here.
 
@@ -99,6 +100,22 @@ class Rank(models.Model):
     @staticmethod
     def get_kyu(kyu):
         return Rank.objects.get(order=-kyu)
+    
+
+    @staticmethod
+    def parse(s):
+        "Parse a string"
+        import re
+
+        m = re.match('.*(?:\D|^)(\d+)[a-z][a-z] kyu.*', s)
+        if m is not None:
+            return Rank.get_kyu(int(m.group(1)))
+        
+        m = re.match('.*(?:\D|^)(\d+)[a-z][a-z] dan.*', s)
+        if m is not None:
+            return Rank.get_dan(int(m.group(1)))
+        
+        raise ValueError("Invalid rank string \"{}\".".format(s))
     
     
     @staticmethod
@@ -287,10 +304,11 @@ class Person(models.Model):
     phone_number = models.CharField(max_length=200, blank=True)
     # address
     email = models.EmailField(blank=True)
+    parent = models.CharField(max_length=100, blank=True)
     
     events = models.ManyToManyField(Event, through='EventLink', related_name='person2')
     
-    reg_date = models.DateField('Date registered', default = date.today)
+    reg_date = models.DateTimeField('Date registered', default = datetime.now)
     paid = models.BooleanField(default=False)
     paidDate = models.DateField('Date paid', blank=True, null=True)
     
@@ -364,6 +382,7 @@ class EventLink(models.Model):
 
 
 def create_divisions():
+
     ages = [6, 9, 14, 18, 31, 100]
     kata = Event.objects.get(name='Kata')
     kumite = Event.objects.get(name='Kumite')
@@ -384,3 +403,75 @@ def create_divisions():
             d.save()
             d = Division(event=kumite, gender='F', start_rank=r1, stop_rank=r2, start_age=ages[ia], stop_age=ages[ia+1]-1)
             d.save()
+
+
+def import_registrations(f):
+    """Import registration data from Google Forms csv.
+    
+    Usage
+        f = open('my_data.csv', newline='')
+        import_registrations(f)
+    
+    The date of the last registration is cached in the SIGNUP_IMPORT_LAST_TSTAMP 
+    setting to make it safe to repeatedly import the same data without creating
+    duplicate registrations.
+    
+    Input stream should be opened with newline='' or muti-line entries will not be parsed correctly.
+    """
+
+    import csv
+    from collections import namedtuple
+    import datetime
+    
+    R = namedtuple('CsvMap', field_names='name')
+    csv_map = {
+        'tstamp'        : R('Timestamp',),
+        'first_name'    : R('First Name',),
+        'last_name'     : R('Last Name',),
+        'gender'        : R('Gender',), # Male, Female
+        'age'           : R('Age',),
+        'rank'          : R('Rank',),
+        'instructor'    : R('Instructor',),
+        'phone_number'  : R("Phone number",),
+        'email'         : R('Email Address',),
+        'parent'        : R('Name of parent or guardian (competitors under 18 years)'),
+        'events'        : R('Events',),
+        'reg_date'      : R('Timestamp',),
+        #paid = models.BooleanField(default=False)
+        #paidDate = models.DateField('Date paid', blank=True, null=True)
+        'notes'         : R('Notes',),
+        }
+        #'City': 'Cambridge'
+        #'Name of parent or guardian (competitors under 18 years)': 'Ann Pratt'
+        #'Address': '', 'Postal Code': 'N1R 5J8'
+        #'Province': 'Ontario', 'Email': '', 'Rank': 'Purple (4th kyu)'
+
+    c = csv.DictReader(f)
+    
+    t_min = config.SIGNUP_IMPORT_LAST_TSTAMP
+    t_max = t_min
+    for row in c:
+        tstamp = datetime.datetime.strptime(row[csv_map['tstamp'].name], '%m/%d/%Y %H:%M:%S')
+        if tstamp <= t_min:
+            continue
+        t_max = max(t_max, tstamp)
+        p = Person()
+        events = []
+        for (field,field_info) in csv_map.items():
+            v = row[field_info.name]
+            if field == 'rank':
+                v = Rank.parse(v)
+            elif field == 'events':
+                events = [Event.objects.get(name=e) for e in v.split(", ")]
+                continue
+            elif field == 'reg_date':
+                v = tstamp
+            else:
+                pass
+            setattr(p, field, v)
+        
+        p.save()
+        for e in events:
+            el = EventLink(person=p,event=e)
+            el.save()
+    config.SIGNUP_IMPORT_LAST_TSTAMP = t_max
