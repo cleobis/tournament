@@ -75,7 +75,7 @@ class DivisionTestCase(TestCase):
         e.save()
         
         # Create some divisions
-        white = Rank.get_kyu(8)
+        white = Rank.get_kyu(9)
         brown = Rank.get_kyu(1)
         bb1 = Rank.get_dan(1)
         bb9 = Rank.get_dan(9)
@@ -88,8 +88,11 @@ class DivisionTestCase(TestCase):
         Division(event=e, gender='F', start_age=1,  stop_age = 18, start_rank=  bb1, stop_rank=  bb9).save()
         # Create this later: Division(event=e, gender='F', start_age=19, stop_age = 99, start_rank=  bb1, stop_rank=  bb9).save()
         
+        def get_divs():
+            return Division.objects.filter(event=e).order_by() # Clear sorting so the above order is retained
+        
         def div_summary():
-            return ([[el.name for el in d.eventlink_set.all()] for d in Division.objects.filter(event=e)],
+            return ([[el.name for el in d.eventlink_set.all()] for d in get_divs()],
                 [el.name for el in e.get_orphan_links()])
         
         self.assertEqual(div_summary(), ([[], [], [], [], [], [], []], []))
@@ -130,7 +133,7 @@ class DivisionTestCase(TestCase):
         self.assertEqual(div_summary(), ([["a a"], ["b b"], ["c c"], ["d d"], ["e e"], ["f f"], ["g g"]], ["h h"]))
         
         # Create a manual EventLink
-        EventLink(event=e, division=Division.objects.filter(event=e)[1], manual_name="m").save()
+        EventLink(event=e, division=get_divs()[1], manual_name="m").save()
         self.assertEqual(div_summary(), ([["a a"], ["b b", "m"], ["c c"], ["d d"], ["e e"], ["f f"], ["g g"]], ["h h"]))
         
         # Create a Division after Person
@@ -138,15 +141,15 @@ class DivisionTestCase(TestCase):
         self.assertEqual(div_summary(), ([["a a"], ["b b", "m"], ["c c"], ["d d"], ["e e"], ["f f"], ["g g"], ["h h"]], []))
         
         # Delete a division
-        Division.objects.filter(event=e)[7].delete()
+        get_divs()[7].delete()
         self.assertEqual(div_summary(), ([["a a"], ["b b", "m"], ["c c"], ["d d"], ["e e"], ["f f"], ["g g"]], ["h h"]))
         
         # Delete a division as part of a merge. Manually added "m" will be dropped.
-        d = Division.objects.filter(event=e)[1].delete()
+        d = get_divs()[1].delete()
         self.assertEqual(div_summary(), ([["a a"], ["c c"], ["d d"], ["e e"], ["f f"], ["g g"]], ["b b", "h h"]))
         
         # Expand a division as part of a merge
-        d = Division.objects.filter(event=e)[2]
+        d = get_divs()[2]
         d.gender = 'MF'
         d.save()
         self.assertEqual(div_summary(), ([["a a"], ["c c"], ["b b", "d d"], ["e e"], ["f f"], ["g g"]], ["h h"]))
