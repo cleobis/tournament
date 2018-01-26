@@ -11,7 +11,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST
 
 from .models import Person, Rank, EventLink, Division
-from .forms import PersonForm, ManualEventLinkForm, PersonFilterForm
+from .forms import PersonForm, ManualEventLinkForm, PersonFilterForm, PersonCheckinForm, PersonPaidForm
 
 # Create your views here.
 def index(request):
@@ -64,6 +64,12 @@ class IndexView(generic.ListView, generic.edit.FormMixin):
 class IndexViewTable(IndexView):
     template_name = "registration/person_list_table.html"
 
+
+class IndexViewTableRow(generic.DetailView):
+    model = Person
+    template_name = "registration/person_list_table_row.html"
+
+
 class DetailView(generic.DetailView):
     model = Person
 
@@ -99,8 +105,42 @@ class PersonUpdate(UpdateView):
 class PersonDelete(DeleteView):
     model = Person
     success_url = reverse_lazy('registration:index')
+
+
+class PersonCheckin(UpdateView):
+    model = Person
+    form_class = PersonCheckinForm
+    inline = False
     
+    def dispatch(self, request, *args, **kwargs):
+        if "inline" in request.GET:
+            self.inline = True
+        return super().dispatch(request, *args, **kwargs)
     
+    def get_success_url(self):
+        if self.inline:
+            return reverse('registration:index-table-row', args=[self.object.pk,])
+        else:
+            return reverse('registration:index')
+
+
+class PersonPaid(UpdateView):
+    model = Person
+    form_class = PersonPaidForm
+    inline = False
+    
+    def dispatch(self, request, *args, **kwargs):
+        if "inline" in request.GET:
+            self.inline = True
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_success_url(self):
+        if self.inline:
+            return reverse('registration:index-table-row', args=[self.object.pk,])
+        else:
+            return reverse('registration:index')
+
+
 class DivisionList(generic.ListView):
     model = Division
     orderby = ('event', 'start_age', 'start_rank__order',)

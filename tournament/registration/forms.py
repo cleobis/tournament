@@ -10,10 +10,22 @@ from .models import Person, Rank, EventLink
 class PersonForm(forms.ModelForm):
     class Meta:
         model = Person
-        fields = ['first_name', 'last_name', 'gender', 'age', 'rank', 'instructor', 'phone_number', 'email', 'parent', 'paid', 'events', 'notes']
+        fields = ['first_name', 'last_name', 'gender', 'age', 'rank', 'instructor', 'phone_number', 'email', 'parent', 'confirmed', 'paid', 'events', 'notes']
         widgets = {
             'events': forms.CheckboxSelectMultiple(),
         }
+
+
+class PersonCheckinForm(forms.ModelForm):
+    class Meta:
+        model = Person
+        fields = ['confirmed']
+
+
+class PersonPaidForm(forms.ModelForm):
+    class Meta:
+        model = Person
+        fields = ['paid']
 
 
 class ManualEventLinkForm(forms.ModelForm):
@@ -48,6 +60,8 @@ class ManualEventLinkForm(forms.ModelForm):
 
 class PersonFilterForm(forms.Form):
     name = forms.CharField(required=False)
+    confirmed = forms.TypedChoiceField(required=False, choices=((None, 'Any'), (True, 'Yes'), (False, 'No'),), 
+        coerce=lambda x: True if x == 'True' else False if x == 'False' else None, empty_value=None)
     paid = forms.TypedChoiceField(required=False, choices=((None, 'Any'), (True, 'Yes'), (False, 'No'),), 
         coerce=lambda x: True if x == 'True' else False if x == 'False' else None, empty_value=None)
     
@@ -63,6 +77,8 @@ class PersonFilterForm(forms.Form):
         self.fields['name'].widget.attrs.update({'ic-trigger-on':'keyup', 'ic-trigger-delay':"250ms"})
         # self.fields['name'].widget.attrs.update({'ic-trigger-on':'keyup changed', 'ic-trigger-delay':"250ms"})
         self.fields['name'].widget.attrs.update(common_attrs)
+        self.fields['confirmed'].widget.attrs.update({'ic-trigger-on':'change'})
+        self.fields['confirmed'].widget.attrs.update(common_attrs)
         self.fields['paid'].widget.attrs.update({'ic-trigger-on':'change'})
         self.fields['paid'].widget.attrs.update(common_attrs)
     
@@ -71,6 +87,8 @@ class PersonFilterForm(forms.Form):
         if len(self.cleaned_data['name']) > 0:
             qs = qs.annotate(name=Concat(F('first_name'), Value(' '), F('last_name'))
                 ).filter(name__contains=self.cleaned_data['name'])
+        if self.cleaned_data['confirmed'] is not None:
+            qs = qs.filter(confirmed=self.cleaned_data['confirmed'])
         if self.cleaned_data['paid'] is not None:
             qs = qs.filter(paid=self.cleaned_data['paid'])
         return qs

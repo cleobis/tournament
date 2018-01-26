@@ -18,7 +18,8 @@
   <li>Phone number: {{ person.phone_number }}</li>
   <li>Email: {{ person.email|urlize }}</li>
   <li>Registration date: {{ person.reg_date|date }}</li>
-  <li>Paid: {{ person.paid|yesno }}</li>
+  <li>Checked in: {{ person.confirmed |yesno |capfirst }}</li>
+  <li>Paid: {{ person.paid |yesno |capfirst }}</li>
   <li>Date paid: {{ person.paidDate }}</li>
   <li>Events:</li>
   <ul>

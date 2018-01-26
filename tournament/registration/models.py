@@ -311,6 +311,7 @@ class Person(models.Model):
     reg_date = models.DateTimeField('Date registered', default = datetime.now)
     paid = models.BooleanField(default=False)
     paidDate = models.DateField('Date paid', blank=True, null=True)
+    confirmed = models.BooleanField('Checked in', default=False)
     
     notes = models.TextField(max_length=512, blank=True)
     

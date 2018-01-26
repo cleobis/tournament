@@ -1,0 +1,36 @@
+<td><a href="{% url 'registration:detail' object.id %}">{{ object.last_name }}, {{ object.first_name }}</a></td>
+<td>{{ object.age }}</td>
+<td>{{ object.rank }}</td>
+<td>{{ object.instructor }}</td>
+<td>
+  {% for e in object.eventlink_set.all %}
+    {% if e.division.id %}
+      <a href="{% url 'registration:division-detail' e.division.id %}" class="tooltip">{{ e.event }}<span class="tooltiptext">{{ e.division }}</span></a>{% if not forlooobject.last %}, {% endif %}
+    {% else %}
+      {{ e.event }}{% if not forlooobject.last %}, {% endif %}
+    {% endif %}
+  {% endfor %}
+</td>
+<td>
+  {% if object.paid %}
+    Yes
+  {% else %}
+    <form action="{% url 'registration:person-paid' object.pk %}" method="post" ic-target="closest tr" ic-post-to="{% url 'registration:person-paid' object.pk %}?inline" ic-indicator="#indicator">
+      {% csrf_token %}
+      <input type="hidden" name="paid" value="True">
+      <button>Paid</button>
+    </form>
+  {% endif %}
+</td>
+<td>
+  {% if object.confirmed %}
+    Yes
+  {% else %}
+    <form action="{% url 'registration:person-checkin' object.pk %}" method="post" ic-target="closest tr" ic-post-to="{% url 'registration:person-checkin' object.pk %}?inline" ic-indicator="#indicator">
+      {{ request }}
+      {% csrf_token %}
+      <input type="hidden" name="confirmed" value="True">
+      <button>Check in</button>
+    </form>
+  {% endif %}
+</td>
