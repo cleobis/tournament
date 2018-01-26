@@ -456,9 +456,12 @@ def import_registrations(f):
     
     t_min = config.SIGNUP_IMPORT_LAST_TSTAMP
     t_max = t_min
+    added = 0
+    skipped = 0
     for row in c:
         tstamp = datetime.datetime.strptime(row[csv_map['tstamp'].name], '%m/%d/%Y %H:%M:%S')
         if tstamp <= t_min:
+            skipped += 1
             continue
         t_max = max(t_max, tstamp)
         p = Person()
@@ -472,12 +475,24 @@ def import_registrations(f):
                 continue
             elif field == 'reg_date':
                 v = tstamp
+            elif field == 'gender':
+                if v == 'Male':
+                    v = 'M'
+                elif v == 'Female':
+                    v = 'F'
+                else:
+                    raise ValueError("Unexpected gender {} for {} {}.".format(v, row[csv_map['first_name'].name], row[csv_map['last_name'].name]))
             else:
                 pass
             setattr(p, field, v)
         
+        p.full_clean()
         p.save()
         for e in events:
             el = EventLink(person=p,event=e)
+            el.update_division()
             el.save()
+        added += 1
     config.SIGNUP_IMPORT_LAST_TSTAMP = t_max
+    
+    return {"added": added, "skipped": skipped}

@@ -214,10 +214,20 @@ class ImportRegistrationTestCase(TestCase):
         
         self.assertEqual(len(Person.objects.all()), 0)
         
-        Event(name="Kata", format=Event.EventFormat.elim1).save()
-        Event(name="Kumite", format=Event.EventFormat.elim1).save()
+        kata = Event(name="Kata", format=Event.EventFormat.elim1)
+        kata.save()
+        kumite = Event(name="Kumite", format=Event.EventFormat.elim1)
+        kumite.save()
+        white = Rank.get_kyu(9)
+        bb9 = Rank.get_dan(9)
+        d_kata   = Division(event=kata,   gender='MF', start_age=1,  stop_age = 99, start_rank=white, stop_rank=bb9)
+        d_kata.save()
+        d_kumite = Division(event=kumite, gender='M',  start_age=1,  stop_age = 99, start_rank=white, stop_rank=bb9)
+        d_kumite.save()
+        # No female kumite: Division(event=kumite, gender='F',  start_age=1,  stop_age = 99, start_rank=white, stop_rank=bb9).save()
         
-        import_registrations(input)
+        stats = import_registrations(input)
+        self.assertEqual(stats, {"added": 2, "skipped": 0})
         
         def person2str(p):
             fields = ('first_name', 'last_name', 'gender', 'age', 'rank', 'instructor', 'phone_number', 'email', 'parent', 'reg_date', 'paid', 'notes', 'eventlink_set')
@@ -237,7 +247,7 @@ class ImportRegistrationTestCase(TestCase):
         # self.maxDiff = None
         self.assertEqual(person2str(people[0]), """first_name => Hunter
 last_name => Pratt
-gender => Male
+gender => M
 age => 15
 rank => Purple (4th kyu)
 instructor => Francisco Salazar
@@ -249,10 +259,11 @@ paid => False
 notes => 
 eventlink_set => Kumite
 """)
+        self.assertEqual(people[0].eventlink_set.get(event=kumite).division, d_kumite) # length checked with person2str()
 
         self.assertEqual(person2str(people[1]), """first_name => Sean
 last_name => Garcia
-gender => Male
+gender => M
 age => 30
 rank => Nidan (2nd dan black belt)
 instructor => Sandy Rooney/ Kim Dunn/ Tom Okura
@@ -264,7 +275,8 @@ paid => False
 notes => 
 eventlink_set => Kata, Kumite
 """)
-
+        self.assertEqual(people[1].eventlink_set.get(event=kumite).division, d_kumite) # length checked with
+        self.assertEqual(people[1].eventlink_set.get(event=kata).division, d_kata)
 
         input = io.StringIO("""Timestamp,First Name,Last Name,Gender,Age,Rank,Instructor,Phone number,Email,Events,Notes,Address,City,Province,Postal Code,Waiver,Email Address,Name of parent or guardian (competitors under 18 years),Address
 1/8/2018 18:46:43,Hunter,Pratt,Male,15,Purple (4th kyu),Francisco Salazar,5196853680,,"Kumite",,40 Woolley Street,Cambridge,Ontario,N1R 5J8,I agree,am_pratt@hotmail.com,Ann Pratt,
@@ -273,12 +285,14 @@ eventlink_set => Kata, Kumite
 there",683 Demaris Crt.,Burlington,Ontario,L7L 5C9,I agree,cg.robertson06@icloud.com,Gordon Robertson,""", newline='')
 
         people = Person.objects.order_by("reg_date")
-        import_registrations(input)
+        stats = import_registrations(input)
+        self.assertEqual(stats, {"added": 1, "skipped": 2})
+        
         self.assertEqual(len(people), 3)
         self.maxDiff = None
         self.assertEqual(person2str(people[2]), """first_name => Charlotte
 last_name => Robertson
-gender => Female
+gender => F
 age => 11
 rank => Blue (5th kyu)
 instructor => Roney
@@ -291,6 +305,8 @@ notes => Hello
 there
 eventlink_set => Kata, Kumite
 """)
+        self.assertEqual(people[2].eventlink_set.get(event=kata).division, d_kata)
+        self.assertEqual(people[2].eventlink_set.get(event=kumite).division, None)
 
 
 def create_random_people(n):
