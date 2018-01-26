@@ -304,7 +304,7 @@ class Person(models.Model):
     phone_number = models.CharField(max_length=200, blank=True)
     # address
     email = models.EmailField(blank=True)
-    parent = models.CharField(max_length=100, blank=True)
+    parent = models.CharField('Parent or Guardian (if under 18)', max_length=100, blank=True)
     
     events = models.ManyToManyField(Event, through='EventLink', related_name='person2')
     
@@ -327,6 +327,12 @@ class Person(models.Model):
     
     def get_absolute_url(self):
         return reverse('registration:detail', kwargs={'pk': self.pk})
+    
+    
+    def clean(self):
+        if self.age < 18 and len(self.parent) == 0:
+            raise ValidationError("Parent or guardian required if under 18.")
+    
     
     def save(self, *args, **kwargs):
         super(Person, self).save(*args, **kwargs)

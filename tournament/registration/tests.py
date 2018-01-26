@@ -1,5 +1,5 @@
 from django.test import TestCase
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from .models import Person, Rank, EventLink, Division, Event, import_registrations
 
 # Create your tests here.
@@ -9,7 +9,6 @@ class EventTestCase(TestCase):
         from kumite.models import KumiteElim1Bracket
         e = Event(name="asfd", format=Event.EventFormat.elim1)
         self.assertEqual(e.get_format_class(10), KumiteElim1Bracket)
-
 
 
 class RankTestCase(TestCase):
@@ -154,6 +153,35 @@ class DivisionTestCase(TestCase):
         d.save()
         self.assertEqual(div_summary(), ([["a a"], ["c c"], ["b b", "d d"], ["e e"], ["f f"], ["g g"]], ["h h"]))
 
+class PersonTestCase(TestCase):
+    
+    def test_required_parent(self):
+        p = Person(first_name="asdf", last_name="qwerty", gender='M', age=10,
+            rank=Rank.objects.get(order=1), instructor="Mr. Instructor")
+        with self.assertRaises(ValidationError):
+            p.full_clean()
+        
+        p.age = 10
+        p.parent = "asdf"
+        p.full_clean() # okay
+        
+        p.age = 17
+        p.parent = "asdf"
+        p.full_clean() # okay
+        
+        p.age = 17
+        p.parent = ""
+        with self.assertRaises(ValidationError):
+            p.full_clean()
+        
+        p.age = 18
+        p.parent = ""
+        p.full_clean() # okay
+        
+        p.age = 18
+        p.parent = "asdf"
+        p.full_clean() # okay
+
 
 class EventLinkTestCase(TestCase):
     
@@ -263,7 +291,7 @@ notes => Hello
 there
 eventlink_set => Kata, Kumite
 """)
-# NOTES
+
 
 def create_random_people(n):
     import names
