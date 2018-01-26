@@ -17,7 +17,7 @@ def validate_score(score):
 
 
 class KataMatch(models.Model):
-    eventlink = models.ForeignKey(EventLink)
+    eventlink = models.ForeignKey(EventLink, on_delete=models.PROTECT)
     round = models.ForeignKey('KataRound', on_delete=models.CASCADE)
     done = models.BooleanField(default=False)
     score1 = models.FloatField(validators=(validate_score,), blank=True, null=True)
