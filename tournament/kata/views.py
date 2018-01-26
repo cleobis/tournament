@@ -8,49 +8,10 @@ from django.views.decorators.http import require_POST
 
 from registration.models import EventLink
 
-from .models import Scoring
-from .forms import ScoringForm
-
 from .models import KataBracket, KataRound, KataMatch
 from .forms import KataMatchForm, KataBracketAddPersonForm
 
 # Create your views here.
-
-class KataScoreList(generic.ListView):
-    model = Scoring
-
-class KataScoreListWithAdd(CreateView):
-    template_name = "kata/scoring_list.html"
-    form_class = ScoringForm
-    success_url = reverse_lazy('list')
-
-    def get_context_data(self, **kwargs):
-        context = super(KataScoreListWithAdd, self).get_context_data(**kwargs)
-        context["scores"] = self.get_queryset()
-        return context
-
-    def get_queryset(self):
-        return Scoring.objects.all()#
-
-    def form_valid(self, form):
-        self.object = form.save()
-        return super(KataScoreListWithAdd, self).form_valid(form)
-
-class KataScoreListModifyInline(UpdateView):
-    model = Scoring
-    template_name = "kata/scoring_list_update_inline.html"
-    form_class = ScoringForm
-    
-    def get_success_url(self):
-        return '/kata_score/list/inline/{}/'.format(self.object.id)
-    
-class KataScoreListDisplayInline(generic.DetailView):
-    model = Scoring
-    template_name = "kata/scoring_list_display_inline.html"
-    
-    
-# class KataBracketList(generic.ListView):
-#     model = KataBracket
 
 class KataBracketDetails(generic.DetailView):
     model = KataBracket

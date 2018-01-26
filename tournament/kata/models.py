@@ -15,59 +15,6 @@ def validate_score(score):
     if round(score,1) != score:
         raise ValidationError('Maximum 1 decimal place.')
 
-class Scoring(models.Model):
-    name = models.CharField(max_length=200)
-    score1 = models.FloatField(validators=(validate_score,))
-    score2 = models.FloatField(validators=(validate_score,))
-    score3 = models.FloatField(validators=(validate_score,))
-    score4 = models.FloatField(validators=(validate_score,))
-    score5 = models.FloatField(validators=(validate_score,))
-    combined_score = models.FloatField(editable=False) # Will be populated by save()
-    tie_score = models.FloatField(editable=False) # Will be populated by save()
-    
-    class Meta:
-        ordering = ['-combined_score', '-tie_score']
-    
-    def get_score(self, i):
-        return getattr(self, "score" + str(i))
-    
-    def get_scores(self):
-        return (self.score1, self.score2, self.score3, self.score4, self.score5)
-    
-    def calc_combined_score(self):
-        scores = self.get_scores()
-        return (sum(scores) - max(scores) - min(scores)) / (len(scores) - 2)
-    
-    def calc_tie_score(self):
-        scores = self.get_scores()
-        return sum(scores) / len(scores)
-    
-    def save(self, *args, **kwargs):
-        self.combined_score = self.calc_combined_score()
-        self.tie_score = self.calc_tie_score()
-        super(Scoring, self).save(*args, **kwargs)
-    
-    def diff(self, other):
-        d = self.combined_score - other.combined_score
-        if d == 0:
-            d = self.tie_score - other.tie_score
-        return d
-    
-    def __eq__(self, other):
-        return self.diff(other) == 0
-    
-    def __lt__(self, other):
-        return self.diff(other) < 0
-    
-    def __le__(self, other):
-        return self.diff(other) <= 0
-    
-    def __gt__(self, other):
-        return self.diff(other) > 0
-    
-    def __ge__(self, other):
-        return self.diff(other) >= 0
-
 
 class KataMatch(models.Model):
     eventlink = models.ForeignKey(EventLink)
@@ -115,25 +62,52 @@ class KataMatch(models.Model):
     
     
     def diff(self, other):
-        d = self.combined_score - other.combined_score
-        if d == 0:
-            d = self.tie_score - other.tie_score
-        return d
+        try:
+            if self.combined_score is not None and other.combined_score is not None:
+                d = self.combined_score - other.combined_score
+                if d == 0:
+                    d = self.tie_score - other.tie_score
+                return d
+            elif self.combined_score is     None and other.combined_score is not None:
+                d = -1
+            elif self.combined_score is not None and other.combined_score is     None:
+                d = 1
+            else: # both none
+                d = 0
+            return d
+        except AttributeError:
+            return NotImplemented
     
     def __eq__(self, other):
-        return self.diff(other) == 0
+        return self.diff(other) == 0 # works with NotImplemented
     
     def __lt__(self, other):
-        return self.diff(other) < 0
+        d = self.diff(other)
+        if d == NotImplemented:
+            return NotImplemented
+        else:
+            return d < 0
     
     def __le__(self, other):
-        return self.diff(other) <= 0
+        d = self.diff(other)
+        if d == NotImplemented:
+            return NotImplemented
+        else:
+            return d <= 0
     
     def __gt__(self, other):
-        return self.diff(other) > 0
+        d = self.diff(other)
+        if d == NotImplemented:
+            return NotImplemented
+        else:
+            return d > 0
     
     def __ge__(self, other):
-        return self.diff(other) >= 0
+        d = self.diff(other)
+        if d == NotImplemented:
+            return NotImplemented
+        else:
+            return d >= 0
     
 
 class KataRound(models.Model):

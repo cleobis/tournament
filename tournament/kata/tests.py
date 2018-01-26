@@ -326,4 +326,77 @@ class TestKataBracket(TestCase):
             (3, get_person(b, "d"))])
         
         self.assertEqual(b.get_next_match(), None)
+
+
+class TestKataMatch(TestCase):
+    
+    def test_cmp(self):
+        """Test that comparisson works properly."""
+        b = make_bracket(2)
+        r = b.kataround_set.get()
+        m1 = r.katamatch_set.all()[0]
+        m2 = r.katamatch_set.all()[1]
+        
+        # Comparisson with other object types
+        self.assertFalse(m1 == 1)
+        with self.assertRaises(TypeError):
+            m1 >= 1
+        with self.assertRaises(TypeError):
+            m1 <= 1
+        with self.assertRaises(TypeError):
+            m1 < 1
+        with self.assertRaises(TypeError):
+            m1 < 1
+        self.assertFalse(1 == m1)
+        with self.assertRaises(TypeError):
+            1 >= m2
+        with self.assertRaises(TypeError):
+            1 <= m2
+        with self.assertRaises(TypeError):
+            1 < m2
+        with self.assertRaises(TypeError):
+            1 < m2
+        
+        # Both not set
+        self.assertTrue(m1 == m2)
+        self.assertTrue(m1 >= m2)
+        self.assertTrue(m1 <= m2)
+        self.assertFalse(m1 > m2)
+        self.assertFalse(m1 < m2)
+        
+        # One set
+        m1.scores = (5, 6, 7, 8, 9)
+        m1.save()
+        self.assertFalse(m1 == m2)
+        self.assertTrue(m1 >= m2)
+        self.assertFalse(m1 <= m2)
+        self.assertTrue(m1 > m2)
+        self.assertFalse(m1 < m2)
+        
+        # Two set, clear winner m2
+        m2.scores = (5, 6, 8, 8, 9)
+        m2.save()
+        self.assertFalse(m1 == m2)
+        self.assertFalse(m1 >= m2)
+        self.assertTrue(m1 <= m2)
+        self.assertFalse(m1 > m2)
+        self.assertTrue(m1 < m2)
+        
+        # Two set, tie winner m1
+        m2.scores = (5, 6, 7, 8, 8)
+        m2.save()
+        self.assertFalse(m1 == m2)
+        self.assertTrue(m1 >= m2)
+        self.assertFalse(m1 <= m2)
+        self.assertTrue(m1 > m2)
+        self.assertFalse(m1 < m2)
+        
+        # Two set, tie
+        m2.scores = (5, 6, 7, 8, 9)
+        m2.save()
+        self.assertTrue(m1 == m2)
+        self.assertTrue(m1 >= m2)
+        self.assertTrue(m1 <= m2)
+        self.assertFalse(m1 > m2)
+        self.assertFalse(m1 < m2)
         

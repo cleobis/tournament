@@ -1,9 +1,0 @@
-    <tr>
-      <td>{{ scoring.name }}</td>
-      {% for i in s.get_scores %}
-      <td>{{ i }}</td>
-      {% endfor %}
-      <td>{{ s.combined_score }}</td>
-      <td>{{ s.tie_score }}</td>
-      <td><button ic-get-from="update_inline/{{ s.id }}/" ic-replace-target="true">Edit</button></td>
-    </tr>

@@ -1,13 +1,7 @@
 from django import forms
 
 from registration.models import EventLink
-from .models import Scoring
 from .models import KataMatch
-
-class ScoringForm(forms.ModelForm):
-    class Meta:
-        model = Scoring
-        fields = ['name', 'score1', 'score2', 'score3', 'score4', 'score5']
 
 
 class KataMatchForm(forms.ModelForm):
