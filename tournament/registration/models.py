@@ -225,7 +225,8 @@ class Division(models.Model):
             person__age__lte=self.stop_age,
             person__rank__order__gte=self.start_rank.order,
             person__rank__order__lte=self.stop_rank.order,
-            event=self.event)
+            event=self.event,
+            locked=False)
         if self.gender == 'MF':
             pass
         elif self.gender in ('M', 'F', ):
@@ -242,7 +243,7 @@ class Division(models.Model):
     
     @staticmethod
     def claim_all():
-        EventLink.objects.filter(person__isnull=False).update(division=None)
+        EventLink.objects.filter(person__isnull=False, locked=False).update(division=None)
         for d in Division.objects.all():
             d.claim()
     
@@ -369,6 +370,7 @@ class EventLink(models.Model):
     manual_name = models.CharField(max_length=100, blank=True)
     event = models.ForeignKey(Event, on_delete=models.PROTECT)
     division = models.ForeignKey(Division, on_delete=models.SET_NULL, blank=True, null=True)
+    locked = models.BooleanField(default=False)
     
     
     class Meta:
@@ -386,7 +388,7 @@ class EventLink(models.Model):
     
     
     def update_division(self):
-        if self.person is not None:
+        if self.person is not None and not self.locked:
             self.division = Division.find_eventlink_division(self)
     
     

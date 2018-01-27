@@ -109,9 +109,9 @@ class DivisionTestCase(TestCase):
         bb1 = Rank.get_dan(1)
         bb9 = Rank.get_dan(9)
         Division(event=e, gender='M', start_age=1,  stop_age = 18, start_rank=white, stop_rank=brown).save()
-        Division(event=e, gender='M', start_age=19, stop_age = 99, start_rank=white, stop_rank=brown).save()
+        Division(event=e, gender='M', start_age=19, stop_age = 99, start_rank=white, stop_rank=brown).save() # <= deleted laster
         Division(event=e, gender='F', start_age=1,  stop_age = 18, start_rank=white, stop_rank=brown).save()
-        Division(event=e, gender='F', start_age=19, stop_age = 99, start_rank=white, stop_rank=brown).save()
+        Division(event=e, gender='F', start_age=19, stop_age = 99, start_rank=white, stop_rank=brown).save() # <= merged with deleted
         Division(event=e, gender='M', start_age=1,  stop_age = 18, start_rank=  bb1, stop_rank=  bb9).save()
         Division(event=e, gender='M', start_age=19, stop_age = 99, start_rank=  bb1, stop_rank=  bb9).save()
         Division(event=e, gender='F', start_age=1,  stop_age = 18, start_rank=  bb1, stop_rank=  bb9).save()
@@ -165,23 +165,36 @@ class DivisionTestCase(TestCase):
         EventLink(event=e, division=get_divs()[1], manual_name="m").save()
         self.assertEqual(div_summary(), ([["a a"], ["b b", "m"], ["c c"], ["d d"], ["e e"], ["f f"], ["g g"]], ["h h"]))
         
+        # Force a person to be in the wrong division
+        p = Person(first_name="o", last_name="d", gender='F', age=25, rank = Rank.get_kyu(5), instructor="asdf")
+        p.save()
+        EventLink(person=p, event=e, division=get_divs()[1], locked=True).save()
+        self.assertEqual(div_summary(), ([["a a"], ["b b", "m", "o d"], ["c c"], ["d d"], ["e e"], ["f f"], ["g g"]], ["h h"]))
+        
+        # Force a person to be in no division
+        p = Person(first_name="o", last_name="n", gender='F', age=25, rank = Rank.get_kyu(5), instructor="asdf")
+        p.save()
+        EventLink(person=p, event=e, division=None, locked=True).save()
+        self.assertEqual(div_summary(), ([["a a"], ["b b", "m", "o d"], ["c c"], ["d d"], ["e e"], ["f f"], ["g g"]], ["h h", "o n"]))
+        
         # Create a Division after Person
         Division(event=e, gender='F', start_age=19, stop_age = 99, start_rank=  bb1, stop_rank=  bb9).save()
-        self.assertEqual(div_summary(), ([["a a"], ["b b", "m"], ["c c"], ["d d"], ["e e"], ["f f"], ["g g"], ["h h"]], []))
+        self.assertEqual(div_summary(), ([["a a"], ["b b", "m", "o d"], ["c c"], ["d d"], ["e e"], ["f f"], ["g g"], ["h h"]], ["o n"]))
         
         # Delete a division
         get_divs()[7].delete()
-        self.assertEqual(div_summary(), ([["a a"], ["b b", "m"], ["c c"], ["d d"], ["e e"], ["f f"], ["g g"]], ["h h"]))
+        self.assertEqual(div_summary(), ([["a a"], ["b b", "m", "o d"], ["c c"], ["d d"], ["e e"], ["f f"], ["g g"]], ["h h", "o n"]))
         
         # Delete a division as part of a merge. Manually added "m" will be dropped.
         d = get_divs()[1].delete()
-        self.assertEqual(div_summary(), ([["a a"], ["c c"], ["d d"], ["e e"], ["f f"], ["g g"]], ["b b", "h h"]))
+        self.assertEqual(div_summary(), ([["a a"], ["c c"], ["d d"], ["e e"], ["f f"], ["g g"]], ["b b", "h h", "o d", "o n"]))
         
         # Expand a division as part of a merge
         d = get_divs()[2]
         d.gender = 'MF'
         d.save()
-        self.assertEqual(div_summary(), ([["a a"], ["c c"], ["b b", "d d"], ["e e"], ["f f"], ["g g"]], ["h h"]))
+        self.assertEqual(div_summary(), ([["a a"], ["c c"], ["b b", "d d"], ["e e"], ["f f"], ["g g"]], ["h h", "o d", "o n"]))
+
 
 class PersonTestCase(TestCase):
     
