@@ -5,6 +5,7 @@
 {% block content %}
 <h1><a href="{% url 'registration:divisions' %}">&lt;</a> {{ object }}</h1>
 
+<h2>Confirmed Participents</h2>
 <table>
   <thead>
     <tr>
@@ -16,31 +17,15 @@
     </tr>
   </thead>
   <tbody>
-    {% if object.eventlink_set.all %}
-      {% for el in object.eventlink_set.all %}
+    {% for el in confirmed_eventlinks %}
       <tr>
-        <td>{{ el.name }}</td>
-        <td>{{ el.person.age }}</td>
-        <td>{{ el.person.gender }}</td>
-        <td>{{ el.person.rank }}</td>
-        <td>
-          {% if el.is_manual and object.get_format is None %}
-            <form action="{{ request.path }}delete/{{el.pk}}/" method="post">
-              {% csrf_token %}
-              
-              <button type="submit">delete</button>
-            </form>
-          {% else %}
-            Can't delete
-          {% endif %}
-        </td>
+        {% include 'registration/division_detail_row.html' %}
       </tr>
-      {% endfor %}
-    {% else %}
+    {% empty %}
       <tr>
         <td colspan="5">No participents</td>
       </tr>
-    {% endif %}
+    {% endfor %}
     {% if object.get_format is None %}
     <tr>
       <td colspan="5">
@@ -58,13 +43,40 @@
   </tbody>
 </table>
 
+<h2>Start Division</h2>
 {% if object.get_format %}
 <h1><a href="{{ object.get_format.get_absolute_url }}">> Bracket</a></h1>
 {% else %}
-<form action="{{ request.path }}build" method="post">
+<form action="{{ request.path }}build/" method="post">
   {% csrf_token %}
   <button type="submit">Build</button>
 </form>
 {% endif %}
+
+{# {% if noshow_eventlinks_length > 0 %} #}
+<h2>No Show Participents</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Age</th>
+      <th>Gender</th>
+      <th>Rank</th>
+      <th>Delete</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for el in noshow_eventlinks %}
+      <tr>
+        {% include 'registration/division_detail_row.html' %}
+      </tr>
+    {% empty %}
+      <tr>
+        <td colspan="5">No participents</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{# {% endif %} #}
 
 {% endblock %}

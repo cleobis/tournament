@@ -87,6 +87,19 @@ class KumiteMatch(models.Model):
         return "{}, round {}, match {}{}".format(prefix, self.round, self.order, name)
     
     
+    def get_display_short_name(self):
+        if self.is_final():
+            name = "Final"
+        elif self.is_consolation():
+            name = "Consolation Final"
+        elif self.round == 1:
+            name = "Semi-finals, Match {}".format(self.order + 1)
+        elif self.round == 2:
+            name = "Quarter-finals, Match {}".format(self.order + 1)
+        else:
+            name = "Round of {:.0f}, Match {}".format(math.pow(2,self.round + 1), self.order + 1)
+        return name
+    
     @property
     def bracket_field(self):
         fields = ('bracket_elim1', 'bracket_rr', 'bracket_2people')

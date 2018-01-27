@@ -173,6 +173,8 @@ class DivisionInfo(generic.DetailView):
         context = super().get_context_data(**kwargs)
         
         context['form'] = ManualEventLinkForm()
+        context['confirmed_eventlinks'] = self.object.get_confirmed_eventlinks()
+        context['noshow_eventlinks'] = self.object.get_noshow_eventlinks()
         
         return context
 

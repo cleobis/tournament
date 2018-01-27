@@ -79,6 +79,7 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'constance.context_processors.config',
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
@@ -154,6 +155,7 @@ STATICFILES_DIRS = [
 
 CONSTANCE_BACKEND = 'constance.backends.database.DatabaseBackend'
 CONSTANCE_CONFIG = {
+    'KUMITE_DURATION_S': (120, 'Duration of kumite match in seconds'),
     'SIGNUP_IMPORT_LAST_TSTAMP': (datetime.datetime.min,
         'Registration date of last person from registration date import. Used to prevent duplicate imports'),
 }

@@ -1,0 +1,16 @@
+<td><a href="{{ el.person.get_absolute_url }}">{{ el.name }}</a></td>
+<td>{{ el.person.age }}</td>
+<td>{{ el.person.gender }}</td>
+<td>{{ el.person.rank }}</td>
+<td>
+  {% if el.is_manual and object.get_format is None %}
+    <form action="{{ request.path }}delete/{{el.pk}}/" method="post">
+      {% csrf_token %}
+      
+      <button type="submit">delete</button>
+    </form>
+  {% else %}
+    Can't delete
+  {% endif %}
+</td>
+</tr>

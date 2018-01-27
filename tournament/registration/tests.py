@@ -69,6 +69,36 @@ class RankTestCase(TestCase):
 
 class DivisionTestCase(TestCase):
     
+    
+    def test_get_eventlinks(self):
+        e = Event(name="event", format=Event.EventFormat.kata)
+        e.save()
+        
+        d = Division(event=e, gender='M', start_age=1,  stop_age = 18, start_rank=Rank.get_kyu(9), stop_rank=Rank.get_dan(9))
+        d.save()
+        
+        p_confirmed = Person(first_name="a", last_name="b", age="10", rank=Rank.get_kyu(5), gender='M', confirmed=True)
+        p_confirmed.save()
+        el = EventLink(event=e, person=p_confirmed)
+        el.save()
+        
+        p_noshow = Person(first_name="c", last_name="d", age="10", rank=Rank.get_kyu(5), gender='M', confirmed=False)
+        p_noshow.save()
+        el = EventLink(event=e, person=p_noshow)
+        el.save()
+        
+        el_manual = EventLink(event=e, division=d, manual_name="manual")
+        el_manual.save()
+        
+        ppl = d.get_confirmed_eventlinks()
+        self.assertTrue(len(ppl) == 2)
+        self.assertIn(p_confirmed.eventlink_set.get(), ppl)
+        self.assertIn(el_manual, ppl)
+        
+        ppl = d.get_noshow_eventlinks()
+        self.assertIn(p_noshow.eventlink_set.get(), ppl)
+        
+    
     def test_claim(self):
         e = Event(name="event", format=Event.EventFormat.kata)
         e.save()

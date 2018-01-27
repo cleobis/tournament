@@ -24,7 +24,7 @@
   <li>Events:</li>
   <ul>
   {% for l in person.eventlink_set.all %}
-    <li>{{ l.event.name }} - {{ l.division }}</li>
+    <li>{{ l.event.name }} - {% if l.division is not None %}<a href="{{ l.division.get_absolute_url }}">{% endif %}{{ l.division }}{% if l.division is not None %}</a>{% endif %}</li>
   {% endfor %}
 </ul>
   <li>Notes: {{ person.notes }}</li>

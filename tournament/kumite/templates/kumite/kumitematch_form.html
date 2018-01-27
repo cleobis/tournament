@@ -4,10 +4,21 @@
 		<link rel="styesheet" href="normalize.css">
 		<!--<link rel="stylesheet" href="w3.css">-->
 	<style>
-		
-		html, body {
-			margin-top: 0;
+    
+		div, h1 {
+/*      outline: 1px dashed black;*/
 		}
+		
+		html {
+      margin: 0;
+    }
+    
+    body {
+      background-color: #666666;
+      color: white;
+      font-family: sans-serif;
+      margin: 2.5vh;
+    }
 		
 		h1 {
 			height: 10vh;
@@ -15,10 +26,6 @@
 			line-height: 10vh;
 			overflow: auto;
 			margin: 0;
-		}
-		
-		div, h1 {
-			outline: 0px solid black;
 		}
 		
 		button {
@@ -36,6 +43,8 @@
 		.v10 {
 			height: 10vh;
 		}
+    
+    
 		.people {
 			padding: 0;
 			display:flex;
@@ -43,7 +52,7 @@
 			padding: 0;
 		}
 		
-		.people > div{
+		.people > div {
 			width: calc(50% - 5px);
 			margin-left: 5px;
 		}
@@ -54,20 +63,21 @@
 		}
 		
 		.people h2 {
-			height: 15vh;
-			font-size: 6vh;
+			height: 5vh;
+			font-size: 4vh;
 			overflow: auto;
 			width: calc(100% - 10px);
 			margin: 0;
 			padding: 0 5px;
+      color: black;
 		}
 		
-		.people .aka h2 {
+		.people .aka h2, .people .aka input {
 			background-color:#f44336;
 		}
-		
-		.people .shiro h2 {
-			background-color:#bbb;
+    
+		.people .shiro h2, .people .shiro input {
+			background-color: white;
 		}
 		
 		.people label {
@@ -84,15 +94,23 @@
 			position: relative;
 		}
 		
-		.input_pm input {
+    .input_pm input {
 			width: calc(100% - 7.5vh);
-			height: 15vh;
-			font-size: 12vh;
 			padding: 0px;
 			text-align: center;
-			
+      border: none;
+    }
+    
+		.points .input_pm input {
+			height: 20vh;
+			font-size: 16vh;
 		}
 		
+		.warnings .input_pm input {
+			height: 10vh;
+			font-size: 8vh;
+		}
+    
 		.input_pm button {
 			position:absolute;
 			right: 0;
@@ -105,7 +123,7 @@
 			vertical-align: middle;
 			-webkit-appearance: none;
 		}
-		
+    
 		.input_pm button:nth-child(2) {
 			top: 0;
 		}
@@ -116,12 +134,14 @@
 		
 		.timer_box {
 			width: 100%;
-			height: 15vh;
-			line-height: calc(15vh - 10px);
+			height: 30vh;
+			font-size: 25vh;
+      font-weight: bold;
+			line-height: calc(30vh / 25vh);
 			vertical-align: middle;
 			text-align: center;
-			font-size: 10vh;
 			background-clip: content-box;
+      background-color: black;
 			box-sizing: border-box;
 			padding: 5px 0;
 		}
@@ -131,9 +151,10 @@
 		}
 		
 		.buttons {
-			height: 10vh;
+			height: calc(10vh - 10px);
+      padding-top: 10px;
 			display: flex;
-			overflow: scroll;
+      overflow: auto;
 		}
 		
 		.buttons button {
@@ -144,7 +165,7 @@
 			font-size: 3vh;
 			font-weight: bold;
 			cursor: pointer;
-			margin-right: 5px;
+			margin-right: 10px;
 		}
 		
 		.buttons button.right_btn {
@@ -159,16 +180,19 @@
 	</head>
 <body>
 {% if not form.read_only %}
-<h1>Round {{ form.match.instance.round }} Match {{ form.match.instance.order }}</h1>
+<h1>{{ form.match.instance.get_display_short_name }}</h1>
 {% else %}
 <h1><a href="{% url 'registration:divisions' %}">&lt;</a> Manual Match</a></h1>
 {% endif %}
 
-<div class="v10">
-	<form action="{{ request.path }}" method="post">
+<form action="{{ request.path }}" method="post">
+<div>
     {{ form.non_field_errors }}
-    {# form.match #}
     {% csrf_token %}
+</div>
+
+<div class="timer_box">
+	<span id="time"></span>
 </div>
 
 <div class="people">
@@ -223,28 +247,25 @@
   </div>
 </div>
 
-<div class="timer_box">
-	<span id="time"></span>
-</div>
-
 
 <div class="buttons">
 	<button id="start" type="button">Start</button>
-    <button id="stop" type="button">Stop</button>
-    <button id="plus" type="button">Plus</button>
-    <button id="minus" type="button">Minus</button>
-    <button id="reset" type="button">Reset</button>
-    {% if form.read_only %}
-      <button id="clear" type="reset" class="right_btn">Clear</button>
+  <button id="stop" type="button">Stop</button>
+  {# <button id="toggle" type="button">?</button> #}
+  <button id="plus" type="button">+0:10</button>
+  <button id="minus" type="button">-0:10</button>
+  <button id="reset" type="button">Reset</button>
+  {% if form.read_only %}
+    <button id="clear" type="reset" class="right_btn">Clear</button>
+  {% else %}
+    {% if form.match.done.value %}
+    <button id="clear" type="submit" name="btn_not_done" class="right_btn">Clear Match</button>
+    <button id="submit" type="submit" name="btn_done">Change Score</button>
     {% else %}
-      {% if form.match.done.value %}
-      <button id="clear" type="submit" name="btn_not_done" class="right_btn">Clear Match</button>
-      <button id="submit" type="submit" name="btn_done">Change Score</button>
-      {% else %}
-      <button id="clear" type="submit" name="btn_not_done" class="right_btn">Cancel</button>
-      <button id="submit" type="submit" name="btn_done">Done</button>
-      {% endif %}
+    <button id="clear" type="submit" name="btn_not_done" class="right_btn">Cancel</button>
+    <button id="submit" type="submit" name="btn_done">Done</button>
     {% endif %}
+  {% endif %}
 </div>
 </form>
 
@@ -256,6 +277,7 @@ function CountDownTimer(duration, granularity) {
   this.duration = duration;
   this.granularity = granularity || 1;
   this.tickFtns = [];
+  this.stateFtns = [];
   this.running = false;
   
   this.tstart = null;
@@ -266,6 +288,7 @@ CountDownTimer.prototype.start = function() {
     return;
   }
   this.running = true;
+  // this.notify_running();
   this.tstart = Date.now();
   var that = this,
       diff;
@@ -273,29 +296,29 @@ CountDownTimer.prototype.start = function() {
   (function timer() {
   	if (!that.running) {
     	return;
-	}
+  	}
   	
     diff = that.remaining();
     if (diff < 10.05) {
     	that.granularity = .1;
-	} else {
-		that.granularity = 1;
-	}
-	diff_round = Math.round(diff / that.granularity) * that.granularity;
+  	} else {
+  		that.granularity = 1;
+  	}
+  	diff_round = Math.round(diff / that.granularity) * that.granularity;
 	
     if (diff > 0) {
     	var dt = diff - diff_round - that.granularity;
     	if (dt <= 0) {
     		dt = that.granularity;
     	}
-    	console.info(diff);
     	setTimeout(timer, dt * 1000);
     } else {
       that.running = false;
       that.duration = 0;
     }
     
-	that.notify(diff_round);
+  	that.notify(diff_round);
+    that.notify_running();
   }());
 };
 
@@ -313,7 +336,6 @@ CountDownTimer.prototype.remaining = function () {
 
 CountDownTimer.prototype.notify = function (diff) {
   diff = diff || Math.round(this.remaining() / this.granularity) * this.granularity;
-  console.log(diff)
   var obj = this.parse(diff);
   this.tickFtns.forEach(function(ftn) {
     ftn.call(this, obj.minutes, obj.seconds, obj.sub_seconds);
@@ -326,7 +348,19 @@ CountDownTimer.prototype.stop = function () {
 	}
 	this.running = false;
 	this.duration = this.duration - ((Date.now() - this.tstart) / 1000);
+  this.notify_running()
 };
+
+// CountDownTimer.prototype.toggle = function() {
+//   console.log("toggle");
+//   if (this.running) {
+//     console.log("stop");
+//     this.stop();
+//   } else {
+//     console.log("start");
+//     this.start();
+//   }
+// }
 
 CountDownTimer.prototype.add = function (dt) {
 	this.duration += dt;
@@ -336,9 +370,22 @@ CountDownTimer.prototype.add = function (dt) {
 	this.notify();
 };
 
+CountDownTimer.prototype.notify_running = function () {
+  this.stateFtns.forEach(function(ftn) {
+    ftn.call(this, this.running);
+  }, this);
+};
+
 CountDownTimer.prototype.onTick = function(ftn) {
   if (typeof ftn === 'function') {
     this.tickFtns.push(ftn);
+  }
+  return this;
+};
+
+CountDownTimer.prototype.onRunning = function(ftn) {
+  if (typeof ftn === 'function') {
+    this.stateFtns.push(ftn);
   }
   return this;
 };
@@ -367,10 +414,12 @@ CountDownTimer.prototype.parse = function(seconds) {
 window.onload = function () {
     var display = document.querySelector('#time'),
         display_box = display.parentElement,
-        timer = new CountDownTimer(120);
+        timer = new CountDownTimer({{ config.KUMITE_DURATION_S }});
     
     timer.onTick(format);
     timer.notify();
+    // timer.onRunning(update_button);
+    timer.notify_running();
     
     document.querySelector('#start').addEventListener('click', function () {
         timer.start();
@@ -379,6 +428,10 @@ window.onload = function () {
     document.querySelector('#stop').addEventListener('click', function () {
         timer.stop();
     });
+    
+    // document.querySelector('#toggle').addEventListener('click', function () {
+    //     timer.toggle();
+    // });
     
     document.querySelector('#plus').addEventListener('click', function () {
         timer.add(10);
@@ -390,7 +443,7 @@ window.onload = function () {
     
     var reset = function () {
     	timer.stop();
-      timer.duration = 90;
+      timer.duration = {{ config.KUMITE_DURATION_S }};
       timer.notify();
     } ;
     document.querySelector('#reset').addEventListener('click', reset);
@@ -412,6 +465,14 @@ window.onload = function () {
         }
       }
     };
+    
+    function update_button(running) {
+      if (running) {
+        document.querySelector('#toggle').innerText = "Stop";
+      } else {
+        document.querySelector('#toggle').innerText = "Start";
+      }
+    }
     
     /* Configure +/- buttons for points and warnings */
     var objs = document.querySelectorAll(".input_pm button");

@@ -6,6 +6,7 @@ from django.core.urlresolvers import reverse
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 
 from constance import config
 from djchoices import DjangoChoices, ChoiceItem
@@ -210,6 +211,14 @@ class Division(models.Model):
         return reverse('registration:division-detail', args=[self.id,])
     
     
+    def get_confirmed_eventlinks(self):
+        return self.eventlink_set.filter(Q(person__confirmed=True) | Q(person=None))
+    
+    
+    def get_noshow_eventlinks(self):
+        return self.eventlink_set.filter(person__confirmed=False)
+    
+    
     def claim(self):
         "Put people into this division."
         links = EventLink.objects.filter(person__age__gte=self.start_age,
@@ -262,7 +271,7 @@ class Division(models.Model):
         if fmt is not None:
             raise Exception("Already build.")
         
-        people = self.eventlink_set.all()
+        people = self.get_confirmed_eventlinks()
         fmt = self.event.get_format_class(len(people))(division=self)
         fmt.save()
         fmt.build(people)
