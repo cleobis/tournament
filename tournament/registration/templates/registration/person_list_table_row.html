@@ -6,9 +6,9 @@
 <td>
   {% for e in object.eventlink_set.all %}
     {% if e.division.id %}
-      <a href="{% url 'registration:division-detail' e.division.id %}" class="tooltip">{{ e.event }}<span class="tooltiptext">{{ e.division }}</span></a>{% if not forlooobject.last %}, {% endif %}
+      <a href="{% url 'registration:division-detail' e.division.id %}" class="tooltip">{{ e.event }}<span class="tooltiptext">{{ e.division }}</span></a>{% if not forloop.last %}, {% endif %}
     {% else %}
-      {{ e.event }}{% if not forlooobject.last %}, {% endif %}
+      {{ e.event }}{% if not forloop.last %}, {% endif %}
     {% endif %}
   {% endfor %}
 </td>

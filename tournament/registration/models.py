@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from datetime import datetime
+from datetime import date, datetime
 
 from django.db import models
 from django.core.urlresolvers import reverse
@@ -345,6 +345,9 @@ class Person(models.Model):
     
     
     def save(self, *args, **kwargs):
+        if self.paid and self.paidDate is None:
+            self.paidDate = date.today()
+            
         super(Person, self).save(*args, **kwargs)
         for el in self.eventlink_set.all():
             el.update_division()
@@ -399,7 +402,7 @@ class EventLink(models.Model):
 
 def create_divisions():
 
-    ages = [6, 9, 14, 18, 31, 100]
+    ages = [1, 11, 15, 18, 100]
     kata = Event.objects.get(name='Kata')
     kumite = Event.objects.get(name='Kumite')
     def ranks():
