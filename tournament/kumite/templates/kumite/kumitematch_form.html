@@ -1,15 +1,15 @@
 <html>
-	<head>
-		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<link rel="styesheet" href="normalize.css">
-		<!--<link rel="stylesheet" href="w3.css">-->
-	<style>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="styesheet" href="normalize.css">
+    <!--<link rel="stylesheet" href="w3.css">-->
+  <style>
     
-		div, h1 {
+    div, h1 {
 /*      outline: 1px dashed black;*/
-		}
-		
-		html {
+    }
+    
+    html {
       margin: 0;
     }
     
@@ -19,165 +19,216 @@
       font-family: sans-serif;
       margin: 2.5vh;
     }
-		
-		h1 {
-			height: 10vh;
-			font-size: 8vh;
-			line-height: 10vh;
-			overflow: auto;
-			margin: 0;
-		}
-		
-		button {
-			-webkit-appearance: none;
-			background-color: #2196F3;
-			border-color: black;
-			border-radius: 1vh;
-			border-width: 1px;
-		}
-		
-		button:hover{
-			box-shadow:0 8px 16px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
-		}
-		
-		.v10 {
-			height: 10vh;
-		}
+    
+    h1 {
+      height: 10vh;
+      font-size: 8vh;
+      line-height: 10vh;
+      overflow: auto;
+      margin: 0;
+    }
+    
+    button {
+      -webkit-appearance: none;
+      background-color: #2196F3;
+      border-color: black;
+      border-radius: 1vh;
+      border-width: 1px;
+    }
+    
+    button:hover, .disqualified input[type=checkbox] + label:hover {
+      box-shadow:0 8px 16px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+    }
+    
+    .v10 {
+      height: 10vh;
+    }
     
     
-		.people {
-			padding: 0;
-			display:flex;
-			width: 100%;
-			padding: 0;
-		}
-		
-		.people > div {
-			width: calc(50% - 5px);
-			margin-left: 5px;
-		}
-		
-		.people > div:first-child {
-			margin-left: 0;
-			margin-right: 5px;
-		}
-		
-		.people h2 {
-			height: 5vh;
-			font-size: 4vh;
-			overflow: auto;
-			width: calc(100% - 10px);
-			margin: 0;
-			padding: 0 5px;
+    .people {
+      padding: 0;
+      display:flex;
+      width: 100%;
+      padding: 0;
+    }
+    
+    .people > div {
+      width: calc(50% - 5px);
+      margin-left: 5px;
+    }
+    
+    .people > div:first-child {
+      margin-left: 0;
+      margin-right: 5px;
+    }
+    
+    .people h2 {
+      height: 5vh;
+      font-size: 4vh;
+      overflow: auto;
+      width: calc(100% - 10px - 10vh);
+      margin: 0;
+      padding: 0 5px;
       color: black;
-		}
-		
-		.people .aka h2, .people .aka input {
-			background-color:#f44336;
-		}
+    }
     
-		.people .shiro h2, .people .shiro input {
-			background-color: white;
-		}
-		
-		.people label {
-			width: 100%;
-			display: block;
-			height: 5vh;
-			font-size: 4vh;
-			line-height: 5vh;
-			font-weight: bold;
-			text-align: center;
-		}
-		
-		.input_pm {
-			position: relative;
-		}
-		
+    .people .aka h2, .people .aka input {
+      background-color:#f44336;
+    }
+    
+    .people .shiro h2, .people .shiro input {
+      background-color: white;
+    }
+    
+    .people label {
+      width: 100%;
+      display: block;
+      height: 5vh;
+      font-size: 4vh;
+      line-height: 5vh;
+      font-weight: bold;
+      text-align: center;
+    }
+    
+    .input_pm {
+      position: relative;
+    }
+    
     .input_pm input {
-			width: calc(100% - 7.5vh);
-			padding: 0px;
-			text-align: center;
+      width: calc(100% - 7.5vh);
+      padding: 0px;
+      text-align: center;
       border: none;
     }
     
-		.points .input_pm input {
-			height: 20vh;
-			font-size: 16vh;
-		}
-		
-		.warnings .input_pm input {
-			height: 10vh;
-			font-size: 8vh;
-		}
+    .points .input_pm input {
+      height: 20vh;
+      font-size: 16vh;
+    }
     
-		.input_pm button {
-			position:absolute;
-			right: 0;
-			height: 50%;
-			width: 7.5vh;
-			max-width: 7.5vh;
-			font-size: 2.5vh;
-			font-weight: bold;
-			padding: 5px;
-			vertical-align: middle;
-			-webkit-appearance: none;
-		}
+    .warnings .input_pm input {
+      height: 10vh;
+      font-size: 8vh;
+    }
     
-		.input_pm button:nth-child(2) {
-			top: 0;
-		}
-		
-		.input_pm button:last-child {
-			bottom: 0;
-		}
-		
-		.timer_box {
-			width: 100%;
-			height: 30vh;
-			font-size: 25vh;
+    .input_pm button {
+      position:absolute;
+      right: 0;
+      height: 50%;
+      width: 7.5vh;
+      max-width: 7.5vh;
+      font-size: 2.5vh;
       font-weight: bold;
-			line-height: calc(30vh / 25vh);
-			vertical-align: middle;
-			text-align: center;
-			background-clip: content-box;
+      padding: 5px;
+      vertical-align: middle;
+      -webkit-appearance: none;
+    }
+    
+    .input_pm button:nth-child(2) {
+      top: 0;
+    }
+    
+    .input_pm button:last-child {
+      bottom: 0;
+    }
+   
+   
+   
+   
+   
+    /*label {
+      display: inline;
+    }*/
+    .aka, .shiro {
+      position: relative;
+    }
+    .disqualified {
+      width: 10vh;
+      position:absolute;
+      right: 0px;
+      top: 0px;
+    }
+    
+    .disqualified input[type=checkbox] {
+    	display: none;
+    }
+
+    .disqualified input[type=checkbox] + label {
+      height: 5vh;
+      box-sizing: border-box;
+      font-size: 3vh;
+      line-height: 5vh;
+      
+      color: black;
+    	background-color: white;
+    	border: 1px solid black;
+      padding: 0px;
+    	border-radius: 1vh;
+      
+      -webkit-touch-callout: none; /* iOS Safari */
+        -webkit-user-select: none; /* Safari */
+         -khtml-user-select: none; /* Konqueror HTML */
+           -moz-user-select: none; /* Firefox */
+            -ms-user-select: none; /* Internet Explorer/Edge */
+                user-select: none;
+    }
+
+    .disqualified input[type=checkbox]:checked + label {
+      background-color: #2196F3;;
+    }
+
+    .disqualified input[type=checkbox]:checked + label:before {
+    	content: '\2714';
+    	font-size: 3vh;
+    }
+    
+    
+    .timer_box {
+      width: 100%;
+      height: 30vh;
+      font-size: 25vh;
+      font-weight: bold;
+      line-height: calc(30vh / 25vh);
+      vertical-align: middle;
+      text-align: center;
+      background-clip: content-box;
       background-color: black;
-			box-sizing: border-box;
-			padding: 5px 0;
-		}
-		
-		.timer_soon {
-			color: #FF0000;
-		}
-		
-		.buttons {
-			height: calc(10vh - 10px);
+      box-sizing: border-box;
+      padding: 5px 0;
+    }
+    
+    .timer_soon {
+      color: #FF0000;
+    }
+    
+    .buttons {
+      height: calc(10vh - 10px);
       padding-top: 10px;
-			display: flex;
+      display: flex;
       overflow: auto;
-		}
-		
-		.buttons button {
-			height: 100%;
-			width: 12vh;
-			padding: 0px;
-			-webkit-appearance: none;
-			font-size: 3vh;
-			font-weight: bold;
-			cursor: pointer;
-			margin-right: 10px;
-		}
-		
-		.buttons button.right_btn {
-			margin-left: auto;
+    }
+    
+    .buttons button {
+      height: 100%;
+      width: 12vh;
+      padding: 0px;
+      -webkit-appearance: none;
+      font-size: 3vh;
+      font-weight: bold;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    
+    .buttons button.right_btn {
+      margin-left: auto;
     }
     
     .buttons button:last-child {
-			margin-right: 0;
-		}
-		
-	</style>
-	</head>
+      margin-right: 0;
+    }
+    
+  </style>
+  </head>
 <body>
 {% if not form.read_only %}
 <h1>{{ form.match.instance.get_display_short_name }}</h1>
@@ -192,14 +243,14 @@
 </div>
 
 <div class="timer_box">
-	<span id="time"></span>
+  <span id="time"></span>
 </div>
 
 <div class="people">
   <div class="aka">
     <h2>Aka: {{ form.aka.instance.name }}</h2>
-    <!-- {{ form.aka.disqualified }} {{ form.aka.disqualified.label_tag }}
-    {{ form.aka.disqualified.errors }}-->
+    <div class="disqualified">{{ form.aka.disqualified }}{{ form.aka.disqualified.label_tag }}</div>
+    <div>{{ form.aka.disqualified.errors }}</div>
     <div class="points">
       {{ form.aka.points.label_tag }}
       <div class="input_pm">
@@ -223,8 +274,8 @@
   
   <div class="shiro">
     <h2>Ao: {{ form.shiro.instance.name }}</h2>
-    <!-- {{ form.shiro.disqualified }} {{ form.shiro.disqualified.label_tag }}
-    {{ form.shiro.disqualified.errors }}-->
+    <div class="disqualified">{{ form.shiro.disqualified }}{{ form.shiro.disqualified.label_tag }}</div>
+    <div>{{ form.shiro.disqualified.errors }}</div>
     <div class="points">
       {{ form.shiro.points.label_tag }}
       <div class="input_pm">
@@ -249,7 +300,7 @@
 
 
 <div class="buttons">
-	<button id="start" type="button">Start</button>
+  <button id="start" type="button">Start</button>
   <button id="stop" type="button">Stop</button>
   {# <button id="toggle" type="button">?</button> #}
   <button id="plus" type="button">+0:10</button>
@@ -294,44 +345,44 @@ CountDownTimer.prototype.start = function() {
       diff;
 
   (function timer() {
-  	if (!that.running) {
-    	return;
-  	}
-  	
+    if (!that.running) {
+      return;
+    }
+    
     diff = that.remaining();
     if (diff < 10.05) {
-    	that.granularity = .1;
-  	} else {
-  		that.granularity = 1;
-  	}
-  	diff_round = Math.round(diff / that.granularity) * that.granularity;
-	
+      that.granularity = .1;
+    } else {
+      that.granularity = 1;
+    }
+    diff_round = Math.round(diff / that.granularity) * that.granularity;
+  
     if (diff > 0) {
-    	var dt = diff - diff_round - that.granularity;
-    	if (dt <= 0) {
-    		dt = that.granularity;
-    	}
-    	setTimeout(timer, dt * 1000);
+      var dt = diff - diff_round - that.granularity;
+      if (dt <= 0) {
+        dt = that.granularity;
+      }
+      setTimeout(timer, dt * 1000);
     } else {
       that.running = false;
       that.duration = 0;
     }
     
-  	that.notify(diff_round);
+    that.notify(diff_round);
     that.notify_running();
   }());
 };
 
 CountDownTimer.prototype.remaining = function () {
     if (this.running) {
-    	diff = (this.duration - ((Date.now() - this.tstart) / 1000));
-	} else {
-   		diff = this.duration; 
-	}
-	if (diff < 0) {
-		diff = 0;
-	}
-	return diff;
+      diff = (this.duration - ((Date.now() - this.tstart) / 1000));
+  } else {
+       diff = this.duration; 
+  }
+  if (diff < 0) {
+    diff = 0;
+  }
+  return diff;
 };
 
 CountDownTimer.prototype.notify = function (diff) {
@@ -343,11 +394,11 @@ CountDownTimer.prototype.notify = function (diff) {
 };
 
 CountDownTimer.prototype.stop = function () {
-	if (!this.running) {
-    	return;
-	}
-	this.running = false;
-	this.duration = this.duration - ((Date.now() - this.tstart) / 1000);
+  if (!this.running) {
+      return;
+  }
+  this.running = false;
+  this.duration = this.duration - ((Date.now() - this.tstart) / 1000);
   this.notify_running()
 };
 
@@ -363,11 +414,11 @@ CountDownTimer.prototype.stop = function () {
 // }
 
 CountDownTimer.prototype.add = function (dt) {
-	this.duration += dt;
-	if (this.duration < 0) {
-    	this.duration = 0;
-	}
-	this.notify();
+  this.duration += dt;
+  if (this.duration < 0) {
+      this.duration = 0;
+  }
+  this.notify();
 };
 
 CountDownTimer.prototype.notify_running = function () {
@@ -442,7 +493,7 @@ window.onload = function () {
     });
     
     var reset = function () {
-    	timer.stop();
+      timer.stop();
       timer.duration = {{ config.KUMITE_DURATION_S }};
       timer.notify();
     } ;
@@ -456,9 +507,9 @@ window.onload = function () {
         
         soon = minutes == 0 && seconds <= 10;
         if (display_box.classList.contains("timer_soon")) {
-        	if (!soon) {
-        		display_box.classList.remove("timer_soon");
-        	}
+          if (!soon) {
+            display_box.classList.remove("timer_soon");
+          }
       } else {
         if (soon) {
             display_box.classList.add("timer_soon");
@@ -477,16 +528,16 @@ window.onload = function () {
     /* Configure +/- buttons for points and warnings */
     var objs = document.querySelectorAll(".input_pm button");
     generator = function (id, do_inc) {
-    	if (do_inc) {
-    		return function(){inc(id)};
-    	} else {
-    		return function(){dec(id)};
-    	}
+      if (do_inc) {
+        return function(){inc(id)};
+      } else {
+        return function(){dec(id)};
+      }
     };
     for (var i=0; i<objs.length; i++) {
       obj = objs[i];
-    	var id = obj.parentElement.querySelector("input").id;
-    	obj.onclick = generator(id, obj.innerText == '+');
+      var id = obj.parentElement.querySelector("input").id;
+      obj.onclick = generator(id, obj.innerText == '+');
     };
 };
 
@@ -503,7 +554,7 @@ function dec(id) {
     x = obj.value;
     x--;
     if (x < 0) {
-    	x = 0;
+      x = 0;
     }
     obj.value = x;
 };

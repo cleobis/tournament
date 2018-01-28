@@ -4,13 +4,13 @@
 
 
 {% block content %}
-<h1>Divisions</h1>
 
 {% if no_division_eventlist %}
-<h2>Participents without a division</h2>
+<h1>Participents without a division</h1>
 {% division_person_list no_division_eventlist show_event=True %}
 {% endif %}
 
+<h1>Divisions</h1>
 <table>
 	<thead>
 		<tr>

@@ -371,6 +371,7 @@ class EventLink(models.Model):
     event = models.ForeignKey(Event, on_delete=models.PROTECT)
     division = models.ForeignKey(Division, on_delete=models.SET_NULL, blank=True, null=True)
     locked = models.BooleanField(default=False)
+    disqualified = models.BooleanField(default=False) # Indicates that record is a placeholder for brackets, not a real person
     
     
     class Meta:
@@ -390,6 +391,23 @@ class EventLink(models.Model):
     def update_division(self):
         if self.person is not None and not self.locked:
             self.division = Division.find_eventlink_division(self)
+    
+    
+    @staticmethod
+    def get_disqualified_singleton(event):
+        signature = {"event": event, "disqualified": True}
+        el = EventLink.objects.filter(**signature)
+        if len(el) > 0:
+            el = el[0]
+        else:
+            el = EventLink(**signature, manual_name="DISQUALIFIED", locked=True)
+            el.save()
+        return el
+    
+    
+    @staticmethod
+    def no_division_eventlinks():
+        return EventLink.objects.filter(division=None, disqualified=False)
     
     
     @property

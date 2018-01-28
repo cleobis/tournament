@@ -139,26 +139,31 @@ class KumiteMatch(models.Model):
     
     def winner(self):
         if self.done:
-            return self.aka if self.aka_won else self.shiro
+            km = self.aka if self.aka_won else self.shiro
+            if km.disqualified:
+                from registration.models import EventLink
+                return EventLink.get_disqualified_singleton(km.eventlink.event)
+            else:
+                return km.eventlink
         else:
             return None
     
     
     def infer_winner(self):
         if self.done:
-            if self.aka.disqualified or self.shiro.disqualified:
-                raise ValueError("Disqualifications not implemented") #################################
-            if self.aka.points == self.shiro.points:
-                raise ValueError("Ties not implemented") #############################################
-            self.aka_won = self.aka.points > self.shiro.points
+            if self.aka.points == self.shiro.points and not self.aka.disqualified and not self.shiro.disqualified:
+                raise ValueError("Ties not permitted.")
+            self.aka_won = self.aka.points > self.shiro.points and not self.aka.disqualified or self.shiro.disqualified
     
     
     def loser(self):
         if self.done:
-            p = self.shiro if self.aka_won else self.aka
-            if p.disqualified:
-                return None
-            return p
+            km = self.shiro if self.aka_won else self.aka
+            if km.disqualified:
+                from registration.models import EventLink
+                return EventLink.get_disqualified_singleton(km.eventlink.event)
+            else:
+                return km.eventlink
         else:
             return None
     
@@ -263,11 +268,9 @@ class KumiteElim1Bracket(models.Model):
     
     
     def get_winners(self):
-        
-        unwrap = lambda x: x.eventlink if x is not None else None
-        return ((1, unwrap(self.final_match.winner())),
-            (2, unwrap(self.final_match.loser())), 
-            (3, unwrap(self.consolation_match.winner())))
+        return ((1, self.final_match.winner()),
+            (2, self.final_match.loser()), 
+            (3, self.consolation_match.winner()))
     
     
     def get_absolute_url(self):
@@ -467,21 +470,24 @@ class KumiteElim1Bracket(models.Model):
             if m is not None:
                 if m.done:
                     if m.winner_match == match:
-                        p = m.winner()
+                        el = m.winner()
                     elif m.consolation_match == match:
-                        p = m.loser()
+                        el = m.loser()
                 else:
-                    p = None
+                    el = None
                 
                 curr_p = getattr(match, attr_name)
+                curr_el = curr_p.eventlink if curr_p is not None else None
                 
-                if not KumiteMatchPerson.same_person(curr_p, p):
+                if curr_el is not el:
                     if match.done:
                         raise ValueError("Can't modify people if the match is done.")
                     
-                    if p is not None:
-                        p = KumiteMatchPerson(eventlink=p.eventlink)
+                    if el is not None:
+                        p = KumiteMatchPerson(eventlink=el, disqualified=el.disqualified)
                         p.save()
+                    else:
+                        p = None
                     
                     setattr(match, attr_name, p)
                     match.save()
@@ -583,27 +589,44 @@ class Kumite2PeopleBracket(models.Model):
         # - First 2 matches done and no tie => assign winner.
         # - First 2 matches tied => Create new match.
         # - First 2 matches no longer tied => Delete extra match and assign winner.
+        # - One person disqualified
+        # - Both people diqualified
         
         matches = self.kumitematch_set.all()
         p1 = matches[0].aka.eventlink
         p2 = matches[0].shiro.eventlink
         points = {p1: 0, p2: 0}
+        disqualifieds = {p1: 0, p2: 0}
         all_done = True
         have_winner = False
         for im, m in enumerate(matches):
             all_done = all_done and m.done
             if m.done:
                 points[m.aka.eventlink] += m.aka.points
+                disqualifieds[m.aka.eventlink] += m.aka.disqualified
                 points[m.shiro.eventlink] += m.shiro.points
+                disqualifieds[m.shiro.eventlink] += m.shiro.disqualified
             
             if not all_done:
                 break
             
-            have_winner = points[p1] != points[p2] and im >= 1
+            have_winner = points[p1] != points[p2] and im >= 1 \
+                or disqualifieds[p1] != 0 or disqualifieds[p2] != 0
                 # Always have at least 2 rounds
+            if disqualifieds[p1]:
+                points[p1] = -1
+            if disqualifieds[p2]:
+                points[p2] = -1
             if have_winner:
                 winner = p1 if points[p1] > points[p2] else p2
+                
+                from registration.models import EventLink
+                if disqualifieds[winner] > 0:
+                    winner = EventLink.get_disqualified_singleton(winner.event)
                 loser  = p2 if points[p1] > points[p2] else p1
+                if disqualifieds[loser] > 0:
+                    loser = EventLink.get_disqualified_singleton(loser.event)
+                
                 for id in range(im+1, len(matches)):
                     matches[id].delete()
                 break
@@ -709,9 +732,9 @@ class KumiteRoundRobinBracket(models.Model):
     def get_people(self):
         from registration.models import EventLink
         
-        matches = self.kumitematch_set.all()
-        people = EventLink.objects.filter(Q(kumitematchperson__match_aka__bracket_rr=self)
-            or Q(kumitematchperson__match_shiro__bracket_rr=self)).distinct()
+        people = EventLink.objects.filter(disqualified=False).filter(
+            Q(kumitematchperson__match_aka__bracket_rr=self)
+            | Q(kumitematchperson__match_shiro__bracket_rr=self)).distinct()
         return people
     
     
@@ -722,20 +745,72 @@ class KumiteRoundRobinBracket(models.Model):
     
     
     def match_callback(self, match):
+        from registration.models import EventLink
         
+        # Propagate aka disqualification status to other matches
+        if not match.aka.eventlink.disqualified:
+            other_match = self.kumitematch_set.filter(order=(match.order - 1) % 3)
+                # During construction of the bracket, this function is called but the other match doesn't exist
+            if len(other_match) > 0 and not other_match[0].done:
+                other_match = other_match[0]
+                disqualified = match.aka.disqualified and match.done
+                if disqualified:
+                    el = EventLink.get_disqualified_singleton(match.aka.eventlink.event)
+                else:
+                    el = match.aka.eventlink
+                
+                if other_match.shiro.eventlink != el:
+                    other_match.shiro.eventlink = el
+                    other_match.shiro.disqualified = disqualified
+                    other_match.shiro.save()
+                    match.winner_match = other_match if disqualified else None
+                    match.save()
+        
+        # Propagate shiro disqualification status to other matches
+        if not match.shiro.eventlink.disqualified:
+            other_match = self.kumitematch_set.filter(order=(match.order + 1) % 3)
+                # During construction of the bracket, this function is called but the other match doesn't exist
+            if len(other_match) > 0 and not other_match[0].done:
+                other_match = other_match[0]
+                disqualified = match.shiro.disqualified and match.done
+                if disqualified:
+                    el = EventLink.get_disqualified_singleton(match.shiro.eventlink.event)
+                else:
+                    el = match.shiro.eventlink
+                
+                if other_match.aka.eventlink != el:
+                    other_match.aka.eventlink = el
+                    other_match.aka.disqualified = disqualified
+                    other_match.aka.save()
+                    match.consolation_match = other_match if disqualified else None
+                    match.save()
+        
+        # Figure out the winner
         matches = self.kumitematch_set.all()
-        points = {p: [0, 0] for p in self.get_people()}
+        points = {p: [0, 0, 0, 0] for p in self.get_people()}
+            # points = [-disqualifications, wins, point differential, total points]
+        DISQUALIFIED = 0
+        WINS = 1
+        DIFF = 2
+        TOTAL = 3
         all_done = True
         for im, m in enumerate(matches):
             all_done = all_done and m.done
             if m.done:
-                if m.aka_won:
-                    points[m.aka.eventlink][0] += 1
-                else:
-                    points[m.shiro.eventlink][0] += 1
                 diff = m.aka.points - m.shiro.points
-                points[m.aka.eventlink][1] += diff
-                points[m.shiro.eventlink][1] -= diff
+                
+                if not m.aka.eventlink.disqualified:
+                    points[m.aka.eventlink][DISQUALIFIED] -= m.aka.disqualified
+                    if m.aka_won:
+                        points[m.aka.eventlink][WINS] += 1
+                    points[m.aka.eventlink][DIFF] += diff
+                    points[m.aka.eventlink][TOTAL] += m.aka.points
+                if not m.shiro.eventlink.disqualified:
+                    points[m.shiro.eventlink][DISQUALIFIED] -= m.shiro.disqualified
+                    if not m.aka_won:
+                        points[m.shiro.eventlink][WINS] += 1
+                    points[m.shiro.eventlink][DIFF] -= diff
+                    points[m.shiro.eventlink][TOTAL] += m.shiro.points
             
             if not all_done:
                 break
@@ -760,13 +835,16 @@ class KumiteRoundRobinBracket(models.Model):
                     raise Exception("Ties not implemented.")
                 
                 prev_point = point
-                prev_person = p
+                if point[DISQUALIFIED] == 0:
+                    prev_person = p
+                else:
+                    prev_person = EventLink.get_disqualified_singleton(p.event)
             
             setattr(self, ranks.__next__(), prev_person)
             self.save()
             
         else:
-            if None in (self.gold, self.silver, self.bronze):
+            if self.gold is not None or self.silver is not None or self.bronze is not None:
                 self.gold = None
                 self.silver = None
                 self.bronze = None

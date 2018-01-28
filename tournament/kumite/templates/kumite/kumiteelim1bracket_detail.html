@@ -28,6 +28,13 @@
     background-color: #CCCCCC;
   }
   
+  .disqualified {
+    text-decoration: line-through;
+  }
+  
+  .winner {
+    font-weight: bold;
+  }
   </style>
 {% endblock %}
 
@@ -128,10 +135,24 @@
                 {% endif %}>
               {# {{ cell.match }} #}
               {% if cell.round == -1 %}
-                {% if cell.person is not None %}{{ cell.person }}{% else %}?{% endif %}
+                {% if cell.person is not None %}{{ cell.person.name }}{% else %}?{% endif %}
               {% else %}
-                {% if cell.is_aka %}{#  round {{ cell.round }}, match {{ cell.match_i|floatformat }}<br /> #}{% else %}vs {% endif %}
-                {% if cell.person is not None %}{{ cell.person }}{% else %}?{% endif %}
+                {% if cell.is_aka %}
+                 {#  round {{ cell.round }}, match {{ cell.match_i|floatformat }}<br /> #}
+                {% else %}
+                  vs 
+                {% endif %}
+                
+                {% if cell.person is not None %}
+                  <span class="{{ cell.person.disqualified |yesno:"disqualified,"}} {% if cell.match.done and cell.match.aka_won and cell.is_aka or cell.match.done and not cell.match.aka_won and not cell.is_aka %}winner{% endif %}">
+                    {{ cell.person }}</span>
+                  {% if cell.match.done %}
+                    P: {{ cell.person.points }} W: {{ cell.person.warnings }}
+                  {% endif %}
+                {% else %}
+                  ?
+                {% endif %}
+                
                 {% if not cell.is_aka and cell.match.is_editable %}
                   {% if cell.match.is_ready %}
                     (<a href="{{ cell.match.get_absolute_url }}">start</a>)
@@ -174,7 +195,7 @@
                 <td {% if cell.span != 1 %}rowspan="{{ cell.span }}"{% endif %}>
                   {# {{ cell.match }} #}
                   {% if cell.round == -1 %}
-                    {% if cell.person is not None %}{{ cell.person }}{% else %}?{% endif %}
+                    {% if cell.person is not None %}{{ cell.person.name }}{% else %}?{% endif %}
                   {% else %}
                     {% if cell.is_aka %}{#  round {{ cell.round }}, match {{ cell.match_i|floatformat }}<br /> #}{% else %}vs {% endif %}
                     {% if cell.person is not None %}{{ cell.person }}{% else %}?{% endif %}

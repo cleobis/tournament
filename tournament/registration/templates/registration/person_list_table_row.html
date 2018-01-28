@@ -28,7 +28,6 @@
     Yes
   {% else %}
     <form action="{% url 'registration:person-checkin' object.pk %}" method="post" ic-target="closest tr" ic-post-to="{% url 'registration:person-checkin' object.pk %}?inline" ic-indicator="#indicator">
-      {{ request }}
       {% csrf_token %}
       <input type="hidden" name="confirmed" value="True">
       <button>Check in</button>

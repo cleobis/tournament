@@ -147,7 +147,7 @@ class DivisionList(generic.ListView):
     
     def get_context_data(self, **kwargs):
         context = super(DivisionList, self).get_context_data(**kwargs)
-        context['no_division_eventlist'] = EventLink.objects.filter(division=None)
+        context['no_division_eventlist'] = EventLink.no_division_eventlinks()
         return context
 
 

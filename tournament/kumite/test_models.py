@@ -97,6 +97,8 @@ class KumiteMatchTestCase(TestCase):
         e = Event(name="test event", format=Event.EventFormat.elim1)
         e.save()
         
+        disqualified = EventLink.get_disqualified_singleton(e)
+        
         el = EventLink(manual_name="aka", event=e)
         el.save()
         aka = KumiteMatchPerson(eventlink=el)
@@ -116,22 +118,26 @@ class KumiteMatchTestCase(TestCase):
         
         m.done = True
         m.aka_won = True
-        self.assertEqual(m.winner(), aka)
-        self.assertEqual(m.loser(), shiro)
+        self.assertEqual(m.winner(), aka.eventlink)
+        self.assertEqual(m.loser(), shiro.eventlink)
         
         shiro.disqualified = True
-        self.assertEqual(m.winner(), aka)
-        self.assertIsNone(m.loser())
+        self.assertEqual(m.winner(), aka.eventlink)
+        self.assertEqual(m.loser(), disqualified)
         shiro.disqualified = False
         
         m.aka_won = False
-        self.assertEqual(m.winner(), shiro)
-        self.assertEqual(m.loser(), aka)
+        self.assertEqual(m.winner(), shiro.eventlink)
+        self.assertEqual(m.loser(), aka.eventlink)
         
         aka.disqualified = True
-        self.assertEqual(m.winner(), shiro)
-        self.assertIsNone(m.loser())
-    
+        self.assertEqual(m.winner(), shiro.eventlink)
+        self.assertEqual(m.loser(), disqualified)
+        
+        shiro.disqualified = True
+        self.assertEqual(m.winner(), disqualified)
+        self.assertEqual(m.loser(), disqualified)
+
     
     def test_claim(self):
         
@@ -767,6 +773,58 @@ class KumiteRoundRobinBracketTestCase(TestCase):
         
         self.assertEqual(b.get_winners(), ((1, m3.aka.eventlink), (2, m2.aka.eventlink), (3, m1.aka.eventlink)))
         
+        # Winner second tier tie break based on total points
+        # a:4 - b:3
+        # b:9 - c:8
+        # c:1 - a:0
+        m1.aka.points = 4
+        m1.aka.save()
+        m1.shiro.points = 3
+        m1.shiro.save()
+        m1.done = True
+        m1.infer_winner()
+        m1.save()
+        
+        m2.aka.points = 9
+        m2.aka.save()
+        m2.shiro.points = 8
+        m2.shiro.save()
+        m2.done = True
+        m2.infer_winner()
+        m2.save()
+        
+        m3.aka.points = 2
+        m3.aka.save()
+        m3.shiro.points = 1
+        m3.shiro.save()
+        m3.done = True
+        m3.infer_winner()
+        m3.save()
+        
+        self.assertEqual(len(b.kumitematch_set.all()), 3)
+        m1 = b.get_match(0, 0)
+        m2 = b.get_match(0, 1)
+        m3 = b.get_match(0, 2)
+        
+        self.assertTrue(m1.is_editable())
+        self.assertFalse(m1.is_ready())
+        self.assertEqual(m1.aka.name, "a")
+        self.assertEqual(m1.shiro.name, "b")
+        
+        self.assertTrue(m2.is_editable())
+        self.assertFalse(m2.is_ready())
+        self.assertEqual(m2.aka.name, "b")
+        self.assertEqual(m2.shiro.name, "c")
+        
+        self.assertTrue(m3.is_editable())
+        self.assertFalse(m3.is_ready())
+        self.assertEqual(m3.aka.name, "c")
+        self.assertEqual(m3.shiro.name, "a")
+        
+        self.assertEqual(b.get_next_match(), None)
+        
+        self.assertEqual(b.get_winners(), ((1, m2.aka.eventlink), (2, m3.aka.eventlink), (3, m1.aka.eventlink)))
+        
         # Winner by total wins, ignoring points
         # a:1 - b:0
         # b:9 - c:0
@@ -812,6 +870,265 @@ class KumiteRoundRobinBracketTestCase(TestCase):
         self.assertEqual(b.get_winners(), ((1, m1.aka.eventlink), (2, m2.aka.eventlink), (3, m3.aka.eventlink)))
         
         #TODO: NEED TO DEAL WITH TIES!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    
+    
+    def test_disqualified_aka(self):
+        b = make_bracket(3)
+        self.assertIsInstance(b, KumiteRoundRobinBracket)
+        
+        self.assertEqual(len(b.kumitematch_set.all()), 3)
+        m1 = b.get_match(0, 0)
+        m2 = b.get_match(0, 1)
+        m3 = b.get_match(0, 2)
+        
+        # Finish one matches
+        # a:1  - b:DQ
+        # b:?  - c:?
+        # c:?  - a:?
+        m1.shiro.points = 10
+        m1.shiro.disqualified = True
+        m1.shiro.save()
+        m1.done = True
+        m1.infer_winner()
+        m1.save()
+        
+        self.assertEqual(len(b.kumitematch_set.all()), 3)
+        m1 = b.get_match(0, 0)
+        m2 = b.get_match(0, 1)
+        m3 = b.get_match(0, 2)
+        
+        self.assertTrue(m1.is_editable())
+        self.assertFalse(m1.is_ready())
+        self.assertEqual(m1.aka.name, "a")
+        self.assertEqual(m1.shiro.name, "b")
+        self.assertTrue(m1.aka_won)
+        
+        self.assertTrue(m2.is_editable())
+        self.assertTrue(m2.is_ready())
+        self.assertEqual(m2.aka.name, "DISQUALIFIED")
+        self.assertEqual(m2.shiro.name, "c")
+        
+        self.assertTrue(m3.is_editable())
+        self.assertTrue(m3.is_ready())
+        self.assertEqual(m3.aka.name, "c")
+        self.assertEqual(m3.shiro.name, "a")
+        
+        self.assertEqual(m2, b.get_next_match())
+        
+        self.assertEqual(b.get_winners(), ((1, None), (2, None), (3, None)))
+        
+        # Finish second match
+        # a:1  - b:DQ <= LOCKED
+        # b:DQ - c:0
+        # c:?  - a:?
+        self.assertTrue(m2.aka.disqualified)
+        m2.done = True
+        m2.infer_winner()
+        m2.save()
+        
+        self.assertEqual(len(b.kumitematch_set.all()), 3)
+        m1 = b.get_match(0, 0)
+        m2 = b.get_match(0, 1)
+        m3 = b.get_match(0, 2)
+        
+        self.assertFalse(m1.is_editable())
+        self.assertFalse(m1.is_ready())
+        self.assertEqual(m1.aka.name, "a")
+        self.assertEqual(m1.shiro.name, "b")
+        self.assertTrue(m1.aka_won)
+        
+        self.assertTrue(m2.is_editable())
+        self.assertFalse(m2.is_ready())
+        self.assertEqual(m2.aka.name, "DISQUALIFIED")
+        self.assertEqual(m2.shiro.name, "c")
+        
+        self.assertTrue(m3.is_editable())
+        self.assertTrue(m3.is_ready())
+        self.assertEqual(m3.aka.name, "c")
+        self.assertEqual(m3.shiro.name, "a")
+        
+        self.assertEqual(m3, b.get_next_match())
+        
+        self.assertEqual(b.get_winners(), ((1, None), (2, None), (3, None)))
+        
+        # DQ third match
+        # a:1  - b:DQ <= LOCKED
+        # DQ   - c:0
+        # c:DQ - a:0
+        m3.aka.disqualified = True
+        m3.aka.save()
+        m3.done = True
+        m3.infer_winner()
+        m3.save()
+        
+        self.assertEqual(len(b.kumitematch_set.all()), 3)
+        m1 = b.get_match(0, 0)
+        m2 = b.get_match(0, 1)
+        m3 = b.get_match(0, 2)
+        
+        self.assertFalse(m1.is_editable())
+        self.assertFalse(m1.is_ready())
+        self.assertEqual(m1.aka.name, "a")
+        self.assertEqual(m1.shiro.name, "b")
+        self.assertTrue(m1.aka_won)
+        
+        self.assertTrue(m2.is_editable())
+        self.assertFalse(m2.is_ready())
+        self.assertEqual(m2.aka.name, "DISQUALIFIED")
+        self.assertEqual(m2.shiro.name, "c")
+        
+        self.assertTrue(m3.is_editable())
+        self.assertFalse(m3.is_ready())
+        self.assertEqual(m3.aka.name, "c")
+        self.assertEqual(m3.shiro.name, "a")
+        
+        self.assertEqual(None, b.get_next_match())
+        
+        disqualified = EventLink.get_disqualified_singleton(m1.aka.eventlink.event)
+        self.assertEqual(b.get_winners(), ((1, m1.aka.eventlink), (2, disqualified), (3, disqualified)))
+        
+        # Undo matches
+        # a:?  - b:?
+        # b:?  - c:?
+        # c:?  - a:?
+        m2.done = False
+        m2.infer_winner()
+        m2.save()
+        m3.done = False
+        m3.infer_winner()
+        m3.save()
+        m1.done = False
+        m1.infer_winner()
+        m1.save()
+        
+        self.assertEqual(len(b.kumitematch_set.all()), 3)
+        m1 = b.get_match(0, 0)
+        m2 = b.get_match(0, 1)
+        m3 = b.get_match(0, 2)
+        
+        self.assertTrue(m1.is_editable())
+        self.assertTrue(m1.is_ready())
+        self.assertEqual(m1.aka.name, "a")
+        self.assertEqual(m1.shiro.name, "b")
+        self.assertTrue(m1.aka_won)
+        
+        self.assertTrue(m2.is_editable())
+        self.assertTrue(m2.is_ready())
+        self.assertEqual(m2.aka.name, "b")
+        self.assertEqual(m2.shiro.name, "c")
+        
+        self.assertTrue(m3.is_editable())
+        self.assertTrue(m3.is_ready())
+        self.assertEqual(m3.aka.name, "c")
+        self.assertEqual(m3.shiro.name, "a")
+        
+        self.assertEqual(m1, b.get_next_match())
+        
+        self.assertEqual(b.get_winners(), ((1, None), (2, None), (3, None)))
+        
+        # Double DQ second match
+        # a:?  - DQ
+        # b:DQ - c:DQ
+        # DQ   - a:?
+        m2.aka.disqualified = True
+        m2.aka.save()
+        m2.shiro.disqualified = True
+        m2.shiro.save()
+        m2.done = True
+        m2.infer_winner()
+        m2.save()
+        
+        self.assertEqual(len(b.kumitematch_set.all()), 3)
+        m1 = b.get_match(0, 0)
+        m2 = b.get_match(0, 1)
+        m3 = b.get_match(0, 2)
+        
+        self.assertTrue(m1.is_editable())
+        self.assertTrue(m1.is_ready())
+        self.assertEqual(m1.aka.name, "a")
+        self.assertEqual(m1.shiro.name, "DISQUALIFIED")
+        self.assertTrue(m1.aka_won)
+        
+        self.assertTrue(m2.is_editable())
+        self.assertFalse(m2.is_ready())
+        self.assertEqual(m2.aka.name, "b")
+        self.assertEqual(m2.shiro.name, "c")
+        
+        self.assertTrue(m3.is_editable())
+        self.assertTrue(m3.is_ready())
+        self.assertEqual(m3.aka.name, "DISQUALIFIED")
+        self.assertEqual(m3.shiro.name, "a")
+        
+        self.assertEqual(m1, b.get_next_match())
+        
+        self.assertEqual(b.get_winners(), ((1, None), (2, None), (3, None)))
+        
+        # Double DQ second match, complete first match
+        # a:0  - DQ
+        # b:DQ - c:DQ <= locked
+        # DQ   - a:?
+        m1.done = True
+        m1.infer_winner()
+        m1.save()
+        
+        self.assertEqual(len(b.kumitematch_set.all()), 3)
+        m1 = b.get_match(0, 0)
+        m2 = b.get_match(0, 1)
+        m3 = b.get_match(0, 2)
+        
+        self.assertTrue(m1.is_editable())
+        self.assertFalse(m1.is_ready())
+        self.assertEqual(m1.aka.name, "a")
+        self.assertEqual(m1.shiro.name, "DISQUALIFIED")
+        self.assertTrue(m1.aka_won)
+        
+        self.assertFalse(m2.is_editable())
+        self.assertFalse(m2.is_ready())
+        self.assertEqual(m2.aka.name, "b")
+        self.assertEqual(m2.shiro.name, "c")
+        
+        self.assertTrue(m3.is_editable())
+        self.assertTrue(m3.is_ready())
+        self.assertEqual(m3.aka.name, "DISQUALIFIED")
+        self.assertEqual(m3.shiro.name, "a")
+        
+        self.assertEqual(m3, b.get_next_match())
+        
+        self.assertEqual(b.get_winners(), ((1, None), (2, None), (3, None)))
+        
+        # Double DQ second match, all done
+        # a:0  - DQ
+        # b:DQ - c:DQ <= locked
+        # DQ   - a:0
+        m3.done = True
+        m3.infer_winner()
+        m3.save()
+        
+        self.assertEqual(len(b.kumitematch_set.all()), 3)
+        m1 = b.get_match(0, 0)
+        m2 = b.get_match(0, 1)
+        m3 = b.get_match(0, 2)
+        
+        self.assertTrue(m1.is_editable())
+        self.assertFalse(m1.is_ready())
+        self.assertEqual(m1.aka.name, "a")
+        self.assertEqual(m1.shiro.name, "DISQUALIFIED")
+        self.assertTrue(m1.aka_won)
+        
+        self.assertFalse(m2.is_editable())
+        self.assertFalse(m2.is_ready())
+        self.assertEqual(m2.aka.name, "b")
+        self.assertEqual(m2.shiro.name, "c")
+        
+        self.assertTrue(m3.is_editable())
+        self.assertFalse(m3.is_ready())
+        self.assertEqual(m3.aka.name, "DISQUALIFIED")
+        self.assertEqual(m3.shiro.name, "a")
+        
+        self.assertEqual(None, b.get_next_match())
+        
+        self.assertEqual(b.get_winners(), ((1, m1.aka.eventlink), (2, disqualified), (3, disqualified)))
+
 
 class Kumite2PeopleBracketTestCase(TestCase):
     
@@ -951,3 +1268,75 @@ class Kumite2PeopleBracketTestCase(TestCase):
         self.assertEqual(b.get_next_match(), None)
         
         self.assertEqual(b.get_winners(), ((1, m1.shiro.eventlink), (2, m1.aka.eventlink)))
+    
+    
+    def test_disqualified(self):
+        b = make_bracket(2)
+        self.assertIsInstance(b, Kumite2PeopleBracket)
+        self.assertEqual(len(b.kumitematch_set.all()), 2)
+        m1 = b.get_match(0, 0)
+        m2 = b.get_match(0, 1)
+        disqualified = EventLink.get_disqualified_singleton(m1.aka.eventlink.event)
+
+        # DQ in second round
+        # a:1 - b:0
+        # b:? - a:DQ
+        m1.aka.points = 1
+        m1.aka.save()
+        m1.done = True
+        m1.infer_winner()
+        m1.save()
+        
+        m2.shiro.disqualified = True
+        m2.shiro.save()
+        m2.done = True
+        m2.infer_winner()
+        m2.save()
+        
+        self.assertEqual(len(b.kumitematch_set.all()), 2)
+        m1 = b.get_match(0, 0)
+        m2 = b.get_match(0, 1)
+        
+        self.assertFalse(m1.is_editable())
+        self.assertFalse(m1.is_ready())
+        self.assertEqual(m1.aka.name, "a")
+        self.assertEqual(m1.shiro.name, "b")
+
+        self.assertTrue(m2.is_editable())
+        self.assertFalse(m2.is_ready())
+        self.assertEqual(m2.aka.name, "b")
+        self.assertEqual(m2.shiro.name, "a")
+
+        self.assertEqual(None, b.get_next_match())
+
+        self.assertEqual(b.get_winners(), ((1, m2.aka.eventlink), (2, disqualified)))
+
+        # Unwind. Double DQ in first round
+        # a:DQ - b:DQ
+        # b:? - a:DQ
+        m2.done = False
+        m2.infer_winner()
+        m2.save()
+        
+        m1 = b.get_match(0, 0)
+        
+        m1.aka.disqualified = True
+        m1.aka.save()
+        m1.shiro.disqualified = True
+        m1.shiro.save()
+        m1.done = True
+        m1.infer_winner()
+        m1.save()
+                
+        self.assertEqual(len(b.kumitematch_set.all()), 1)
+        m1 = b.get_match(0, 0)
+        
+        self.assertTrue(m1.is_editable())
+        self.assertFalse(m1.is_ready())
+        self.assertEqual(m1.aka.name, "a")
+        self.assertEqual(m1.shiro.name, "b")
+
+        self.assertEqual(None, b.get_next_match())
+
+        self.assertEqual(b.get_winners(), ((1, disqualified), (2, disqualified)))
+        

@@ -30,6 +30,10 @@ class KumiteMatchCombinedForm(MultiModelForm):
     def __init__(self, read_only=False, **kwargs):
         self.read_only = read_only
         super().__init__(**kwargs)
+        self['aka'].fields['disqualified'].label = 'DQ'
+        self['aka'].fields['disqualified'].label_suffix = ''
+        self['shiro'].fields['disqualified'].label = 'DQ'
+        self['shiro'].fields['disqualified'].label_suffix = ''
     
     def clean(self):
         super(KumiteMatchCombinedForm, self).clean()
