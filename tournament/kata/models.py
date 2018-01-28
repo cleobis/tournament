@@ -50,8 +50,8 @@ class KataMatch(models.Model):
         scores = self.scores
         self.done = all((x is not None for x in scores))
         if self.done:
-            self.combined_score = (sum(scores) - max(scores) - min(scores)) / (len(scores) - 2)
-            self.tie_score = sum(scores) / len(scores)
+            self.combined_score = sum(scores) - max(scores) - min(scores)
+            self.tie_score = sum(scores)
         else:
             self.combined_score = None
             self.tie_score = None
