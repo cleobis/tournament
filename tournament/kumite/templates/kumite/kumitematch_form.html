@@ -55,6 +55,7 @@
     .people > div {
       width: calc(50% - 5px);
       margin-left: 5px;
+      display: inline-block; /* IE 10 compatibility */
     }
     
     .people > div:first-child {
@@ -62,6 +63,10 @@
       margin-right: 5px;
     }
     
+    .people > div:last-child {
+      float: right; /* IE 10 compatibility */
+    }
+        
     .people h2 {
       height: 5vh;
       font-size: 4vh;
@@ -188,7 +193,7 @@
       height: 30vh;
       font-size: 25vh;
       font-weight: bold;
-      line-height: calc(30vh / 25vh);
+      line-height: 30vh;
       vertical-align: middle;
       text-align: center;
       background-clip: content-box;

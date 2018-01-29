@@ -6,6 +6,7 @@ from django.core.urlresolvers import reverse, reverse_lazy
 from django.http.response import HttpResponseRedirect, HttpResponseForbidden
 from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST
+from django.contrib.admin.views.decorators import staff_member_required
 
 import math
 
@@ -92,6 +93,7 @@ class BracketDetails(DetailView):
         return context
 
 
+@method_decorator(staff_member_required, name='dispatch')
 class BracketDelete(DeleteView):
     model = KumiteElim1Bracket
     

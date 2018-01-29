@@ -219,10 +219,14 @@
 {% endif %}
 
 <h1>Reset</h1>
+{% if request.user.is_staff %}
 <form action="{{ delete_url }}" method="post">
   {% csrf_token %}
   <button type="submit">Delete</button>
 </form>
+{% else %}
+<p>Admin user required.</p>
+{% endif %}
 
 <script>
   <!-- Enable drag and drop for mobile -->
