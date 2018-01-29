@@ -86,7 +86,7 @@ class PersonFilterForm(forms.Form):
     def filter(self, qs):
         if len(self.cleaned_data['name']) > 0:
             qs = qs.annotate(name=Concat(F('first_name'), Value(' '), F('last_name'))
-                ).filter(name__contains=self.cleaned_data['name'])
+                ).filter(name__icontains=self.cleaned_data['name'])
         if self.cleaned_data['confirmed'] is not None:
             qs = qs.filter(confirmed=self.cleaned_data['confirmed'])
         if self.cleaned_data['paid'] is not None:
