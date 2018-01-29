@@ -1,0 +1,1 @@
+jQuery(document).ready(function(t){t(document).keydown(function(e){var a=!1;37==e.which?a=t(".previous-image a").attr("href"):39==e.which&&(a=t(".entry-attachment a").attr("href")),a&&!t("textarea, input").is(":focus")&&(window.location=a)})});
