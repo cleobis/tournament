@@ -201,7 +201,7 @@ class TestKataBracket(TestCase):
         winners = b.get_winners()
         self.assertEqual(winners, [(1, get_person(b, "a")), (1, get_person(b, "c")), 
             (3, get_person(b, "b")), (3, get_person(b, "d"))])
-        
+
         # f
         m = b.get_next_match()
         self.assertEqual(m.round.round, 0)

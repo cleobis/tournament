@@ -578,7 +578,7 @@ class KumiteElim1BracketTestCase(TestCase):
                 m.shiro.name if m.shiro is not None else "",
                 m.shiro.is_swappable() if m.shiro is not None else False
             ) for m in b.kumitematch_set.all()]
-        get_people = lambda: [p.name for p in b.get_swappable_match_people()] 
+        get_people = lambda: [p.name for p in b.get_swappable_match_people().order_by('pk')] 
         
         self.assertEqual(get_people(), ["a", "d", "e", "b", "c"])
         self.assertEqual(get_matches(), [('d', True, 'e', True), ('a', True, '', False), 

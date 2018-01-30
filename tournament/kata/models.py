@@ -177,8 +177,6 @@ class KataRound(models.Model):
                 batch.append(m)
                 next_m = itr.peek(None)
                 if next_m is None or next_m < m:
-                    n_winner += len(batch)
-                    
                     if len(batch) == 1:
                         pass # Have winner. Don't actually care who they are.
                     else:
@@ -192,6 +190,7 @@ class KataRound(models.Model):
                             m.save()
                     del batch[:]
                     
+                    n_winner += len(batch)
                     if n_winner >= self.n_winner_needed:
                         break
 

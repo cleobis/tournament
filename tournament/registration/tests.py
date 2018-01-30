@@ -118,11 +118,11 @@ class DivisionTestCase(TestCase):
         # Create this later: Division(event=e, gender='F', start_age=19, stop_age = 99, start_rank=  bb1, stop_rank=  bb9).save()
         
         def get_divs():
-            return Division.objects.filter(event=e).order_by() # Clear sorting so the above order is retained
+            return Division.objects.filter(event=e).order_by('pk') # Clear sorting so the above order is retained
         
         def div_summary():
-            return ([[el.name for el in d.eventlink_set.all()] for d in get_divs()],
-                [el.name for el in e.get_orphan_links()])
+            return ([[el.name for el in d.eventlink_set.order_by('pk')] for d in get_divs()],
+                [el.name for el in e.get_orphan_links().order_by('pk')])
         
         self.assertEqual(div_summary(), ([[], [], [], [], [], [], []], []))
         
