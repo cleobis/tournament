@@ -11,25 +11,23 @@
 {% endif %}
 
 <h1>Divisions</h1>
-<table>
+<table style="table-layout:fixed;">
 	<thead>
 		<tr>
-			<th>division</th>
-			<th>status</th>
-			<th>participants</th>
-			<th>winners</th>
+			<th style="width:50%;">Division</th>
+			<th style="width:10%;">Status</th>
+			<th style="width:10%;">Participants</th>
+			<th style="width:30%;">Winners</th>
 		</tr>
 	</thead>
 	<tbody>
 {% for div in object_list %}
 		<tr>
-			<td>{{ div }} <a href="{{ div.pk }}/">></a></td>
+			<td><a href="{{ div.pk }}/">{{ div }}</a></td>
 			<td>{{ div.status }}</td>
 			<td>{{ div.eventlink_set.all |length }}</td>
 			<td>
-{# division_person_list div.eventlink_set.all #}
-
-{% if div.get_format %}
+{% if div.status == "Done" %}
 {% for position, person in div.get_format.get_winners %}
 {{ position }}. {{ person.name }}<br />
 {% endfor %}

@@ -239,7 +239,18 @@ class Division(models.Model):
     def save(self, *args, **kwargs):
         super(Division, self).save(*args, **kwargs)
         Division.claim_all()
-    
+
+
+    @property
+    def status(self):
+        b = self.get_format()
+        if b:
+            if b.get_next_match() is None:
+                return "Done"
+            else:
+                return "Started"
+        else:
+            return "Ready"
     
     @staticmethod
     def claim_all():
