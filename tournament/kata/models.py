@@ -188,9 +188,9 @@ class KataRound(models.Model):
                         for p in batch:
                             m = KataMatch(eventlink=p.eventlink, round=round)
                             m.save()
+                    n_winner += len(batch)
                     del batch[:]
                     
-                    n_winner += len(batch)
                     if n_winner >= self.n_winner_needed:
                         break
 
