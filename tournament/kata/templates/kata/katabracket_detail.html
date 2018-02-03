@@ -106,7 +106,7 @@
 {% endif %}
 
 {% if not editing and round.round == 0 and not round.locked %}
-<h2>Add competetor</h2>
+<h2>Add participant</h2>
 <form method="post" action="{% url 'kata:bracket-match-add' bracket.id %}">
   {% csrf_token %}
   {{ add_form }}

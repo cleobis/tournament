@@ -27,9 +27,9 @@ class RankAdmin(admin.ModelAdmin):
 
 
 class DivisionAdmin(admin.ModelAdmin):
-    list_display = ['__str__', 'event', 'gender', 'start_age', 'stop_age', 'start_rank', 'stop_rank', 'num_participents']
+    list_display = ['__str__', 'num_participents', 'event', 'gender', 'start_age', 'stop_age', 'start_rank', 'stop_rank']
     list_editable = ['event', 'gender', 'start_age', 'stop_age', 'start_rank', 'stop_rank']
-    list_filter = ['event']
+    list_filter = ['event', 'gender', 'start_age', 'start_rank']
     inlines = (PersonInline,)
     
     
