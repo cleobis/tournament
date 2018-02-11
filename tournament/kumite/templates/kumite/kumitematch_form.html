@@ -252,31 +252,6 @@
 </div>
 
 <div class="people">
-  <div class="aka">
-    <h2>Aka: {{ form.aka.instance.name }}</h2>
-    <div class="disqualified">{{ form.aka.disqualified }}{{ form.aka.disqualified.label_tag }}</div>
-    <div>{{ form.aka.disqualified.errors }}</div>
-    <div class="points">
-      {{ form.aka.points.label_tag }}
-      <div class="input_pm">
-        {{ form.aka.points }}
-        <button type="button">+</button>
-        <button type="button">-</button>
-      </div>
-      {{ form.aka.points.errors }}
-    </div>
-    <div class="warnings">
-      {{ form.aka.warnings.label_tag }}
-      <div class="input_pm" style="position:relative;">
-        {{ form.aka.warnings }}
-        <button type="button">+</button>
-        <button type="button">-</button>
-      </div>
-      {{ form.aka.warnings.errors }}
-    </div>
-    {{ form.aka.non_field_errors }}
-  </div>
-  
   <div class="shiro">
     <h2>Ao: {{ form.shiro.instance.name }}</h2>
     <div class="disqualified">{{ form.shiro.disqualified }}{{ form.shiro.disqualified.label_tag }}</div>
@@ -300,6 +275,31 @@
       {{ form.shiro.warnings.errors }}
     </div>
     {{ form.shiro.non_field_errors }}
+  </div>
+  
+  <div class="aka">
+    <h2>Aka: {{ form.aka.instance.name }}</h2>
+    <div class="disqualified">{{ form.aka.disqualified }}{{ form.aka.disqualified.label_tag }}</div>
+    <div>{{ form.aka.disqualified.errors }}</div>
+    <div class="points">
+      {{ form.aka.points.label_tag }}
+      <div class="input_pm">
+        {{ form.aka.points }}
+        <button type="button">+</button>
+        <button type="button">-</button>
+      </div>
+      {{ form.aka.points.errors }}
+    </div>
+    <div class="warnings">
+      {{ form.aka.warnings.label_tag }}
+      <div class="input_pm" style="position:relative;">
+        {{ form.aka.warnings }}
+        <button type="button">+</button>
+        <button type="button">-</button>
+      </div>
+      {{ form.aka.warnings.errors }}
+    </div>
+    {{ form.aka.non_field_errors }}
   </div>
 </div>
 
