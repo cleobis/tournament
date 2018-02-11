@@ -540,3 +540,28 @@ def import_registrations(f):
     config.SIGNUP_IMPORT_LAST_TSTAMP = t_max
     
     return {"added": added, "skipped": skipped}
+
+
+def export_registrations(f):
+    """Export registration data as a csv file.
+    
+    Usage:
+        with open("filename.csv", "w", newline='''') as f:
+            export_registrations(f)
+    """
+    
+    from csv import writer
+    csv = writer(f)
+    
+    fields = ("first_name", "last_name", 'gender', 'age', 'rank', 'instructor', 'phone_number', 'email', 'parent', 'events', 'reg_date', 'notes')
+    
+    def process_field(p, f):
+        if f == 'events':
+            return ", ".join((el.event.name for el in p.eventlink_set.all()))
+        else:
+            return getattr(p, f)
+    
+    csv.writerow(fields)
+    for p in Person.objects.all():
+        csv.writerow((process_field(p, f) for f in fields))
+    

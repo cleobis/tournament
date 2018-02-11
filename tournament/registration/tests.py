@@ -1,6 +1,10 @@
-from django.test import TestCase
+from datetime import datetime
+from io import StringIO
+
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from .models import Person, Rank, EventLink, Division, Event, import_registrations
+from django.test import TestCase
+
+from .models import Person, Rank, EventLink, Division, Event, import_registrations, export_registrations
 
 # Create your tests here.
 class EventTestCase(TestCase):
@@ -246,12 +250,11 @@ class EventLinkTestCase(TestCase):
         self.assertEqual(el.name, "asdf qwerty")
         
 
-class ImportRegistrationTestCase(TestCase):
+class ImportExportRegistrationTestCase(TestCase):
     
     def test_import_registration(self):
-        import io
         
-        input = io.StringIO("""Timestamp,First Name,Last Name,Gender,Age,Rank,Instructor,Phone number,Email,Events,Notes,Address,City,Province,Postal Code,Waiver,Email Address,Name of parent or guardian (competitors under 18 years),Address
+        input = StringIO("""Timestamp,First Name,Last Name,Gender,Age,Rank,Instructor,Phone number,Email,Events,Notes,Address,City,Province,Postal Code,Waiver,Email Address,Name of parent or guardian (competitors under 18 years),Address
 1/8/2018 18:46:43,Hunter,Pratt,Male,15,Purple (4th kyu),Francisco Salazar,5196853680,,"Kumite",,40 Woolley Street,Cambridge,Ontario,N1R 5J8,I agree,am_pratt@hotmail.com,Ann Pratt,
 1/10/2018 14:39:21,Sean,Garcia,Male,30,Nidan (2nd dan black belt),Sandy Rooney/ Kim Dunn/ Tom Okura,9058186599,,"Kata, Kumite",,50 Glen Road,Hamilton,ON,L8S4N3,I agree,seansqgarcia@gmail.com,,""", newline='')
         
@@ -321,7 +324,7 @@ eventlink_set => Kata, Kumite
         self.assertEqual(people[1].eventlink_set.get(event=kumite).division, d_kumite) # length checked with
         self.assertEqual(people[1].eventlink_set.get(event=kata).division, d_kata)
 
-        input = io.StringIO("""Timestamp,First Name,Last Name,Gender,Age,Rank,Instructor,Phone number,Email,Events,Notes,Address,City,Province,Postal Code,Waiver,Email Address,Name of parent or guardian (competitors under 18 years),Address
+        input = StringIO("""Timestamp,First Name,Last Name,Gender,Age,Rank,Instructor,Phone number,Email,Events,Notes,Address,City,Province,Postal Code,Waiver,Email Address,Name of parent or guardian (competitors under 18 years),Address
 1/8/2018 18:46:43,Hunter,Pratt,Male,15,Purple (4th kyu),Francisco Salazar,5196853680,,"Kumite",,40 Woolley Street,Cambridge,Ontario,N1R 5J8,I agree,am_pratt@hotmail.com,Ann Pratt,
 1/10/2018 14:39:21,Sean,Garcia,Male,30,Nidan (2nd dan black belt),Sandy Rooney/ Kim Dunn/ Tom Okura,9058186599,,"Kata, Kumite",,50 Glen Road,Hamilton,ON,L8S4N3,I agree,seansqgarcia@gmail.com,,
 1/11/2018 21:31:54,Charlotte,Robertson,Female,11,Blue (5th kyu),Roney,905 637 8309,,"Kata, Kumite","Hello
@@ -350,7 +353,54 @@ eventlink_set => Kata, Kumite
 """)
         self.assertEqual(people[2].eventlink_set.get(event=kata).division, d_kata)
         self.assertEqual(people[2].eventlink_set.get(event=kumite).division, None)
-
+    
+    
+    def test_export_registration(self):
+        
+        kata = Event(name="Kata", format=Event.EventFormat.elim1)
+        kata.save()
+        kumite = Event(name="Kumite", format=Event.EventFormat.elim1)
+        kumite.save()
+        white = Rank.get_kyu(9)
+        bb2 = Rank.get_dan(2)
+        d_kata   = Division(event=kata,   gender='MF', start_age=1,  stop_age = 99, start_rank=white, stop_rank=bb2)
+        d_kata.save()
+        # No kumite division created
+        # d_kumite = Division(event=kumite, gender='M',  start_age=1,  stop_age = 99, start_rank=white, stop_rank=bb9)
+        # d_kumite.save()
+        
+        p = Person(first_name='Mark', last_name='Patterson', gender='M', age=32, rank=bb2, instructor='Sandy',
+            phone_number='123 456 7890', email="asdf@asdf.com", parent="", 
+            reg_date=datetime(2018, 1, 30, 13, 12, 10), paid=True, notes="""multi
+line
+note""")
+        p.save()
+        el = EventLink(event=kata, person=p)
+        el.save()
+        el = EventLink(event=kumite, person=p)
+        el.save()
+        
+        f = StringIO()
+        export_registrations(f)
+        self.maxDiff=None
+        self.assertEqual(f.getvalue().replace('\r\n', '\n'), """first_name,last_name,gender,age,rank,instructor,phone_number,email,parent,events,reg_date,notes
+Mark,Patterson,M,32,Nidan (2nd dan black belt),Sandy,123 456 7890,asdf@asdf.com,,"Kata, Kumite",2018-01-30 13:12:10,"multi
+line
+note"
+""")
+    
+    
+    def test_export_registration_fields(self):
+        """Look for any new fields that might need to be added."""
+        
+        export_fields = ("first_name", "last_name", 'gender', 'age', 'rank', 'instructor', 'phone_number', 'email', 'parent', 'events', 'reg_date', 'notes')
+        unused_fields = ('eventlink', 'paidDate', 'confirmed', 'id', 'paid')
+        okay_fields = export_fields + unused_fields
+        
+        model_fields = Person._meta.get_fields()
+        for f in model_fields:
+            self.assertIn(f.name, okay_fields)
+        
 
 def create_random_people(n):
     import names
