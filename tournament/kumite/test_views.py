@@ -21,7 +21,7 @@ class MatchViewTestCase(LiveServerTestCase):
         
         username = os.environ.get('SAUCE_USERNAME')
         password = os.environ.get('SAUCE_ACCESS_KEY')
-        if None in (username, password):
+        if True or None in (username, password):
             self.selenium = webdriver.Safari()
             self.selenium.implicitly_wait(5)
         else:
@@ -72,6 +72,8 @@ class MatchViewTestCase(LiveServerTestCase):
             ]
         if os.environ.get('SAUCE_USERNAME') is None:
             caps = [{}]
+        else:
+            return ############################ ONLY RUN LOCALLY FOR NOW
         
         for c in caps:
             with self.subTest(cap=c):
