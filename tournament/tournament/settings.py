@@ -67,7 +67,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     
-    'lockdown.middleware.LockdownMiddleware',
+    # 'lockdown.middleware.LockdownMiddleware',
 ]
 
 ROOT_URLCONF = 'tournament.urls'
