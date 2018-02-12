@@ -34,6 +34,8 @@ class KumiteMatchCombinedForm(MultiModelForm):
         self['aka'].fields['disqualified'].label_suffix = ''
         self['shiro'].fields['disqualified'].label = 'DQ'
         self['shiro'].fields['disqualified'].label_suffix = ''
+        
+        self.swap_changed = False
     
     def clean(self):
         super(KumiteMatchCombinedForm, self).clean()
@@ -46,6 +48,10 @@ class KumiteMatchCombinedForm(MultiModelForm):
             done = True
         elif 'btn_not_done' in self.data:
             done = False
+        elif 'btn_swap' in self.data:
+            self['match'].instance.swap = not self['match'].instance.swap
+            self.swap_changed = True
+            done = self['match'].instance.done
         else:
             raise ValidationError('Unexpected submit button.', code='done_missing')
         self['match'].cleaned_data['done'] = done

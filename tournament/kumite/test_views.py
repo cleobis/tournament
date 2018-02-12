@@ -1,6 +1,7 @@
 import os
 
 from django.test import LiveServerTestCase, TestCase
+from django_webtest import WebTest
 
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
@@ -145,6 +146,47 @@ class MatchViewTestCase(LiveServerTestCase):
         
         
         # TODO: Test timer, manually editing field, data saved to model correctly
+
+
+class TestSwap(WebTest):
+    
+    def test_swap(self):
+        
+        b = make_bracket(2)
+        m = b.get_next_match()
+        mp1 = m.aka
+        mp2 = m.shiro
+        
+        resp = self.app.get(m.get_absolute_url())
+        
+        html = resp.html
+        self.assertEqual(html.select(".aka h2")[0].string, "Aka: " + mp1.eventlink.name)
+        self.assertEqual(html.select(".shiro h2")[0].string, "Ao: " + mp2.eventlink.name)
+        
+        # Fill out the form and click the submit button
+        resp.form['aka-points'] = 1
+        resp.form['aka-warnings'] = 2
+        resp.form['shiro-points'] = 3
+        resp.form['shiro-warnings'] = 4
+        resp = resp.form.submit('btn_swap').follow()
+        
+        # Check that the fields are swapped
+        html = resp.html
+        self.assertEqual(html.select(".aka h2")[0].string, "Aka: " + mp2.eventlink.name)
+        self.assertEqual(html.select(".shiro h2")[0].string, "Ao: " + mp1.eventlink.name)
+        self.assertEqual(resp.form['aka-points'].value, "3")
+        self.assertEqual(resp.form['aka-warnings'].value, "4")
+        self.assertEqual(resp.form['shiro-points'].value, "1")
+        self.assertEqual(resp.form['shiro-warnings'].value, "2")
+        
+        # Set winner. Make sure it is the right person
+        resp.form['shiro-points'] = 10
+        resp.form.submit('btn_done')
+        m.refresh_from_db()
+        self.assertTrue(m.done)
+        self.assertTrue(m.aka_won)
+        self.assertEqual(m.winner(), mp1.eventlink)
+        self.assertEqual(m.loser(), mp2.eventlink)
 
 
 # HTML5 drag and drop doesn't work with Selenium.

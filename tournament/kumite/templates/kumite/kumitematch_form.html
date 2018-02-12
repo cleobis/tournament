@@ -314,11 +314,12 @@
   {% if form.read_only %}
     <button id="clear" type="reset" class="right_btn">Clear</button>
   {% else %}
+    <button id="clear" type="submit" name="btn_swap" class="right_btn">Swap</button>
     {% if form.match.done.value %}
-    <button id="clear" type="submit" name="btn_not_done" class="right_btn">Clear Match</button>
+    <button id="clear" type="submit" name="btn_not_done">Clear Match</button>
     <button id="submit" type="submit" name="btn_done">Change Score</button>
     {% else %}
-    <button id="clear" type="submit" name="btn_not_done" class="right_btn">Cancel</button>
+    <button id="clear" type="submit" name="btn_not_done">Cancel</button>
     <button id="submit" type="submit" name="btn_done">Done</button>
     {% endif %}
   {% endif %}

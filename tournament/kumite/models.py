@@ -69,7 +69,8 @@ class KumiteMatch(models.Model):
     consolation_match = models.ForeignKey('self', blank=True, null=True, on_delete=models.SET_NULL, related_name='+')
     aka = models.OneToOneField(KumiteMatchPerson, blank=True, null=True, on_delete=models.PROTECT, related_name='match_aka')
     shiro = models.OneToOneField(KumiteMatchPerson, blank=True, null=True, on_delete=models.PROTECT, related_name='match_shiro')
-
+    
+    swap = models.BooleanField(default=False) # Swap aka and shiro for display
     done = models.BooleanField(default=False)
     aka_won = models.BooleanField(default=False)
     
@@ -135,6 +136,14 @@ class KumiteMatch(models.Model):
     
     def people(self):
         return [self.aka, self.shiro]
+    
+    
+    def get_aka_display(self):
+        return self.aka if not self.swap else self.shiro
+    
+    
+    def get_shiro_display(self):
+        return self.shiro if not self.swap else self.aka
     
     
     def winner(self):

@@ -213,19 +213,29 @@ class KumiteMatchUpdate(UpdateView):
     model = KumiteMatch
     form_class = KumiteMatchCombinedForm
     
+    def __init__(self):
+        self.swap_changed = False
     
     def get_form_kwargs(self):
         kwargs = super(KumiteMatchUpdate, self).get_form_kwargs()
         kwargs.update(instance={
             'match': self.object,
-            'aka': self.object.aka,
-            'shiro': self.object.shiro,
+            'aka': self.object.get_aka_display(),
+            'shiro': self.object.get_shiro_display(),
         })
         return kwargs
     
     
+    def form_valid(self, form):
+        self.swap_changed = form.swap_changed
+        return super().form_valid(form)
+    
     def get_success_url(self):
-        return self.object['match'].bracket.get_absolute_url()
+        
+        if self.swap_changed:
+            return self.object['match'].get_absolute_url()
+        else:
+            return self.object['match'].bracket.get_absolute_url()
     
     
     def dispatch(self, *args, **kwargs):
