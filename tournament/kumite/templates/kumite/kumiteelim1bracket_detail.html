@@ -7,6 +7,7 @@
 {% block stylesheets %}
   {{ block.super }}
   <style>
+    
   .bracket td, .bracket th {
     height: 30px;
     padding: 2px 6px;
@@ -146,8 +147,11 @@
                 {% if cell.person is not None %}
                   <span class="{{ cell.person.disqualified |yesno:"disqualified,"}} {% if cell.match.done and cell.match.aka_won and cell.is_aka or cell.match.done and not cell.match.aka_won and not cell.is_aka %}winner{% endif %}">
                     {{ cell.person }}</span>
+                  {% if cell.person.is_first_match %}
+                    <br />({{ cell.person.eventlink.person.instructor }})
+                  {% endif %}
                   {% if cell.match.done %}
-                    P: {{ cell.person.points }} W: {{ cell.person.warnings }}
+                    <br />P: {{ cell.person.points }} W: {{ cell.person.warnings }}
                   {% endif %}
                 {% else %}
                   ?
