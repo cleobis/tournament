@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-git
+
 """Module responsible for defining the events in which people can compete and registration. The rules used to run each
 event are provided by other modules.
 
