@@ -9,3 +9,5 @@ tournament/node_modules
 venv2
 wvenv
 django-master
+docs/_build
+.idea

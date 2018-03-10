@@ -14,11 +14,15 @@ from .models import Person, Rank, EventLink, Division
 from .forms import PersonForm, ManualEventLinkForm, PersonFilterForm, PersonCheckinForm, PersonPaidForm
 
 # Create your views here.
-def index(request):
-    return HttpResponse("Hello, world. You're at the index.")
-
 
 class IndexView(generic.ListView, generic.edit.FormMixin):
+    """Main view for displaying the registered competetors.
+
+    Related to :class:`.IndexViewTable` and :class:`.IndexViewTableRow` which are used to redraw parts of this view
+    dynamically. Views :class:`PersonPaid` and :class:`PersonCheckin` are called by clicking buttons in this view.
+
+    """
+
     model = Person
     form_class = PersonFilterForm
     

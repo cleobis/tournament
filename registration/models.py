@@ -1,3 +1,14 @@
+"""Module responsible for defining the events in which people can compete and registration. The rules used to run each
+event are provided by other modules.
+
+* An :class:`.Event` defines an area in which you can compete, e.g. Kata or Kumite.
+* A :class:`.Division` defines a range of ages, belt ranks, and genders who compete against eachother in an Event.
+* A :class:`.Person` stores the registration information for a competetor.
+* For each Person, a :class:`.EventLink` is created for each Event in which they register.
+* A :class:`.Rank` is a utility table for populating the belt rank choices.
+
+"""
+
 from abc import ABC, abstractmethod
 from datetime import date, datetime
 
@@ -15,14 +26,20 @@ from phonenumber_field.modelfields import PhoneNumberField
 # Create your models here.
 
 class Event(models.Model):
-    """The events at the tournament in which you can compete. E.g. Kata or Kumite."""
+    """The events at the tournament in which you can compete. E.g. Kata or Kumite.
+    
+    The events define the options that are presented to the users when they register. They also determine which the
+    scoring rules used for each division.
+    """
     
     class EventFormat(DjangoChoices):
         kata = ChoiceItem("A")
         elim1 = ChoiceItem("B")
     
-    
+    #: The name of the event to be displayed to users.
     name = models.CharField(max_length=100)
+    #: The scoring rules used for the event.
+    #: :func:get_format_class
     format = models.CharField(max_length=1, choices=EventFormat.choices)
     
     
@@ -56,22 +73,6 @@ class Event(models.Model):
                 raise Exception("Unexpected number of people {}.".format(n_people))
         else:
             raise Exception("Unexpected format.")
-
-
-# class AbstractFormat(ABC):
-#
-#     @abstractmethod
-#     def build(self, people):
-#         pass
-#
-#     @abstractmethod
-#     def asdf(self):
-#         pass
-#
-#     @property
-#     @abstractmethod
-#     def winners(self):
-#         pass
 
 
 class Rank(models.Model):
