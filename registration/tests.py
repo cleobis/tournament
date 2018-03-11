@@ -113,7 +113,7 @@ class DivisionTestCase(TestCase):
         bb1 = Rank.get_dan(1)
         bb9 = Rank.get_dan(9)
         Division(event=e, gender='M', start_age=1,  stop_age = 18, start_rank=white, stop_rank=brown).save()
-        Division(event=e, gender='M', start_age=19, stop_age = 99, start_rank=white, stop_rank=brown).save() # <= deleted laster
+        Division(event=e, gender='M', start_age=19, stop_age = 99, start_rank=white, stop_rank=brown).save() # <= deleted later, then recreated, then deleted
         Division(event=e, gender='F', start_age=1,  stop_age = 18, start_rank=white, stop_rank=brown).save()
         Division(event=e, gender='F', start_age=19, stop_age = 99, start_rank=white, stop_rank=brown).save() # <= merged with deleted
         Division(event=e, gender='M', start_age=1,  stop_age = 18, start_rank=  bb1, stop_rank=  bb9).save()
@@ -190,13 +190,26 @@ class DivisionTestCase(TestCase):
         self.assertEqual(div_summary(), ([["a a"], ["b b", "m", "o d"], ["c c"], ["d d"], ["e e"], ["f f"], ["g g"]], ["h h", "o n"]))
         
         # Delete a division as part of a merge. Manually added "m" will be dropped.
+        # M, 19-99, white-brown
         d = get_divs()[1].delete()
         self.assertEqual(div_summary(), ([["a a"], ["c c"], ["d d"], ["e e"], ["f f"], ["g g"]], ["b b", "h h", "o d", "o n"]))
         
         # Expand a division as part of a merge
+        # F, 19-99, white-brown => MF
         d = get_divs()[2]
         d.gender = 'MF'
         d.save()
+        self.assertEqual(div_summary(), ([["a a"], ["c c"], ["b b", "d d"], ["e e"], ["f f"], ["g g"]], ["h h", "o d", "o n"]))
+
+        # Create an overlapping division
+        # M, 19-99, white-brown
+        # The newly created division steals "b b"
+        d2 = Division(event=e, gender='M', start_age=19, stop_age=99, start_rank=white, stop_rank=brown)
+        d2.save()
+        self.assertEqual(div_summary(), ([["a a"], ["c c"], ["d d"], ["e e"], ["f f"], ["g g"], ["b b"]], ["h h", "o d", "o n"]))
+
+        # Delete the just-created division. Orphan should be reclaimed by overlapping division.
+        d2.delete()
         self.assertEqual(div_summary(), ([["a a"], ["c c"], ["b b", "d d"], ["e e"], ["f f"], ["g g"]], ["h h", "o d", "o n"]))
 
 

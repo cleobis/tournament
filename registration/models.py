@@ -16,7 +16,7 @@ from datetime import date, datetime
 
 from django.db import models
 from django.core.urlresolvers import reverse
-from django.db.models.signals import pre_delete
+from django.db.models.signals import pre_delete, post_delete
 from django.dispatch import receiver
 from django.core.exceptions import ValidationError
 from django.db.models import Q
@@ -221,22 +221,28 @@ class Division(models.Model):
     def get_noshow_eventlinks(self):
         return self.eventlink_set.filter(person__confirmed=False)
     
-    
-    def claim(self):
-        "Put people into this division."
+
+    def filter_eventlinks(self):
+        """Return QuerySet of :class:`EventLink`s that should be in this division."""
         links = EventLink.objects.filter(person__age__gte=self.start_age,
-            person__age__lte=self.stop_age,
-            person__rank__order__gte=self.start_rank.order,
-            person__rank__order__lte=self.stop_rank.order,
-            event=self.event,
-            locked=False)
+                                         person__age__lte=self.stop_age,
+                                         person__rank__order__gte=self.start_rank.order,
+                                         person__rank__order__lte=self.stop_rank.order,
+                                         event=self.event,
+                                         locked=False)
         if self.gender == 'MF':
             pass
-        elif self.gender in ('M', 'F', ):
+        elif self.gender in ('M', 'F',):
             links = links.filter(person__gender=self.gender)
         else:
             raise Exception("Unexpected gender '{}' in Division {}.".format(self.gender, self.id))
-        links.update(division=self)
+
+        return links
+
+
+    def claim(self):
+        "Put people into this division."
+        self.filter_eventlinks().update(division=self)
     
     
     def save(self, *args, **kwargs):
@@ -311,11 +317,22 @@ class Division(models.Model):
 
 
 @receiver(pre_delete, sender=Division)
-def Division_post_delete(sender, instance, **kwargs):
-    
+def Division_pre_delete(sender, instance, **kwargs):
+
     # Remove manually added people since we can't automatically assign them to a division.
     el = EventLink.objects.filter(division=instance, person__isnull=True)
     el.delete()
+
+
+@receiver(post_delete, sender=Division)
+def Division_post_delete(sender, instance, **kwargs):
+
+    # Call claim on the orphaned people since there could be overlapping divisions. This can't be done in the
+    # pre_delete handler because our changes would be overwritten.
+    for el in instance.filter_eventlinks().all():
+        el.update_division()
+        if el.division is not None:
+            el.save()
 
 
 class Person(models.Model):
