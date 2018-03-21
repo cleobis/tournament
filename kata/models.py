@@ -1,7 +1,7 @@
 from django.db import models
 from django.core import validators
 from django.core.exceptions import ValidationError
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from registration.models import EventLink
 
@@ -119,7 +119,7 @@ class KataRound(models.Model):
     bracket = models.ForeignKey('KataBracket', on_delete=models.CASCADE)
     round = models.SmallIntegerField()
     order = models.SmallIntegerField()
-    prev_round = models.ForeignKey('KataRound', blank=True, null=True)
+    prev_round = models.ForeignKey('KataRound', blank=True, null=True, on_delete=models.CASCADE)
     locked = models.BooleanField(default=False)
     n_winner_needed = models.PositiveSmallIntegerField()
     
@@ -197,7 +197,7 @@ class KataRound(models.Model):
 
 class KataBracket(models.Model):
     
-    division = models.ForeignKey('registration.Division', null=True)
+    division = models.ForeignKey('registration.Division', null=True, on_delete=models.CASCADE)
     
     def __str__(self):
         return str(self.division) + " - Kata"

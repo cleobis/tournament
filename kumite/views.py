@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.views.generic import DetailView
 from django.views.generic.detail import SingleObjectMixin
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, ModelFormMixin, FormView
-from django.core.urlresolvers import reverse, reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.http.response import HttpResponseRedirect, HttpResponseForbidden
 from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST

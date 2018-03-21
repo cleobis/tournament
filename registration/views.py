@@ -1,7 +1,5 @@
-from django.http import HttpResponse
 from django.http.response import HttpResponseRedirect, HttpResponseForbidden
-from django.shortcuts import render
-from django.core.urlresolvers import reverse_lazy, reverse
+from django.urls import reverse_lazy, reverse
 from django.core.exceptions import PermissionDenied
 
 from django.views import generic

@@ -11,11 +11,10 @@ event are provided by other modules.
 
 """
 
-from abc import ABC, abstractmethod
 from datetime import date, datetime
 
 from django.db import models
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.db.models.signals import pre_delete, post_delete
 from django.dispatch import receiver
 from django.core.exceptions import ValidationError
@@ -23,7 +22,6 @@ from django.db.models import Q
 
 from constance import config
 from djchoices import DjangoChoices, ChoiceItem
-from phonenumber_field.modelfields import PhoneNumberField
 
 # Create your models here.
 

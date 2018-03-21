@@ -5,7 +5,7 @@ from django.db.models import Q, F
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.core.exceptions import MultipleObjectsReturned
-from django.core.urlresolvers import reverse, reverse_lazy
+from django.urls import reverse, reverse_lazy
 
 # from registration.models import AbstractFormat
 

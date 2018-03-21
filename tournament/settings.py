@@ -46,14 +46,15 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.admindocs',
     
-    'address',
+    #'address',
     'betterforms',
     'constance',
     'constance.backends.database',
     'django_extensions',
-    'phonenumber_field',
-    
+    #'phonenumber_field',
+
     'lockdown',
+
     
 ]
 
