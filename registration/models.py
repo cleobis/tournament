@@ -6,7 +6,7 @@ event are provided by other modules.
 * An :class:`.Event` defines an area in which you can compete, e.g. Kata or Kumite.
 * A :class:`.Division` defines a range of ages, belt ranks, and genders who compete against eachother in an Event.
 * A :class:`.Person` stores the registration information for a competetor.
-* For each Person, a :class:`.EventLink` is created for each Event in which they register.
+* For each Person, an :class:`.EventLink` is created for each Event in which they register.
 * A :class:`.Rank` is a utility table for populating the belt rank choices.
 
 """

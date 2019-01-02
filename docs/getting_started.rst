@@ -24,7 +24,7 @@ or Windows::
 
 Install the project dependencies by running::
 
-    pip install -e requirements.txt
+    pip install -r requirements.txt
 
 manage.py
 ^^^^^^^^^

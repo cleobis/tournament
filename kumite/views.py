@@ -178,9 +178,6 @@ class KumiteMatchPersonSwapView(BracketDetails, FormView):
     
     def form_valid(self, form):
         
-        import logging
-        log = logging.getLogger()
-        
         p1 = form.cleaned_data['src']
         m1 = p1.kumitematch
         attr1 = "aka" if p1 == m1.aka else "shiro"
