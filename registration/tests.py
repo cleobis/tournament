@@ -2,6 +2,7 @@ from datetime import datetime
 from io import StringIO
 
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db.models import Q
 from django.test import TestCase
 
 from .models import Person, Rank, EventLink, Division, Event, import_registrations, export_registrations
@@ -81,12 +82,12 @@ class DivisionTestCase(TestCase):
         d = Division(event=e, gender='M', start_age=1,  stop_age = 18, start_rank=Rank.get_kyu(9), stop_rank=Rank.get_dan(9))
         d.save()
         
-        p_confirmed = Person(first_name="a", last_name="b", age="10", rank=Rank.get_kyu(5), gender='M', confirmed=True)
+        p_confirmed = Person(first_name="confirmed", last_name="", age="10", rank=Rank.get_kyu(5), gender='M', confirmed=True)
         p_confirmed.save()
         el = EventLink(event=e, person=p_confirmed)
         el.save()
         
-        p_noshow = Person(first_name="c", last_name="d", age="10", rank=Rank.get_kyu(5), gender='M', confirmed=False)
+        p_noshow = Person(first_name="noshow", last_name="", age="10", rank=Rank.get_kyu(5), gender='M', confirmed=False)
         p_noshow.save()
         el = EventLink(event=e, person=p_noshow)
         el.save()
@@ -95,13 +96,85 @@ class DivisionTestCase(TestCase):
         el_manual.save()
         
         ppl = d.get_confirmed_eventlinks()
-        self.assertTrue(len(ppl) == 2)
-        self.assertIn(p_confirmed.eventlink_set.get(), ppl)
-        self.assertIn(el_manual, ppl)
+        ppl = [x.name for x in ppl]
+        ppl.sort()
+        self.assertEqual(ppl, ["confirmed", "manual"])
         
         ppl = d.get_noshow_eventlinks()
-        self.assertIn(p_noshow.eventlink_set.get(), ppl)
+        ppl = [x.name for x in ppl]
+        ppl.sort()
+        self.assertEqual(ppl, ["noshow"])
         
+        ppl = d.get_team_eventlinks()
+        ppl = [x.name for x in ppl]
+        ppl.sort()
+        self.assertEqual(ppl, [])
+        
+        ppl = d.get_non_team_eventlinks()
+        ppl = [x.name for x in ppl]
+        ppl.sort()
+        self.assertEqual(ppl, ["confirmed", "manual", "noshow"])
+        
+    
+    def test_get_eventlinks_team(self):
+        e = Event(name="event", format=Event.EventFormat.kata, is_team=True)
+        e.save()
+        
+        d = Division(event=e, gender='M', start_age=1,  stop_age = 18, start_rank=Rank.get_kyu(9), stop_rank=Rank.get_dan(9))
+        d.save()
+        
+        team1 = EventLink(event=e, division=d, is_team=True)
+        team1.save()
+        
+        team2 = EventLink(event=e, division=d, is_team=True)
+        team2.save()
+        
+        p = Person(first_name="confirmed in team", last_name="", age="10", rank=Rank.get_kyu(5), gender='M', confirmed=True)
+        p.save()
+        el = EventLink(event=e, person=p, team=team1)
+        el.save()
+        
+        p = Person(first_name="confirmed no team", last_name="", age="10", rank=Rank.get_kyu(5), gender='M', confirmed=True)
+        p.save()
+        el = EventLink(event=e, person=p)
+        el.save()
+        
+        p = Person(first_name="noshow in team", last_name="", age="10", rank=Rank.get_kyu(5), gender='M', confirmed=False)
+        p.save()
+        el = EventLink(event=e, person=p, team=team1)
+        el.save()
+        
+        p = Person(first_name="noshow no team", last_name="", age="10", rank=Rank.get_kyu(5), gender='M', confirmed=False)
+        p.save()
+        el = EventLink(event=e, person=p)
+        el.save()
+        
+        el = EventLink(event=e, division=d, manual_name="manual in team", team=team2)
+        el.save()
+        
+        el = EventLink(event=e, division=d, manual_name="manual no team")
+        el.save()
+        
+        ppl = d.get_confirmed_eventlinks()
+        ppl = [x.name for x in ppl]
+        ppl.sort()
+        self.assertEqual(ppl, ["Team confirmed in team and noshow in team", "Team manual in team"])
+        
+        ppl = d.get_noshow_eventlinks()
+        ppl = [x.name for x in ppl]
+        ppl.sort()
+        self.assertEqual(ppl, ["confirmed no team", "manual no team", "noshow no team"])
+        
+        ppl = d.get_team_eventlinks()
+        ppl = [x.name for x in ppl]
+        ppl.sort()
+        self.assertEqual(ppl, ["Team confirmed in team and noshow in team", "Team manual in team"])
+        
+        ppl = d.get_non_team_eventlinks()
+        ppl = [x.name for x in ppl]
+        ppl.sort()
+        self.assertEqual(ppl, ["confirmed in team", "confirmed no team", "manual in team", "manual no team", "noshow in team", "noshow no team"])
+    
     
     def test_claim(self):
         e = Event(name="event", format=Event.EventFormat.kata)
@@ -211,6 +284,78 @@ class DivisionTestCase(TestCase):
         # Delete the just-created division. Orphan should be reclaimed by overlapping division.
         d2.delete()
         self.assertEqual(div_summary(), ([["a a"], ["c c"], ["b b", "d d"], ["e e"], ["f f"], ["g g"]], ["h h", "o d", "o n"]))
+    
+    
+    def test_claim_teams(self):
+        # Split division
+        # Merge Division
+        # Team splits
+        # Time whole
+        
+        e = Event(name="event", format=Event.EventFormat.kata, is_team=True)
+        e.save()
+        
+        # Create some divisions
+        white = Rank.get_kyu(9)
+        brown = Rank.get_kyu(1)
+        bb1 = Rank.get_dan(1)
+        bb9 = Rank.get_dan(9)
+        d1 = Division(event=e, gender='MF', start_age=1,  stop_age = 99, start_rank=white, stop_rank=bb9)
+        d1.save()
+        # Create this later: Division(event=e, gender='F', start_age=19, stop_age = 99, start_rank=  bb1, stop_rank=  bb9).save()
+        
+        def get_divs():
+            return Division.objects.filter(event=e).order_by('pk') # Clear sorting so the above order is retained
+        
+        def div_summary():
+            return ([[el.name for el in d.eventlink_set.filter(Q(is_team=True) | Q(team=None)).order_by('pk')] for d in get_divs()],
+                [el.name for el in e.get_orphan_links().order_by('pk')])
+        
+        self.assertEqual(div_summary(), ([[]], []))
+        
+        # Create some people
+        p = Person(first_name="a", last_name="", gender='M', age=1, rank=Rank.get_kyu(8), instructor="asdf")
+        p.save()
+        EventLink(person=p, event=e).save()
+        
+        p = Person(first_name="b", last_name="", gender='M', age=19, rank=Rank.get_kyu(5), instructor="asdf")
+        p.save()
+        EventLink(person=p, event=e).save()
+        
+        p = Person(first_name="c", last_name="", gender='M', age=18, rank=Rank.get_kyu(3), instructor="asdf")
+        p.save()
+        EventLink(person=p, event=e).save()
+        
+        p = Person(first_name="d", last_name="", gender='F', age=50, rank=Rank.get_kyu(1), instructor="asdf")
+        p.save()
+        EventLink(person=p, event=e).save()
+        
+        EventLink(manual_name="e", event=e, division=d1).save()
+        
+        # Check assignment without teams
+        self.assertEqual(div_summary(), ([["a", "b", "c", "d", "e"]], []))
+        
+        # Create initial teams and check teams reported correctly
+        team = EventLink(event=e, division=d1, is_team=True)
+        team.save()
+        EventLink.objects.filter(person__first_name="a").update(team=team)
+        EventLink.objects.filter(person__first_name="b").update(team=team)
+        
+        team = EventLink(event=e, division=d1, is_team=True)
+        team.save()
+        EventLink.objects.filter(person__first_name="c").update(team=team)
+        EventLink.objects.filter(person__first_name="d").update(team=team)
+        EventLink.objects.filter(manual_name="e").update(team=team)
+        
+        self.assertEqual(div_summary(), ([["Team a and b", "Team c, d and e"]], []))
+        
+        # Create a new division that splits out the boys. Team a and b should move to the new division. Other team is split
+        Division(event=e, gender='M', start_age=1,  stop_age = 98, start_rank=white, stop_rank=bb9).save()
+        self.assertEqual(div_summary(), ([["Team d and e"], ["c", "Team a and b"]], []))
+        
+        # Delete first division, orphaning d and causing manually created e to be dropped
+        d1.delete()
+        self.assertEqual(div_summary(), ([["c", "Team a and b"]], ["d"]))
 
 
 class PersonTestCase(TestCase):
@@ -256,12 +401,83 @@ class EventLinkTestCase(TestCase):
         el = EventLink(manual_name='manual', event=e)
         self.assertTrue(el.is_manual)
         self.assertEqual(el.name, 'manual')
+        self.assertFalse(el.is_team)
+        self.assertIsNone(el.team)
         
         el.person = p
+        el.manual_name = ""
         el.save()
         self.assertFalse(el.is_manual)
         self.assertEqual(el.name, "asdf qwerty")
+    
+    
+    def test_team(self):
+        p = Person(first_name="asdf", last_name="qwerty", gender='M', age=20,
+            rank=Rank.objects.get(order=1), instructor="Mr. Instructor")
+        p.save()
         
+        e = Event(name="event", format=Event.EventFormat.kata)
+        e.save()
+        
+        team = EventLink(event=e, is_team=True)
+        team.save()
+        self.assertEqual(team.name, "Empty team")
+        
+        el = EventLink(event=e, person=p, team=team)
+        el.save()
+        self.assertEqual(team.name, "Team asdf qwerty")
+        
+        el = EventLink(event=e, manual_name="aaa", team=team)
+        el.save()
+        self.assertEqual(team.name, "Team aaa and asdf qwerty")
+        
+        el = EventLink(event=e, manual_name="zzz", team=team)
+        el.save()
+        self.assertEqual(team.name, "Team aaa, asdf qwerty and zzz")
+    
+    
+    def test_clean(self):
+        p = Person(first_name="asdf", last_name="qwerty", gender='M', age=20,
+            rank=Rank.objects.get(order=1), instructor="Mr. Instructor")
+        p.save()
+        
+        e = Event(name="event", format=Event.EventFormat.kata)
+        e.save()
+        
+        d = Division(event=e, gender='M', start_age=1,  stop_age = 18, start_rank=Rank.get_kyu(9), stop_rank=Rank.get_dan(9))
+        d.save()
+        
+        el = EventLink(event=e, division=d)
+        el.person = p
+        el.full_clean()
+        
+        # Can't set manual name and person
+        el.manual_name = "asdf"
+        with self.assertRaises(ValidationError):
+            el.full_clean()
+        el.person = None
+        el.full_clean()
+        
+        # Can't set is_team and manual name
+        el.is_team = True
+        with self.assertRaises(ValidationError):
+            el.full_clean()
+        el.manual_name = ""
+        el.full_clean()
+        
+        # Division required for team
+        el.division = None
+        with self.assertRaises(ValidationError):
+            el.full_clean()
+        el.is_team = False
+        el.full_clean()
+        
+        # Division required for manual
+        el.person = None
+        el.manual_name = "asdf"
+        with self.assertRaises(ValidationError):
+            el.full_clean()
+
 
 class ImportExportRegistrationTestCase(TestCase):
     

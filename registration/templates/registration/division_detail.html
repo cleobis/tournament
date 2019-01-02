@@ -18,23 +18,21 @@
   </thead>
   <tbody>
     {% for el in confirmed_eventlinks %}
-      <tr>
-        {% include 'registration/division_detail_row.html' %}
-      </tr>
+      {% include 'registration/division_detail_row.html' %}
     {% empty %}
       <tr>
         <td colspan="5">No participents</td>
       </tr>
     {% endfor %}
-    {% if object.get_format is None %}
+    {% if not locked %}
     <tr>
       <td colspan="5">
         <form action="{{ request.path }}" method="post">
           {% csrf_token %}
-          {{ form.non_field_errors }}
-          {{ form.manual_name.errors }}
-          <label for="{{ form.manual_name.id_for_label }}">{{ form.manual_name.label }}:</label>
-          {{ form.manual_name }}
+          {{ add_form.non_field_errors }}
+          {{ add_form.manual_name.errors }}
+          <label for="{{ form.manual_name.id_for_label }}">{{ add_form.manual_name.label }}:</label>
+          {{ add_form.manual_name }}
           <button type="submit">+</button>
         </form>
       </td>
@@ -44,7 +42,7 @@
 </table>
 
 <h2>Start Division</h2>
-{% if object.get_format %}
+{% if locked %}
 <h1><a href="{{ object.get_format.get_absolute_url }}">> Bracket</a></h1>
 {% else %}
 <form action="{{ request.path }}build/" method="post">
@@ -67,9 +65,7 @@
   </thead>
   <tbody>
     {% for el in noshow_eventlinks %}
-      <tr>
-        {% include 'registration/division_detail_row.html' %}
-      </tr>
+      {% include 'registration/division_detail_row.html' %}
     {% empty %}
       <tr>
         <td colspan="5">No participents</td>

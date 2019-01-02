@@ -13,12 +13,13 @@ event are provided by other modules.
 
 from datetime import date, datetime
 
-from django.db import models
-from django.urls import reverse
-from django.db.models.signals import pre_delete, post_delete
-from django.dispatch import receiver
 from django.core.exceptions import ValidationError
-from django.db.models import Q
+from django.db import models
+from django.db.models import Q, F
+from django.db.models.signals import pre_delete, post_delete
+from django.db.models.aggregates import Count, Max, Min
+from django.dispatch import receiver
+from django.urls import reverse
 
 from constance import config
 from djchoices import DjangoChoices, ChoiceItem
@@ -41,6 +42,8 @@ class Event(models.Model):
     #: The scoring rules used for the event.
     #: :func:get_format_class
     format = models.CharField(max_length=1, choices=EventFormat.choices)
+    #: True if people participate in the division as a team rather than an individual. Typically used for team Kata.
+    is_team = models.BooleanField(default=False) 
     
     
     def __str__(self):
@@ -213,15 +216,41 @@ class Division(models.Model):
     
     
     def get_confirmed_eventlinks(self):
-        return self.eventlink_set.filter(Q(person__confirmed=True) | Q(person=None))
+        """Returns the :class:`.EventLink`s that will participate in the division.
+        
+        For individual events, the EventLinks for confirmed people and EventLinks that are manually added are returned.
+        
+        For team events, the EventLinks that are teams are returned.
+        """
+        if self.event.is_team:
+            return self.eventlink_set.filter(is_team=True)
+        else:
+            return self.eventlink_set.filter(Q(person__confirmed=True) | Q(person=None))
     
     
     def get_noshow_eventlinks(self):
-        return self.eventlink_set.filter(person__confirmed=False)
+        """Returns the :class:`.EventLink`s that will NOT participate in the division.
+        
+        For individual events, the EventLinks with confirmed=False are returned.
+        
+        For team events, the EventLinks that are not assigned to teams are returned.
+        """
+        if self.event.is_team:
+            return self.eventlink_set.filter(team=None, is_team=False)
+        else:
+            return self.eventlink_set.filter(person__confirmed=False)
     
-
+    
+    def get_team_eventlinks(self):
+        return self.eventlink_set.filter(is_team=True)
+    
+    
+    def get_non_team_eventlinks(self):
+        return self.eventlink_set.filter(is_team=False)
+    
+    
     def filter_eventlinks(self):
-        """Return QuerySet of :class:`EventLink`s that should be in this division."""
+        """Return QuerySet of :class:`.EventLink` that should be in this division."""
         links = EventLink.objects.filter(person__age__gte=self.start_age,
                                          person__age__lte=self.stop_age,
                                          person__rank__order__gte=self.start_rank.order,
@@ -239,8 +268,31 @@ class Division(models.Model):
 
 
     def claim(self):
-        "Put people into this division."
-        self.filter_eventlinks().update(division=self)
+        """Put people into this division.
+        
+        If all members of a team move to the same division, they stay in a team. If some of the members
+        move to a new division, only the members that stay in the original division will stay in a team.
+        """
+        
+        links = self.filter_eventlinks()
+        links.exclude(division=self).update(division=self)
+        
+        if not self.event.is_team:
+            return
+        
+        teams = set((x.team.id for x in links if x.team is not None))
+        teams = EventLink.objects.annotate(
+            min_div=Min('eventlink__division__pk'), 
+            max_div=Max('eventlink__division__pk'), 
+            count=Count('eventlink')
+            ).filter(id__in=teams)
+        
+        # If everyone moved to the division, update the team
+        teams.filter(min_div=self.id, max_div=self.id).update(division=self)
+        
+        # Split teams
+        split_teams = teams.exclude(division=self)
+        links.filter(team__in=split_teams).update(team=None)
     
     
     def save(self, *args, **kwargs):
@@ -317,7 +369,7 @@ class Division(models.Model):
 @receiver(pre_delete, sender=Division)
 def Division_pre_delete(sender, instance, **kwargs):
 
-    # Remove manually added people since we can't automatically assign them to a division.
+    # Remove manually added people and teams since we can't automatically assign them to a division.
     el = EventLink.objects.filter(division=instance, person__isnull=True)
     el.delete()
 
@@ -359,7 +411,7 @@ class Person(models.Model):
         ordering = ['last_name', 'first_name']
     
     def full_name(self):
-        return self.first_name + " " + self.last_name
+        return self.first_name + (" " if len(self.first_name) > 0 and len(self.last_name) > 0 else "") + self.last_name
     
     
     def __str__(self):
@@ -385,14 +437,18 @@ class Person(models.Model):
 
 
 class EventLink(models.Model):
-    """A person participating in a Division.
+    """A person participating in a :class:`.Division`.
     
     If a person participates in multiple divisions, there will be multiple EventLinks.
     
-    Usually an EventLink links back to a Person registration. To support less 
+    Usually an EventLink links back to a :class:`.Person` registration. To support less 
     sophisticated configurations or persons registering at ring-side, the
     EventLink may be created with only a name (manual_name) and no linked
     Person.
+    
+    An EventLink can represent a team of people participating in an event. In this 
+    case, there will be a EventLink for each person (with `is_team=False`), each of 
+    which has a `team` field that points to a shared EventLink (with `is_team=True`).
     """
     
     person = models.ForeignKey(Person, on_delete=models.CASCADE, blank=True, null=True)
@@ -401,7 +457,8 @@ class EventLink(models.Model):
     division = models.ForeignKey(Division, on_delete=models.SET_NULL, blank=True, null=True)
     locked = models.BooleanField(default=False)
     disqualified = models.BooleanField(default=False) # Indicates that record is a placeholder for brackets, not a real person
-    
+    is_team = models.BooleanField(default=False)
+    team = models.ForeignKey('EventLink', on_delete=models.SET_NULL, blank=True, null=True)
     
     class Meta:
         ordering = ('event__name',)
@@ -410,6 +467,15 @@ class EventLink(models.Model):
     def __str__(self):
         div = self.division.event.name if self.division is not None else "No division"
         return self.name + " - " + div
+    
+    
+    def clean(self):
+        if self.person is not None and len(self.manual_name) > 0:
+            raise ValidationError("Can't set both person and manual_name")
+        if self.is_team and len(self.manual_name) > 0:
+            raise ValidationError("Can't set manual_name for team")
+        if (self.is_team or self.is_manual) and self.division is None:
+            raise ValidationError("Manual and team EventLinks must have a division")
     
     
     def save(self, *args, **kwargs):
@@ -441,12 +507,29 @@ class EventLink(models.Model):
     
     @property
     def is_manual(self):
-        return self.person is None
+        return len(self.manual_name) > 0
     
     
     @property
     def name(self):
-        return str(self.person) if not self.is_manual else self.manual_name
+        if self.is_manual:
+            return self.manual_name
+        elif self.is_team:
+            names = [x.name for x in self.eventlink_set.all()]
+            names.sort()
+            if len(names) == 0:
+                return "Empty team"
+            if len(names) == 1:
+                return "Team " + names[0]
+            else:
+                s = ", ".join(names[0:-1])
+                s = " and ".join([s, names[-1]])
+                return "Team " + s
+        elif self.person is not None:
+            return str(self.person)
+        else:
+            # Should never happen
+            return "Unknown"
 
 
 def create_divisions():

@@ -1,19 +1,20 @@
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.http.response import HttpResponseRedirect, HttpResponseForbidden
 from django.urls import reverse_lazy, reverse
 from django.core.exceptions import PermissionDenied
 
 from django.views import generic
-from django.views.generic.edit import CreateView, UpdateView, DeleteView, ModelFormMixin
+from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView, ModelFormMixin
 
 from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST
 
 from .models import Person, Rank, EventLink, Division
-from .forms import PersonForm, ManualEventLinkForm, PersonFilterForm, PersonCheckinForm, PersonPaidForm
+from .forms import PersonForm, ManualEventLinkForm, PersonFilterForm, PersonCheckinForm, PersonPaidForm, TeamAssignForm
 
 # Create your views here.
 
-class IndexView(generic.ListView, generic.edit.FormMixin):
+class IndexView(PermissionRequiredMixin, generic.ListView, generic.edit.FormMixin):
     """Main view for displaying the registered competetors.
 
     Related to :class:`.IndexViewTable` and :class:`.IndexViewTableRow` which are used to redraw parts of this view
@@ -23,6 +24,7 @@ class IndexView(generic.ListView, generic.edit.FormMixin):
 
     model = Person
     form_class = PersonFilterForm
+    permission_required = 'accounts.edit'
     
     
     def __init__(self, *args, **kwargs):
@@ -47,7 +49,6 @@ class IndexView(generic.ListView, generic.edit.FormMixin):
         return kwargs
     
     
-    
     def get(self, request, *args, **kwargs):
         self.form = self.get_form()
         return super().get(request, *args, **kwargs)
@@ -67,10 +68,10 @@ class IndexViewTable(IndexView):
     template_name = "registration/person_list_table.html"
 
 
-class IndexViewTableRow(generic.DetailView):
+class IndexViewTableRow(PermissionRequiredMixin, generic.DetailView):
     model = Person
     template_name = "registration/person_list_table_row.html"
-
+    permission_required = 'account.edit'
 
 class DetailView(generic.DetailView):
     model = Person
@@ -97,10 +98,16 @@ class PersonUpdate(UpdateView):
         self.object = form.save(commit=False)
         self.object.save()
         if 'events' in form.changed_data:
-            self.object.events.clear() # Remove existing links and recreate
+            # Clear links for removed events
+            link_set = self.object.eventlink_set.all()
+            for link in link_set:
+                if link.event not in form.cleaned_data['events']:
+                    link.delete()
+            # Create links for added events
             for event in form.cleaned_data['events']:
-                link = EventLink(event=event, person=self.object)
-                link.save()
+                if link_set.filter(event=event).count() == 0:
+                    link = EventLink(event=event, person=self.object)
+                    link.save()
         return HttpResponseRedirect(self.get_success_url())
 
 
@@ -153,38 +160,48 @@ class DivisionList(generic.ListView):
         return context
 
 
-class DivisionInfoDispatch(generic.View):
+def add_division_info_context_data(view, context, **kwargs):
+    context['locked'] = view.object.get_format() is not None
+    context['confirmed_eventlinks'] = view.object.get_confirmed_eventlinks()
+    context['noshow_eventlinks'] = view.object.get_noshow_eventlinks()
+    if 'add_form' not in context:
+        context['add_form'] = ManualEventLinkForm()
+    if view.object.event.is_team:
+        context['team_assign_form'] = TeamAssignForm(view.object)
     
-    # See https://docs.djangoproject.com/en/1.8/topics/class-based-views/mixins/#using-formmixin-with-detailview
-    
-    def get(self, request, *args, **kwargs):
-        view = DivisionInfo.as_view()
-        return view(request, *args, **kwargs)
-    
-    
-    def post(self, request, *args, **kwargs):
-        
-        view = DivisionAddManualPerson.as_view()
-        return view(request, *args, **kwargs)
+    return context
 
 
 class DivisionInfo(generic.DetailView):
     model = Division
     
+    def get_template_names(self):
+        if self.object.event.is_team:
+            return ['registration/division_team_detail.html']
+        else:
+            return ['registration/division_detail.html']
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
-        context['form'] = ManualEventLinkForm()
-        context['confirmed_eventlinks'] = self.object.get_confirmed_eventlinks()
-        context['noshow_eventlinks'] = self.object.get_noshow_eventlinks()
-        
+        context = add_division_info_context_data(self, context)
         return context
 
 
+@method_decorator(require_POST, name='dispatch')
 class DivisionAddManualPerson(generic.detail.SingleObjectMixin, generic.FormView):
-    template_name = 'registration/division_detail.html'
     form_class = ManualEventLinkForm
     model = Division
+    
+    def get_template_names(self):
+        if self.object.event.is_team:
+            return ['registration/division_team_detail.html']
+        else:
+            return ['registration/division_detail.html']
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context = add_division_info_context_data(self, context)
+        return context
     
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -195,17 +212,75 @@ class DivisionAddManualPerson(generic.detail.SingleObjectMixin, generic.FormView
         form.instance.save()
         return super().form_valid(form)
     
+    def form_invalid(self, form):
+        return self.render_to_response(self.get_context_data(add_form=form))
     
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         return super().post(request, *args, **kwargs)
     
     def get_success_url(self):
-        return reverse('registration:division-detail', kwargs={'pk': self.object.pk})
+        return self.object.get_absolute_url()
 
 
+@method_decorator(require_POST, name='dispatch')
+class TeamAssignView(DivisionInfo, FormView):
+    form_class = TeamAssignForm
+    
+    
+    def get_context_data(self, form=None):
+        context = super().get_context_data(**kwargs)
+        context = add_division_info_context_data(self, context)
+        return context
+    
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['division'] = self.get_object()
+        return kwargs
+    
+    
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        return super().post(request, *args, **kwargs)
+    
+    
+    def form_valid(self, form):
+        
+        el1 = form.cleaned_data['src']
+        old_team = el1.team
+        
+        el2 = form.cleaned_data['tgt']
+        if el2 is None:
+            el2 = EventLink(division=self.object, event=self.object.event, is_team=True)
+            el2.save()
+        elif not el2.is_team:
+            team = EventLink(division=self.object, event=self.object.event, is_team=True)
+            team.save()
+            el2.team = team
+            el2.save()
+            el2 = team
+        
+        el1.team = el2
+        el1.save()
+        
+        if old_team is not None and old_team.eventlink_set.count() == 0:
+            old_team.delete()
+        
+        return super().form_valid(form)
+    
+    
+    def form_invalid(self, form):
+        return self.render_to_response(self.get_context_data(team_assign_form=form))
+    
+    
+    def get_success_url(self):
+        return self.object.get_absolute_url()
+
+
+@method_decorator(require_POST, name='dispatch')
 class DivisionDeleteManaualPerson(generic.DeleteView):
-    template_name = 'registration/division_detail.html'
+    template_name = 'registration/division_detail.html' # Value doesn't matter since HTTP Get is forbidden
     model = EventLink
     
     def get_object(self):
@@ -215,10 +290,15 @@ class DivisionDeleteManaualPerson(generic.DeleteView):
       raise PermissionDenied
     
     def get_success_url(self):
-        return reverse('registration:division-detail', kwargs={'pk': self.object.division.pk})
+        return self.object.division.get_absolute_url()
     
-    def get(self, *args, **kwargs):
-        return HttpResponseForbidden()
+    def delete(self, request, *args, **kwargs):
+        
+        old_team = self.get_object().team
+        ret = super().delete(request, *args, **kwargs)
+        if old_team is not None and old_team.eventlink_set.count() == 0:
+            old_team.delete()
+        return ret
 
 
 @method_decorator(require_POST, name='dispatch')

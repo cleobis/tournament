@@ -14,7 +14,10 @@ urlpatterns = [
     url(r'^person/(?P<pk>[0-9]+)/checkin/$', views.PersonCheckin.as_view(), name='person-checkin'),
     url(r'^person/(?P<pk>[0-9]+)/paid/$', views.PersonPaid.as_view(), name='person-paid'),
     url(r'^division/$', views.DivisionList.as_view(), name='divisions'),
-    url(r'^division/(?P<pk>[0-9]+)/$', views.DivisionInfoDispatch.as_view(), name='division-detail'),
+    url(r'^division/(?P<pk>[0-9]+)/$', views.DivisionInfo.as_view(), name='division-detail'),
+    url(r'^division/(?P<pk>[0-9]+)/addPerson/$', views.DivisionAddManualPerson.as_view(), name='division-add-person'),
+    url(r'^division/(?P<pk>[0-9]+)/assignTeam/$', views.TeamAssignView.as_view(), name='division-team-assign'),
     url(r'^division/(?P<pk_div>[0-9]+)/delete/(?P<pk>[0-9]+)/$', views.DivisionDeleteManaualPerson.as_view()),
-    url(r'^division/(?P<pk>[0-9]+)/build/$', views.DivisionBuild.as_view()),
+    url(r'^division/(?P<pk>[0-9]+)/build/$', views.DivisionBuild.as_view(), name='division-build'),
+    
 ]

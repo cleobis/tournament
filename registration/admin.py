@@ -14,10 +14,14 @@ class PersonInline(admin.TabularInline):
     model = EventLink
     extra = 0
     readonly_fields = ['person', 'event']
-#    fields = ['person', ]#get_age]
     
-#    def get_age(self, obj):
-#        return obj.person.age
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "team":
+            qs = EventLink.objects.all()
+            if request.object is not None:
+                qs = qs.filter(division=request.object, is_team=True)
+            kwargs["queryset"] = qs
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 class RankAdmin(admin.ModelAdmin):
@@ -41,6 +45,11 @@ class DivisionAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         qs = super(DivisionAdmin, self).get_queryset(request)
         return qs.annotate(num_participents=models.Count('eventlink'))
+        
+    def get_form(self, request, obj=None, **kwargs):
+        # just save obj reference for future processing in Inline
+        request.object = obj
+        return super().get_form(request, obj, **kwargs)
 
 
 class DivisionInline(admin.TabularInline):

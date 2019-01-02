@@ -23,7 +23,7 @@
 	<tbody>
 {% for div in object_list %}
 		<tr>
-			<td><a href="{{ div.pk }}/">{{ div }}</a></td>
+			<td><a href="{{ div.get_absolute_url }}">{{ div }}</a></td>
 			<td>{{ div.status }}</td>
 			<td>{{ div.eventlink_set.all |length }}</td>
 			<td>

@@ -53,9 +53,54 @@ class ManualEventLinkForm(forms.ModelForm):
         
         if self.division is None:
             raise ValidationError('Division not assigned.')
+        if self.division.get_format() is not None:
+            raise ValidationError('Division already created.')
         
         self.instance.event = self.division.event
         self.instance.division = self.division
+
+
+class TeamAssignForm(forms.Form):
+    src = forms.ModelChoiceField(queryset=EventLink.objects.none(), widget=forms.HiddenInput())
+    tgt = forms.ModelChoiceField(queryset=EventLink.objects.none(), widget=forms.HiddenInput(), required=False)
+    prefix = 'assign'
+    
+    def __init__(self, division=None, **kwargs):
+        
+        if division is None:
+            raise ValueError('Division is required.')
+        if not division.event.is_team:
+            raise ValueError('Division not for teams.')
+        self.division = division
+        
+        super().__init__(**kwargs)
+        
+        self.fields['src'].queryset = self.division.get_non_team_eventlinks()
+        self.fields['tgt'].queryset = self.division.eventlink_set.all()
+    
+    
+    def clean_src(self):
+        # This should never actually get used because the get_swappable_match_people() queryset limits the choices.
+        value = self.cleaned_data['src']
+        if value.division != self.division:
+            raise forms.ValidationError("Can't be assigned.")
+        return value
+    
+    
+    def clean_tgt(self):
+        # This should never actually get used because the get_swappable_match_people() queryset limits the choices.
+        value = self.cleaned_data['tgt']
+        if value is not None:
+            if value.division != self.division:
+                raise forms.ValidationError("Can't be assigned.")
+        return value
+    
+    
+    def clean(self):
+        super().clean()
+        
+        if self.division.get_format() is not None:
+            raise ValidationError('Division already created.')
 
 
 class PersonFilterForm(forms.Form):
