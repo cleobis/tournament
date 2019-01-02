@@ -31,5 +31,4 @@ urlpatterns = [
     path(r'kumite/', include('kumite.urls')),
     path(r'admin/doc/', include('django.contrib.admindocs.urls')),
     path(r'admin/', admin.site.urls),
-    path(r'accounts/', include('accounts.urls')),
     ]
