@@ -200,6 +200,8 @@ class DivisionAddManualPerson(generic.detail.SingleObjectMixin, generic.FormView
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['add_form'] = context['form']
+        del context['form']
         context = add_division_info_context_data(self, context)
         return context
     
@@ -211,9 +213,6 @@ class DivisionAddManualPerson(generic.detail.SingleObjectMixin, generic.FormView
     def form_valid(self, form):
         form.instance.save()
         return super().form_valid(form)
-    
-    def form_invalid(self, form):
-        return self.render_to_response(self.get_context_data(add_form=form))
     
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
@@ -228,8 +227,10 @@ class TeamAssignView(DivisionInfo, FormView):
     form_class = TeamAssignForm
     
     
-    def get_context_data(self, form=None):
+    def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['team_assign_form'] = context['form']
+        del context['form']
         context = add_division_info_context_data(self, context)
         return context
     
@@ -268,10 +269,6 @@ class TeamAssignView(DivisionInfo, FormView):
             old_team.delete()
         
         return super().form_valid(form)
-    
-    
-    def form_invalid(self, form):
-        return self.render_to_response(self.get_context_data(team_assign_form=form))
     
     
     def get_success_url(self):

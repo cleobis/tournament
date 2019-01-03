@@ -4,6 +4,8 @@ import time
 from django.urls import reverse
 from django.test import LiveServerTestCase, TestCase
 
+from django_webtest import WebTest
+
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
@@ -11,6 +13,111 @@ from selenium.webdriver.common.action_chains import ActionChains
 
 from .models import Event, Division, Person, Rank, EventLink
 from .views import IndexView
+
+
+class DivisionTeamDetailTestCase(WebTest):
+    
+    def test_assign_team_form(self):
+        e = Event(name="Team kata", format=Event.EventFormat.kata, is_team=True)
+        e.save()
+        
+        white = Rank.get_kyu(9)
+        brown = Rank.get_kyu(1)
+        bb1 = Rank.get_dan(1)
+        bb9 = Rank.get_dan(9)
+        d = Division(event=e, gender='MF', start_age=1,  stop_age = 99, start_rank=white, stop_rank=bb9)
+        d.save()
+        
+        p1 = Person(first_name="a", last_name="", gender='M', age=1, rank=Rank.get_kyu(8), instructor="asdf")
+        p1.save()
+        el1 = EventLink(person=p1, event=e)
+        el1.save()
+        
+        p2 = Person(first_name="b", last_name="", gender='M', age=1, rank=Rank.get_kyu(8), instructor="asdf")
+        p2.save()
+        el2 = EventLink(person=p2, event=e)
+        el2.save()
+        
+        el3 = EventLink(manual_name="m", event=e, division=d)
+        el3.save()
+        
+        resp = self.app.get(d.get_absolute_url())
+        form = resp.forms['team_assign_form']
+        
+        # Add a to a new team
+        # t1 (a), unassigned (b, m)
+        form['assign-src'] = el1.id
+        resp = form.submit()
+        
+        self.assertEqual(d.eventlink_set.count(), 4)
+        t1 = d.eventlink_set.latest('pk')
+        self.assertEqual(t1.is_team, True)
+        self.assertIn(el1, t1.eventlink_set.all())
+        self.assertEqual(t1.eventlink_set.count(), 1)
+        
+        # Assign second person to same team
+        # t1 (a, m), unassigned (b)
+        resp = resp.follow()
+        form = resp.forms['team_assign_form']
+        form['assign-src'] = el3.id
+        form['assign-tgt'] = t1.id
+        resp = form.submit()
+        
+        self.assertEqual(d.eventlink_set.count(), 4)
+        self.assertIn(el1, t1.eventlink_set.all())
+        self.assertIn(el3, t1.eventlink_set.all())
+        self.assertEqual(t1.eventlink_set.count(), 2)
+        
+        # Move one to a new team with unassigned person
+        # t1 (m), t2 (a, b)
+        resp = resp.follow()
+        form = resp.forms['team_assign_form']
+        form['assign-src'] = el1.id
+        form['assign-tgt'] = el2.id
+        resp = form.submit()
+        
+        self.assertEqual(d.eventlink_set.count(), 5)
+        t1.refresh_from_db()
+        t2 = d.eventlink_set.latest('pk')
+        self.assertEqual(t1.is_team, True)
+        self.assertIn(el3, t1.eventlink_set.all())
+        self.assertEqual(t1.eventlink_set.count(), 1)
+        self.assertEqual(t2.is_team, True)
+        self.assertIn(el1, t2.eventlink_set.all())
+        self.assertIn(el2, t2.eventlink_set.all())
+        self.assertEqual(t2.eventlink_set.count(), 2)
+        
+        # Try moving a person to a person that is already in a team. Fails.
+        resp = resp.follow()
+        form = resp.forms['team_assign_form']
+        form['assign-src'] = "asdf" #el3.id
+        form['assign-tgt'] = el2.id
+        resp = form.submit()
+        self.assertFalse(resp.context['team_assign_form'].is_valid())
+        
+        # Try moving a team. Fails.
+        form = resp.forms['team_assign_form']
+        form['assign-src'] = t1.id
+        form['assign-tgt'] = ""
+        resp = form.submit()
+        self.assertFalse(resp.context['team_assign_form'].is_valid())
+        
+        # Move last person from first team to second team. First team should be deleted.
+        # t2 (a, b, m)
+        form = resp.forms['team_assign_form']
+        form['assign-src'] = el3.id
+        form['assign-tgt'] = t2.id
+        resp = form.submit()
+        
+        self.assertEqual(d.eventlink_set.count(), 4)
+        self.assertEqual(d.eventlink_set.filter(pk=t1.id).count(), 0) # is deleted
+        t2.refresh_from_db()
+        self.assertEqual(t2.is_team, True)
+        self.assertIn(el1, t2.eventlink_set.all())
+        self.assertIn(el2, t2.eventlink_set.all())
+        self.assertIn(el3, t2.eventlink_set.all())
+        self.assertEqual(t2.eventlink_set.count(), 3)
+
 
 # Disabled because the events don't work properly with Selenium.
 # class IndexViewTestCase(LiveServerTestCase):

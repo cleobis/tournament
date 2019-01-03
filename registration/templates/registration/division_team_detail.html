@@ -163,7 +163,7 @@
 </table>
 
 {% if not locked %}
-<form action="{% url 'registration:division-team-assign' object.id %}" method="post">
+<form id="team_assign_form" action="{% url 'registration:division-team-assign' object.id %}" method="post">
   {% csrf_token %}
   {{ team_assign_form }}
 </form>
