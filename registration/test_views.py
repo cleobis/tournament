@@ -117,8 +117,28 @@ class DivisionTeamDetailTestCase(WebTest):
         self.assertIn(el2, t2.eventlink_set.all())
         self.assertIn(el3, t2.eventlink_set.all())
         self.assertEqual(t2.eventlink_set.count(), 3)
-
-
+        
+        # Try assigning an EventLink from another division
+        d2 = Division(event=e, gender='MF', start_age=99,  stop_age = 99, start_rank=bb9, stop_rank=bb9)
+        d2.save()
+        
+        el4 = EventLink(manual_name="other", event=e, division=d2)
+        el4.save() ;
+        
+        resp = resp.follow()
+        form = resp.forms['team_assign_form']
+        form['assign-src'] = el4.id
+        form['assign-tgt'] = t2.id
+        resp = form.submit()
+        self.assertFalse(resp.context['team_assign_form'].is_valid())
+        
+        # Try assigning an EventLink to another division
+        form = resp.forms['team_assign_form']
+        form['assign-src'] = el2.id
+        form['assign-tgt'] = el4.id
+        resp = form.submit()
+        self.assertFalse(resp.context['team_assign_form'].is_valid())
+        
 # Disabled because the events don't work properly with Selenium.
 # class IndexViewTestCase(LiveServerTestCase):
 #
