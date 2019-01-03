@@ -101,6 +101,7 @@
       <th>Age</th>
       <th>Gender</th>
       <th>Rank</th>
+      <th>Teammates</th>
       <th>Delete</th>
     </tr>
   </thead>
@@ -115,7 +116,7 @@
           {% endif %}
           >
       <tr>
-        <td colspan="6">{{ team.name }}</td>
+        <td colspan="7">{{ team.name }}</td>
       </tr>
       {% for el in team.eventlink_set.all %}
         {% include 'registration/division_team_detail_row.html' %}
@@ -130,7 +131,7 @@
             ondrop="drop_handler(event, '');"
           {% endif %}
           >
-      <td colspan="6">New team</td>
+      <td colspan="7">New team</td>
     </tr>
     {% for el in noshow_eventlinks %}
       <tbody 
@@ -146,7 +147,7 @@
     {% endfor %}
     {% if not locked %}
     <tr>
-      <td colspan="6">
+      <td colspan="7">
         <form action="{% url 'registration:division-add-person' object.id %}" method="post">
           {% csrf_token %}
           {{ add_form.non_field_errors }}

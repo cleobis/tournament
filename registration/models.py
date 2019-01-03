@@ -19,10 +19,12 @@ from django.db.models import Q, F
 from django.db.models.signals import pre_delete, post_delete
 from django.db.models.aggregates import Count, Max, Min
 from django.dispatch import receiver
+from django.utils import timezone
 from django.urls import reverse
 
 from constance import config
 from djchoices import DjangoChoices, ChoiceItem
+import dateutil.parser
 
 # Create your models here.
 
@@ -398,6 +400,7 @@ class Person(models.Model):
     parent = models.CharField('Parent or Guardian (if under 18)', max_length=100, blank=True)
     
     events = models.ManyToManyField(Event, through='EventLink', related_name='person2')
+    teammates = models.CharField(max_length=200, blank=True)
     
     reg_date = models.DateTimeField('Date registered', default = datetime.now)
     paid = models.BooleanField(default=False)
@@ -568,6 +571,8 @@ def import_registrations(f):
     duplicate registrations.
     
     Input stream should be opened with newline='' or muti-line entries will not be parsed correctly.
+    
+    .. todo:: Pay attention to timezones when parsing dates. See https://docs.djangoproject.com/en/1.11/topics/i18n/timezones/
     """
 
     import csv
@@ -584,9 +589,10 @@ def import_registrations(f):
         'rank'          : R('Rank',),
         'instructor'    : R('Instructor',),
         'phone_number'  : R("Phone number",),
-        'email'         : R('Email Address',),
+        'email'         : R(['Email Address','Username'],),
         'parent'        : R('Name of parent or guardian (competitors under 18 years)'),
         'events'        : R('Events',),
+        'teammates'     : R('Teammates for Team Kata'),
         'reg_date'      : R('Timestamp',),
         #paid = models.BooleanField(default=False)
         #paidDate = models.DateField('Date paid', blank=True, null=True)
@@ -600,11 +606,18 @@ def import_registrations(f):
     c = csv.DictReader(f)
     
     t_min = config.SIGNUP_IMPORT_LAST_TSTAMP
+    if timezone.is_aware(t_min):
+        t_min = timezone.make_naive(t_min)
     t_max = t_min
     added = 0
     skipped = 0
     for row in c:
-        tstamp = datetime.datetime.strptime(row[csv_map['tstamp'].name], '%m/%d/%Y %H:%M:%S')
+        
+        # Parse datestamp.
+        tstamp = dateutil.parser.parse(row[csv_map['tstamp'].name])
+        if timezone.is_aware(tstamp):
+            tstamp = timezone.make_naive(tstamp)
+        
         if tstamp <= t_min:
             skipped += 1
             continue
@@ -612,11 +625,31 @@ def import_registrations(f):
         p = Person()
         events = []
         for (field,field_info) in csv_map.items():
-            v = row[field_info.name]
+            
+            found = False
+            field_names = field_info.name
+            if isinstance(field_names, str):
+                field_names = [field_names]
+            for fn in field_names:
+                if fn in row:
+                    v = row[fn]
+                    found = True
+                    break
+            if not found:
+                if field in ('teammates',):
+                    continue
+                else:
+                    raise ValueError('Unable to find ' + field_info.name)
+            
             if field == 'rank':
                 v = Rank.parse(v)
             elif field == 'events':
-                events = [Event.objects.get(name=e) for e in v.split(", ")]
+                # Delimiter used to be ", ", now ":"
+                if ';' in v:
+                    v = v.split(';')
+                else:
+                    v = v.split(", ")
+                events = [Event.objects.get(name=e) for e in v]
                 continue
             elif field == 'reg_date':
                 v = tstamp

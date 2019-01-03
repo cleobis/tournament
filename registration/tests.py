@@ -484,8 +484,8 @@ class ImportExportRegistrationTestCase(TestCase):
     def test_import_registration(self):
         
         input = StringIO("""Timestamp,First Name,Last Name,Gender,Age,Rank,Instructor,Phone number,Email,Events,Notes,Address,City,Province,Postal Code,Waiver,Email Address,Name of parent or guardian (competitors under 18 years),Address
-1/8/2018 18:46:43,Hunter,Pratt,Male,15,Purple (4th kyu),Francisco Salazar,5196853680,,"Kumite",,40 Woolley Street,Cambridge,Ontario,N1R 5J8,I agree,am_pratt@hotmail.com,Ann Pratt,
-1/10/2018 14:39:21,Sean,Garcia,Male,30,Nidan (2nd dan black belt),Sandy Rooney/ Kim Dunn/ Tom Okura,9058186599,,"Kata, Kumite",,50 Glen Road,Hamilton,ON,L8S4N3,I agree,seansqgarcia@gmail.com,,""", newline='')
+1/8/2018 18:46:43,HHH,PPP,Male,15,Purple (4th kyu),FFF SSS,5191234567,,"Kumite",,40 WWW,CCC,OOO,NNN 555,I agree,asdf@hotmail.com,AAA PPP,
+1/10/2018 14:39:21,SSS,GGG,Male,30,Nidan (2nd dan black belt),SSS RRR/ KKK DDD/ TTT OOO,9051234567,,"Kata, Kumite",,50 GGG,HHH,ON,LLL444,I agree,sss@gmail.com,,""", newline='')
         
         self.assertEqual(len(Person.objects.all()), 0)
         
@@ -493,6 +493,8 @@ class ImportExportRegistrationTestCase(TestCase):
         kata.save()
         kumite = Event(name="Kumite", format=Event.EventFormat.elim1)
         kumite.save()
+        team_kata = Event(name="Team kata", format=Event.EventFormat.elim1, is_team=True)
+        team_kata.save()
         white = Rank.get_kyu(9)
         bb9 = Rank.get_dan(9)
         d_kata   = Division(event=kata,   gender='MF', start_age=1,  stop_age = 99, start_rank=white, stop_rank=bb9)
@@ -505,7 +507,7 @@ class ImportExportRegistrationTestCase(TestCase):
         self.assertEqual(stats, {"added": 2, "skipped": 0})
         
         def person2str(p):
-            fields = ('first_name', 'last_name', 'gender', 'age', 'rank', 'instructor', 'phone_number', 'email', 'parent', 'reg_date', 'paid', 'notes', 'eventlink_set')
+            fields = ('first_name', 'last_name', 'gender', 'age', 'rank', 'instructor', 'phone_number', 'email', 'parent', 'reg_date', 'paid', 'notes', 'eventlink_set', 'teammates')
             str = ""
             for f in fields:
                 if f == "eventlink_set":
@@ -520,68 +522,98 @@ class ImportExportRegistrationTestCase(TestCase):
         people = Person.objects.order_by("reg_date")
         self.assertEqual(len(people), 2)
         # self.maxDiff = None
-        self.assertEqual(person2str(people[0]), """first_name => Hunter
-last_name => Pratt
+        self.assertEqual(person2str(people[0]), """first_name => HHH
+last_name => PPP
 gender => M
 age => 15
 rank => Purple (4th kyu)
-instructor => Francisco Salazar
-phone_number => 5196853680
-email => am_pratt@hotmail.com
-parent => Ann Pratt
+instructor => FFF SSS
+phone_number => 5191234567
+email => asdf@hotmail.com
+parent => AAA PPP
 reg_date => 2018-01-08 18:46:43
 paid => False
 notes => 
 eventlink_set => Kumite
+teammates => 
 """)
         self.assertEqual(people[0].eventlink_set.get(event=kumite).division, d_kumite) # length checked with person2str()
 
-        self.assertEqual(person2str(people[1]), """first_name => Sean
-last_name => Garcia
+        self.assertEqual(person2str(people[1]), """first_name => SSS
+last_name => GGG
 gender => M
 age => 30
 rank => Nidan (2nd dan black belt)
-instructor => Sandy Rooney/ Kim Dunn/ Tom Okura
-phone_number => 9058186599
-email => seansqgarcia@gmail.com
+instructor => SSS RRR/ KKK DDD/ TTT OOO
+phone_number => 9051234567
+email => sss@gmail.com
 parent => 
 reg_date => 2018-01-10 14:39:21
 paid => False
 notes => 
 eventlink_set => Kata, Kumite
+teammates => 
 """)
         self.assertEqual(people[1].eventlink_set.get(event=kumite).division, d_kumite) # length checked with
         self.assertEqual(people[1].eventlink_set.get(event=kata).division, d_kata)
 
         input = StringIO("""Timestamp,First Name,Last Name,Gender,Age,Rank,Instructor,Phone number,Email,Events,Notes,Address,City,Province,Postal Code,Waiver,Email Address,Name of parent or guardian (competitors under 18 years),Address
-1/8/2018 18:46:43,Hunter,Pratt,Male,15,Purple (4th kyu),Francisco Salazar,5196853680,,"Kumite",,40 Woolley Street,Cambridge,Ontario,N1R 5J8,I agree,am_pratt@hotmail.com,Ann Pratt,
-1/10/2018 14:39:21,Sean,Garcia,Male,30,Nidan (2nd dan black belt),Sandy Rooney/ Kim Dunn/ Tom Okura,9058186599,,"Kata, Kumite",,50 Glen Road,Hamilton,ON,L8S4N3,I agree,seansqgarcia@gmail.com,,
-1/11/2018 21:31:54,Charlotte,Robertson,Female,11,Blue (5th kyu),Roney,905 637 8309,,"Kata, Kumite","Hello
-there",683 Demaris Crt.,Burlington,Ontario,L7L 5C9,I agree,cg.robertson06@icloud.com,Gordon Robertson,""", newline='')
+1/8/2018 18:46:43,HHH,PPP,Male,15,Purple (4th kyu),FFF SSS,5191234567,,"Kumite",,40 WWW,CCC,OOO,NNN 555,I agree,asdf@hotmail.com,AAA PPP,
+1/10/2018 14:39:21,SSS,GGG,Male,30,Nidan (2nd dan black belt),SSS RRR/ KKK DDD/ TTT OOO,9051234567,,"Kata, Kumite",,50 GGG,HHH,ON,LLL444,I agree,sss@gmail.com,,
+1/11/2018 21:31:54,CCC,RRR,Female,11,Blue (5th kyu),RRR,905 123 4567,,"Kata, Kumite","Hello
+there",555 DDD,BBB,Ontario,LLL 555,I agree,ccc@icloud.com,GGG RRR,""", newline='')
 
-        people = Person.objects.order_by("reg_date")
         stats = import_registrations(input)
         self.assertEqual(stats, {"added": 1, "skipped": 2})
         
+        people = Person.objects.order_by("reg_date")
         self.assertEqual(len(people), 3)
         self.maxDiff = None
-        self.assertEqual(person2str(people[2]), """first_name => Charlotte
-last_name => Robertson
+        self.assertEqual(person2str(people[2]), """first_name => CCC
+last_name => RRR
 gender => F
 age => 11
 rank => Blue (5th kyu)
-instructor => Roney
-phone_number => 905 637 8309
-email => cg.robertson06@icloud.com
-parent => Gordon Robertson
+instructor => RRR
+phone_number => 905 123 4567
+email => ccc@icloud.com
+parent => GGG RRR
 reg_date => 2018-01-11 21:31:54
 paid => False
 notes => Hello
 there
 eventlink_set => Kata, Kumite
+teammates => 
 """)
         self.assertEqual(people[2].eventlink_set.get(event=kata).division, d_kata)
         self.assertEqual(people[2].eventlink_set.get(event=kumite).division, None)
+        
+        # Updated import to include team kata and teammates. This was also 
+        # exported directly from the form rather than going through Google 
+        # sheets, so the fields and formatting are subtly different.
+        input = StringIO(""""Timestamp","Username","First Name","Last Name","Gender","Age","Rank","Instructor","Phone number","Address","City","Province","Postal Code","Events","Teammates for Team Kata","Notes","Waiver","Name of parent or guardian (competitors under 18 years)"
+"2019/01/03 9:16:55 AM EST","asdf@gmail.com","MMM","PPP","Male","55","Nidan (2nd dan black belt)","SSS","1234567890","","","","","Kata;Kumite;Team kata","Anyone","","I agree",""""")
+        
+        stats = import_registrations(input)
+        self.assertEqual(stats, {"added": 1, "skipped": 0})
+        
+        people = Person.objects.order_by("reg_date")
+        self.assertEqual(len(people), 4)
+        self.assertEqual(person2str(people.last()), """first_name => MMM
+last_name => PPP
+gender => M
+age => 55
+rank => Nidan (2nd dan black belt)
+instructor => SSS
+phone_number => 1234567890
+email => asdf@gmail.com
+parent => 
+reg_date => 2019-01-03 09:16:55
+paid => False
+notes => 
+eventlink_set => Kata, Kumite, Team kata
+teammates => Anyone
+""")
     
     
     def test_export_registration(self):
@@ -622,7 +654,7 @@ note"
     def test_export_registration_fields(self):
         """Look for any new fields that might need to be added."""
         
-        export_fields = ("first_name", "last_name", 'gender', 'age', 'rank', 'instructor', 'phone_number', 'email', 'parent', 'events', 'reg_date', 'notes')
+        export_fields = ("first_name", "last_name", 'gender', 'age', 'rank', 'instructor', 'phone_number', 'email', 'parent', 'events', 'teammates', 'reg_date', 'notes')
         unused_fields = ('eventlink', 'paidDate', 'confirmed', 'id', 'paid')
         okay_fields = export_fields + unused_fields
         

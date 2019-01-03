@@ -8,6 +8,7 @@
   <td>{{ el.person.age }}</td>
   <td>{{ el.person.gender }}</td>
   <td>{{ el.person.rank }}</td>
+  <td>{{ el.person.teammates }}</td>
   <td>
     {% if el.is_manual and object.get_format is None %}
       <form action="{{ request.path }}delete/{{el.pk}}/" method="post">
