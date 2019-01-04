@@ -76,7 +76,7 @@ class TeamAssignForm(forms.Form):
         super().__init__(**kwargs)
         
         self.fields['src'].queryset = self.division.get_non_team_eventlinks()
-        self.fields['tgt'].queryset = self.division.eventlink_set.all()
+        self.fields['tgt'].queryset = self.division.eventlink_set.filter(Q(is_team=True) | Q(team=None))
     
     
     def clean_src(self):

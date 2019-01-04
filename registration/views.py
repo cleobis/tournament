@@ -166,7 +166,7 @@ def add_division_info_context_data(view, context, **kwargs):
     context['noshow_eventlinks'] = view.object.get_noshow_eventlinks()
     if 'add_form' not in context:
         context['add_form'] = ManualEventLinkForm()
-    if view.object.event.is_team:
+    if view.object.event.is_team and 'team_assign_form' not in context:
         context['team_assign_form'] = TeamAssignForm(view.object)
     
     return context
