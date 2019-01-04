@@ -68,6 +68,8 @@ class KataBracketAddPersonForm(forms.ModelForm):
     def clean(self):
         if not self.cleaned_data['manual_name'] and not self.cleaned_data['existing_eventlink']:
             raise forms.ValidationError("Specify either manual name or select from menu.")
+        if self.cleaned_data['manual_name'] and self.cleaned_data['existing_eventlink']:
+            raise forms.ValidationError("Specify only one of manual name or selection from menu.")
 
 
 class KataBracketAddTeamForm(forms.ModelForm):
