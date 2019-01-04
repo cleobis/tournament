@@ -10,6 +10,7 @@ urlpatterns = [
     url(r'^(?P<bracket>[0-9]+)/edit/(?P<pk>[0-9]+)/$', views.KataBracketEditMatch.as_view(), name='bracket-match-edit'),
     url(r'^(?P<bracket>[0-9]+)/delete/(?P<pk>[0-9]+)/$', views.KataBracketDeleteMatch.as_view(), name='bracket-match-delete'),
     url(r'^(?P<pk>[0-9]+)/add/$', views.KataBracketAddMatch.as_view(), name='bracket-match-add'),
+    url(r'^(?P<pk>[0-9]+)/addTeam/$', views.KataBracketAddTeamMatch.as_view(), name='bracket-team-match-add'),
 #    url(r'^person/(?P<pk>[0-9]+)/$', views.DetailView.as_view(), name='detail'),
 #    url(r'^person/(?P<pk>[0-9]+)/edit/$', views.PersonUpdate.as_view(), name='update'),
 #    url(r'^person/(?P<pk>[0-9]+)/delete/$', views.PersonDelete.as_view(), name='delete'),

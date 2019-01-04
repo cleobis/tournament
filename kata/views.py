@@ -8,7 +8,7 @@ from django.views.decorators.http import require_POST
 from registration.models import EventLink
 
 from .models import KataBracket, KataRound, KataMatch
-from .forms import KataMatchForm, KataBracketAddPersonForm
+from .forms import KataMatchForm, KataBracketAddPersonForm, KataBracketAddTeamForm
 
 # Create your views here.
 
@@ -21,7 +21,12 @@ class KataBracketDetails(generic.DetailView):
         context = super().get_context_data(**kwargs)
         context['editing'] = False
         
-        context['add_form'] = KataBracketAddPersonForm(self.object.division)
+        if self.object.division.event.is_team:
+            context['add_form'] = KataBracketAddTeamForm(self.object.division)
+            context['add_form_url'] = reverse('kata:bracket-team-match-add', args=[self.object.id])
+        else:
+            context['add_form'] = KataBracketAddPersonForm(self.object.division)
+            context['add_form_url'] = reverse('kata:bracket-match-add', args=[self.object.id])
         
         return context
 
@@ -83,7 +88,9 @@ class KataBracketDeleteMatch(DeleteView):
         
         ret = super().delete(request, *args, **kwargs)
         
-        if p.is_manual:
+        # Delete manual event links that are part of the team. 
+        
+        if p.is_manual or p.is_team:
             p.delete()
         round.match_callback(None)
         
@@ -111,14 +118,15 @@ class KataBracketAddMatch(KataBracketDetails, FormView):
         return super().post(request, *args, **kwargs)
     
     
-    def form_valid(self, form):
+    def form_valid(self, form, skip=False):
         
-        p = form.cleaned_data['existing_eventlink'] 
-        if p is None:
-            p = form.instance
-            p.save()
-        self.get_object().add_person(p)
+        if not skip:
+            p = form.cleaned_data['existing_eventlink'] 
+            if p is None:
+                p = form.instance
+                p.save()
         
+            self.get_object().add_person(p)
         
         return super().form_valid(form)
     
@@ -131,6 +139,32 @@ class KataBracketAddMatch(KataBracketDetails, FormView):
     
     def get_success_url(self):
         return reverse('kata:bracket', args=[self.object.id])
+
+
+class KataBracketAddTeamMatch(KataBracketAddMatch):
+    form_class = KataBracketAddTeamForm
+    
+    
+    def form_valid(self, form):
+        
+        p = form.cleaned_data['existing_eventlink'] 
+        if p is None:
+            p = form.instance
+        
+        team = form.cleaned_data['team']
+        new_team = team is None
+        if new_team:
+            team = EventLink(event=p.event, division=p.division, is_team=True)
+            team.save()
+        
+        p.team = team
+        p.save()
+        
+        if new_team:
+            self.get_object().add_person(team)
+        
+        return super().form_valid(form, skip=True)
+
 #
 # class KataBracketEditMatch(generic.detail.SingleObjectMixin, generic.FormView):
 #     template_name = 'kata/katabracket_detail.html'
