@@ -285,6 +285,12 @@ class DivisionTestCase(TestCase):
         d2.delete()
         self.assertEqual(div_summary(), ([["a a"], ["c c"], ["b b", "d d"], ["e e"], ["f f"], ["g g"]], ["h h", "o d", "o n"]))
     
+        # Change information about someone and check division changes
+        p = Person.objects.get(first_name="a")
+        p.gender = 'F'
+        p.save()
+        self.assertEqual(div_summary(), ([[], ["a a", "c c"], ["b b", "d d"], ["e e"], ["f f"], ["g g"]], ["h h", "o d", "o n"]))
+    
     
     def test_claim_teams(self):
         # Split division

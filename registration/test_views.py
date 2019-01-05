@@ -15,7 +15,46 @@ from .models import Event, Division, Person, Rank, EventLink
 from .views import IndexView
 
 
-class DivisionTeamDetailTestCase(WebTest):
+class DivisionDetailTestCase(WebTest):
+    
+    def test_manual_eventlink(self):
+        for is_team in [False, True]:
+            e = Event(name="Team kata", format=Event.EventFormat.kata, is_team=is_team)
+            e.save()
+        
+            white = Rank.get_kyu(9)
+            brown = Rank.get_kyu(1)
+            bb1 = Rank.get_dan(1)
+            bb9 = Rank.get_dan(9)
+            d = Division(event=e, gender='MF', start_age=1,  stop_age = 99, start_rank=white, stop_rank=bb9)
+            d.save()
+        
+            p1 = Person(first_name="a", last_name="", gender='M', age=1, rank=Rank.get_kyu(8), instructor="asdf")
+            p1.save()
+            el1 = EventLink(person=p1, event=e)
+            el1.save()
+            
+            url = d.get_absolute_url()
+            resp = self.app.get(url)
+            form = resp.forms['add_form']
+            
+            # Add manual
+            form['manual_name'] = "asdf"
+            resp = form.submit()
+            
+            self.assertRedirects(resp, url)
+            el = d.eventlink_set.latest('pk')
+            self.assertEqual(el.manual_name, "asdf")
+            self.assertEqual(el.is_manual, True)
+            self.assertEqual(d.eventlink_set.count(), 2)
+            
+            # Add empty name. Fails
+            resp = resp.follow()
+            form = resp.forms['add_form']
+            form['manual_name'] = ""
+            resp = form.submit()
+            
+            self.assertFormError(resp, 'add_form', 'manual_name', "Name cannot be empty.")
     
     def test_assign_team_form(self):
         e = Event(name="Team kata", format=Event.EventFormat.kata, is_team=True)

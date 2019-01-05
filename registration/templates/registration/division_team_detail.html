@@ -148,7 +148,7 @@
     {% if not locked %}
     <tr>
       <td colspan="7">
-        <form action="{% url 'registration:division-add-person' object.id %}" method="post">
+        <form id="add_form" action="{% url 'registration:division-add-person' object.id %}" method="post">
           {% csrf_token %}
           {{ add_form.non_field_errors }}
           {{ add_form.manual_name.errors }}
