@@ -16,7 +16,7 @@
   {% if object.paid %}
     Yes
   {% else %}
-    <form action="{% url 'registration:person-paid' object.pk %}" method="post" ic-target="closest tr" ic-post-to="{% url 'registration:person-paid' object.pk %}?inline" ic-indicator="#indicator">
+    <form id="form_paid_{{ object.pk }}" action="{% url 'registration:person-paid' object.pk %}" method="post" ic-target="closest tr" ic-post-to="{% url 'registration:person-paid' object.pk %}?inline" ic-indicator="#indicator">
       {% csrf_token %}
       <input type="hidden" name="paid" value="True">
       <button>Paid</button>
@@ -27,7 +27,7 @@
   {% if object.confirmed %}
     Yes
   {% else %}
-    <form action="{% url 'registration:person-checkin' object.pk %}" method="post" ic-target="closest tr" ic-post-to="{% url 'registration:person-checkin' object.pk %}?inline" ic-indicator="#indicator">
+    <form id="form_confirmed_{{ object.pk }}" action="{% url 'registration:person-checkin' object.pk %}" method="post" ic-target="closest tr" ic-post-to="{% url 'registration:person-checkin' object.pk %}?inline" ic-indicator="#indicator">
       {% csrf_token %}
       <input type="hidden" name="confirmed" value="True">
       <button>Check in</button>

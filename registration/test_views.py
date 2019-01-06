@@ -3,6 +3,7 @@ import time
 
 from django.urls import reverse
 from django.test import LiveServerTestCase, TestCase
+from django.contrib.auth import get_user_model
 
 from django_webtest import WebTest
 
@@ -15,6 +16,147 @@ from .models import Event, Division, Person, Rank, EventLink
 from .views import IndexView
 
 
+class PersonListTestCase(WebTest):
+    
+    def setUp(self):
+        
+        e_kumite = Event.objects.create(name="Kumite", format=Event.EventFormat.elim1)
+        e_team_kata = Event.objects.create(name="Team kata", format=Event.EventFormat.kata, is_team=True)
+        
+        p = Person.objects.create(first_name="aaa", last_name="last1", gender='M', age=22, rank=Rank.get_kyu(8), instructor="asdf", paid=False, confirmed=False)
+        EventLink.objects.create(person=p, event=e_kumite)
+        
+        p = Person.objects.create(first_name="bbb", last_name="last1", gender='F', age=22, rank=Rank.get_kyu(8), instructor="asdf", paid=False, confirmed=True)
+        EventLink.objects.create(person=p, event=e_team_kata)
+        
+        p = Person.objects.create(first_name="ccc", last_name="ddd", gender='M', age=30, rank=Rank.get_kyu(8), instructor="asdf", paid=True, confirmed=False)
+        EventLink.objects.create(person=p, event=e_kumite)
+        
+        p = Person.objects.create(first_name="eee", last_name="fff", gender='M', age=30, rank=Rank.get_kyu(8), instructor="asdf", paid=True, confirmed=True)
+        EventLink.objects.create(person=p, event=e_kumite)
+        EventLink.objects.create(person=p, event=e_team_kata)
+        
+        User = get_user_model()
+        user = User.objects.create_user('temporary', 'temporary@gmail.com', 'temporary', is_staff=True, is_superuser=True)
+        user.save()
+        self.app.set_user("temporary")
+    
+    
+    def test_person_paid_form(self):
+        url = reverse('registration:index')
+        resp = self.app.get(url)
+        
+        # Mark person as paid
+        # WebTest runs without JavaScript so this doesn't test the inline replacing of table rows.
+        p = Person.objects.get(first_name="aaa")
+        form = resp.forms['form_paid_' + str(p.id)]
+        resp = form.submit()
+        
+        self.assertRedirects(resp, url)
+        resp = resp.follow()
+        
+        p.refresh_from_db()
+        self.assertEqual(p.paid, True)
+        self.assertEqual(p.confirmed, False) # No change
+        self.assertNotIn('form_paid_' + str(p.id), resp.forms)
+        self.assertEqual(resp.context['object_list'].count(), 4)
+    
+    
+    def test_person_paid_inline(self):
+        url = reverse('registration:index')
+        resp = self.app.get(url)
+        
+        p = Person.objects.get(first_name="aaa")
+        
+        # Mark person as paid
+        # Manually force the form to hit the endpoint used by the inline row replace.
+        form = resp.forms['form_paid_' + str(p.id)]
+        form.action = form.action + "?inline"
+        resp = form.submit()
+        
+        self.assertRedirects(resp, reverse('registration:index-table-row', args=[p.id,]))
+        resp = resp.follow()
+        self.assertTrue(resp.text.startswith("<td>")) # Returns just table row
+        p.refresh_from_db()
+        self.assertEqual(p.paid, True)
+        self.assertEqual(p.confirmed, False) # No change
+        self.assertNotIn('form_paid_' + str(p.id), resp.forms)
+    
+    
+    def test_person_confirmed_form(self):
+        url = reverse('registration:index')
+        resp = self.app.get(url)
+        
+        # Mark person as confirmed
+        # WebTest runs without JavaScript so this doesn't test the inline replacing of table rows.
+        p = Person.objects.get(first_name="aaa")
+        form = resp.forms['form_confirmed_' + str(p.id)]
+        resp = form.submit()
+        
+        self.assertRedirects(resp, url)
+        resp = resp.follow()
+        
+        p.refresh_from_db()
+        self.assertEqual(p.paid, False) # No change
+        self.assertEqual(p.confirmed, True)
+        self.assertNotIn('form_confirmed_' + str(p.id), resp.forms)
+        self.assertEqual(resp.context['object_list'].count(), 4)
+    
+    
+    def test_person_confirmed_inline(self):
+        url = reverse('registration:index')
+        resp = self.app.get(url)
+        
+        p = Person.objects.get(first_name="aaa")
+        
+        # Mark person as paid
+        # Manually force the form to hit the endpoint used by the inline row replace.
+        form = resp.forms['form_confirmed_' + str(p.id)]
+        form.action = form.action + "?inline"
+        resp = form.submit()
+        
+        self.assertRedirects(resp, reverse('registration:index-table-row', args=[p.id,]))
+        resp = resp.follow()
+        self.assertTrue(resp.text.startswith("<td>")) # Returns just table row
+        p.refresh_from_db()
+        self.assertEqual(p.paid, False) # No change
+        self.assertEqual(p.confirmed, True)
+        self.assertNotIn('form_confirmed_' + str(p.id), resp.forms)
+    
+    
+    def test_person_filter(self):
+        url = reverse('registration:index')
+        resp = self.app.get(url)
+        
+        def names_summary(resp):
+            return [x.first_name for x in resp.context['object_list']]
+        
+        self.assertEqual(names_summary(resp), ["ccc", "eee", "aaa", "bbb"])
+        
+        # Filter by last name
+        form = resp.forms['filter_table']
+        form['name'] = "last1"
+        resp = form.submit()
+        
+        self.assertEqual(names_summary(resp), ["aaa", "bbb"])
+        
+        # Filter by name and confirmed
+        form = resp.forms['filter_table']
+        form['confirmed'] = True
+        resp = form.submit()
+        
+        self.assertEqual(names_summary(resp), ["bbb"])
+        
+        # Filter by confirmed and paid, clear name
+        form = resp.forms['filter_table']
+        form['name'] = ""
+        form['confirmed'] = False
+        form['paid'] = True
+        resp = form.submit()
+        
+        self.assertEqual(names_summary(resp), ["ccc"])
+        
+    
 class DivisionDetailTestCase(WebTest):
     
     def test_manual_eventlink(self):

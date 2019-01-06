@@ -52,9 +52,9 @@ class Event(models.Model):
         return self.name
     
     
-    def save(self):
+    def save(self, **kwargs):
         self.full_clean() # Catch blank strings when creating objects manually.
-        super().save()
+        super().save(**kwargs)
     
     
     def get_orphan_links(self):
