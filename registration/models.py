@@ -537,11 +537,11 @@ class EventLink(models.Model):
 
 def create_divisions():
 
-    ages = [1, 11, 15, 18, 100]
+    
     kata = Event.objects.get(name='Kata')
     kumite = Event.objects.get(name='Kumite')
-    def ranks():
-        starts = [-9, -6, -4, 1, 11]
+    
+    def ranks(starts):
         for i in range(len(starts)-1):
             r1 = starts[i]
             r2 = starts[i+1]-1
@@ -549,14 +549,24 @@ def create_divisions():
                 r2 -= 1
             yield (Rank.objects.get(order=r1), Rank.objects.get(order=r2))
     
+    rank_starts = [-9, -6, -4, 1, 11]
+    ages = [1, 11, 15, 18, 100]
     for ia in range(len(ages)-1):
-        for r1, r2 in ranks():
+        for r1, r2 in ranks(rank_starts):
             d = Division(event=kata, gender='MF', start_rank=r1, stop_rank=r2, start_age=ages[ia], stop_age=ages[ia+1]-1)
             d.save()
             d = Division(event=kumite, gender='M', start_rank=r1, stop_rank=r2, start_age=ages[ia], stop_age=ages[ia+1]-1)
             d.save()
             d = Division(event=kumite, gender='F', start_rank=r1, stop_rank=r2, start_age=ages[ia], stop_age=ages[ia+1]-1)
             d.save()
+    
+    team_kata = Event.objects.get(name='Team kata')
+    
+    rank_starts = [-9, -6, -4, 1, 11]
+    for r1, r2 in ranks(rank_starts):
+        d = Division(event=team_kata, gender='MF', start_rank=r1, stop_rank=r2, start_age=1, stop_age=99)
+        d.save()
+    
 
 
 def import_registrations(f):
