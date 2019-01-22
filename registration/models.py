@@ -299,9 +299,22 @@ class Division(models.Model):
     
     def save(self, *args, **kwargs):
         super(Division, self).save(*args, **kwargs)
-        Division.claim_all()
-
-
+        
+        # Remove auto-assigned event links from division
+        links = self.eventlink_set.filter(person__isnull=False, locked=False, is_team=False)
+        link_ids = [x.id for x in links]
+        links.update(division=None)
+        
+        # Add back in the event links that still fit. Also fixes teams.
+        self.claim()
+        
+        # Links might belong in another division now
+        for link in EventLink.objects.filter(division=None, id__in=link_ids):
+            link.update_division()
+            if link.division is not None:
+                link.save()
+    
+    
     @property
     def status(self):
         b = self.get_format()
@@ -312,12 +325,6 @@ class Division(models.Model):
                 return "Started"
         else:
             return "Ready"
-    
-    @staticmethod
-    def claim_all():
-        EventLink.objects.filter(person__isnull=False, locked=False).update(division=None)
-        for d in Division.objects.all():
-            d.claim()
     
     
     @staticmethod
@@ -539,12 +546,12 @@ def create_divisions():
 
     
     try:
-    kata = Event.objects.get(name='Kata')
+        kata = Event.objects.get(name='Kata')
     except Event.DoesNotExist:
         kata = Event.objects.create(name='Kata', format=Event.EventFormat.kata)
         
     try:
-    kumite = Event.objects.get(name='Kumite')
+        kumite = Event.objects.get(name='Kumite')
     except Event.DoesNotExist:
         kumite = Event.objects.create(name='Kumite', format=Event.EventFormat.elim1)
     
@@ -568,7 +575,7 @@ def create_divisions():
             d.save()
     
     try:
-    team_kata = Event.objects.get(name='Team kata')
+        team_kata = Event.objects.get(name='Team kata')
     except Event.DoesNotExist:
         team_kata = Event.objects.create(name='Team kata', format=Event.EventFormat.kata, is_team=True)
     

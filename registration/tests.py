@@ -273,7 +273,7 @@ class DivisionTestCase(TestCase):
         d.gender = 'MF'
         d.save()
         self.assertEqual(div_summary(), ([["a a"], ["c c"], ["b b", "d d"], ["e e"], ["f f"], ["g g"]], ["h h", "o d", "o n"]))
-
+        
         # Create an overlapping division
         # M, 19-99, white-brown
         # The newly created division steals "b b"
@@ -281,6 +281,20 @@ class DivisionTestCase(TestCase):
         d2.save()
         self.assertEqual(div_summary(), ([["a a"], ["c c"], ["d d"], ["e e"], ["f f"], ["g g"], ["b b"]], ["h h", "o d", "o n"]))
 
+        # Shift the overlapping division
+        # M, 19-99, white-brown => 100-99
+        # "b b" goes back to its original division
+        d2.start_age=100
+        d2.save()
+        self.assertEqual(div_summary(), ([["a a"], ["c c"], ["b b", "d d"], ["e e"], ["f f"], ["g g"], []], ["h h", "o d", "o n"]))
+        
+        # Shift the overlapping division back.
+        # M, 100-99, white-brown => 19-99
+        # The modified  division steals "b b"
+        d2.start_age=19
+        d2.save()
+        self.assertEqual(div_summary(), ([["a a"], ["c c"], ["d d"], ["e e"], ["f f"], ["g g"], ["b b"]], ["h h", "o d", "o n"]))
+        
         # Delete the just-created division. Orphan should be reclaimed by overlapping division.
         d2.delete()
         self.assertEqual(div_summary(), ([["a a"], ["c c"], ["b b", "d d"], ["e e"], ["f f"], ["g g"]], ["h h", "o d", "o n"]))
