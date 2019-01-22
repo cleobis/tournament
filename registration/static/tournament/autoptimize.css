@@ -47,3 +47,87 @@ img#wpstats{display:none}
 .photonic-flickr-stream .photonic-pad-photosets{margin:15px}.photonic-flickr-stream .photonic-pad-galleries{margin:15px}.photonic-flickr-stream .photonic-pad-photos{padding:5px 15px}.photonic-picasa-stream .photonic-pad-photos{padding:5px 15px}.photonic-picasa-stream img{border-top:0;border-right:0;border-bottom:0;border-left:0;padding:0}.photonic-panel .photonic-picasa-image img{border-top:0;border-right:0;border-bottom:0;border-left:0;padding:0}.photonic-500px-stream .photonic-pad-photos{padding:5px 15px}.photonic-500px-stream img{border-top:0;border-right:0;border-bottom:0;border-left:0;padding:0}.photonic-zenfolio-stream .photonic-pad-photos{padding:5px 15px}.photonic-zenfolio-stream .photonic-pad-photosets{margin:5px 15px}.photonic-zenfolio-photo img{border-top:0;border-right:0;border-bottom:0;border-left:0;padding:0}.photonic-zenfolio-set-thumb img{border-top:0;border-right:0;border-bottom:0;border-left:0;padding:0}.photonic-instagram-stream .photonic-pad-photos{padding:5px 15px}.photonic-instagram-photo img{border-top:0;border-right:0;border-bottom:0;border-left:0;padding:0}.photonic-smug-stream .photonic-pad-albums{margin:15px}.photonic-smug-stream .photonic-pad-photos{padding:5px 15px}.photonic-smug-stream img{border-top:0;border-right:0;border-bottom:0;border-left:0;padding:0}.photonic-panel .photonic-smug-image img{border-top:0;border-right:0;border-bottom:0;border-left:0;padding:0}.photonic-panel{background:#111 !important;border-top:0;border-right:0;border-bottom:0;border-left:0}.photonic-panel .photonic-flickr-image img{border-top:0;border-right:0;border-bottom:0;border-left:0;padding:0}.photonic-flickr-panel .photonic-pad-photos{padding:10px 15px;box-sizing:border-box}.photonic-picasa-panel .photonic-pad-photos{padding:10px 15px;box-sizing:border-box}.photonic-smug-panel .photonic-pad-photos{padding:10px 15px;box-sizing:border-box}.photonic-flickr-coll-thumb img{border-top:0;border-right:0;border-bottom:0;border-left:0;padding:0}.photonic-flickr-set .photonic-flickr-set-solo-thumb img{border-top:0;border-right:0;border-bottom:0;border-left:0;padding:0}.photonic-flickr-stream .photonic-flickr-photo img{border-top:0;border-right:0;border-bottom:0;border-left:0;padding:0}.photonic-flickr-set-thumb img{border-top:0;border-right:0;border-bottom:0;border-left:0;padding:0}.photonic-smug-album-thumb img{border-top:0;border-right:0;border-bottom:0;border-left:0;padding:0}.photonic-random-layout .photonic-tiled-photo{padding:2px}.photonic-masonry-layout .photonic-thumb{padding:2px}.photonic-mosaic-layout .photonic-thumb{padding:2px}.photonic-ie .photonic-masonry-layout .photonic-level-1,.photonic-ie .photonic-masonry-layout .photonic-level-2{width:200px}
 #wpadminbar .quicklinks li#wp-admin-bar-stats{height:32px}#wpadminbar .quicklinks li#wp-admin-bar-stats a{height:32px;padding:0}#wpadminbar .quicklinks li#wp-admin-bar-stats a div{height:32px;width:95px;overflow:hidden;margin:0 10px}#wpadminbar .quicklinks li#wp-admin-bar-stats a:hover div{width:auto;margin:0 8px 0 10px}#wpadminbar .quicklinks li#wp-admin-bar-stats a img{height:24px;padding:4px 0;max-width:none;border:0}
 header#masthead .masthead-sidebar{padding-top:20px;padding-bottom:20px}ul.category-posts-internal{margin-left:0}
+/* Alerts from Bootstrap */
+.alert {
+  position: relative;
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 1rem;
+  border: 1px solid transparent;
+  border-radius: 0.25rem;
+}
+
+.alert-heading {
+  color: inherit;
+}
+
+.alert-link {
+  font-weight: 700;
+}
+
+.alert-dismissible {
+  padding-right: 4rem;
+}
+
+.alert-dismissible .close {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 0.75rem 1.25rem;
+  color: inherit;
+}
+
+.alert-success {
+  color: #155724;
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+}
+
+.alert-success hr {
+  border-top-color: #b1dfbb;
+}
+
+.alert-success .alert-link {
+  color: #0b2e13;
+}
+
+.alert-info {
+  color: #0c5460;
+  background-color: #d1ecf1;
+  border-color: #bee5eb;
+}
+
+.alert-info hr {
+  border-top-color: #abdde5;
+}
+
+.alert-info .alert-link {
+  color: #062c33;
+}
+
+.alert-warning {
+  color: #856404;
+  background-color: #fff3cd;
+  border-color: #ffeeba;
+}
+
+.alert-warning hr {
+  border-top-color: #ffe8a1;
+}
+
+.alert-warning .alert-link {
+  color: #533f03;
+}
+
+.alert-danger {
+  color: #721c24;
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+}
+
+.alert-danger hr {
+  border-top-color: #f1b0b7;
+}
+
+.alert-danger .alert-link {
+  color: #491217;
+}

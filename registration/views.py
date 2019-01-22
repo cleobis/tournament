@@ -2,6 +2,7 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.http.response import HttpResponseRedirect, HttpResponseForbidden
 from django.urls import reverse_lazy, reverse
 from django.core.exceptions import PermissionDenied
+from django.contrib import messages
 
 from django.views import generic
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView, ModelFormMixin
@@ -310,4 +311,16 @@ class DivisionBuild(generic.detail.SingleObjectMixin, generic.View):
             fmt = div.build_format()
         
         return HttpResponseRedirect(fmt.get_absolute_url())
+
+
+class MessageDemoView(generic.TemplateView):
+    template_name = 'registration/message_demo.html'
+    
+    def get(self, request, *args, **kwargs):
+        messages.debug(request, 'Debug message.')
+        messages.info(request, 'Info message.')
+        messages.success(request, 'Success message.')
+        messages.warning(request, 'Warning message.')
+        messages.error(request, 'Error message.')
         
+        return super().get(request, *args, **kwargs)

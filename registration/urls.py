@@ -19,5 +19,6 @@ urlpatterns = [
     url(r'^division/(?P<pk>[0-9]+)/assignTeam/$', views.TeamAssignView.as_view(), name='division-team-assign'),
     url(r'^division/(?P<pk_div>[0-9]+)/delete/(?P<pk>[0-9]+)/$', views.DivisionDeleteManaualPerson.as_view()),
     url(r'^division/(?P<pk>[0-9]+)/build/$', views.DivisionBuild.as_view(), name='division-build'),
+    url(r'^messageDemo/', views.MessageDemoView.as_view()),
     
 ]

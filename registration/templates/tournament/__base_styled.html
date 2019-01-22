@@ -83,8 +83,14 @@
             <div id="content" class="site-content" role="main">
               <article id="post-284" class="post-284 page type-page status-publish post">
                 <div class="entry-main">
-                  {#<header class="entry-header"><h1 class="entry-title">About</h1></header>#}
                   <div class="entry-content">
+                    
+                        {% for message in messages %}
+                      <div class="alert {{ message.tags }}" role="alert">
+                        {{ message }}
+                      </div>
+                        {% endfor %}
+                    
                     {% block content %}
                     {% endblock %}
                   </div>
