@@ -538,8 +538,15 @@ class EventLink(models.Model):
 def create_divisions():
 
     
+    try:
     kata = Event.objects.get(name='Kata')
+    except Event.DoesNotExist:
+        kata = Event.objects.create(name='Kata', format=Event.EventFormat.kata)
+        
+    try:
     kumite = Event.objects.get(name='Kumite')
+    except Event.DoesNotExist:
+        kumite = Event.objects.create(name='Kumite', format=Event.EventFormat.elim1)
     
     def ranks(starts):
         for i in range(len(starts)-1):
@@ -560,7 +567,10 @@ def create_divisions():
             d = Division(event=kumite, gender='F', start_rank=r1, stop_rank=r2, start_age=ages[ia], stop_age=ages[ia+1]-1)
             d.save()
     
+    try:
     team_kata = Event.objects.get(name='Team kata')
+    except Event.DoesNotExist:
+        team_kata = Event.objects.create(name='Team kata', format=Event.EventFormat.kata, is_team=True)
     
     rank_starts = [-9, -6, -4, 1, 11]
     for r1, r2 in ranks(rank_starts):
