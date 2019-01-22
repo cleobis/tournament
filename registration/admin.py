@@ -31,20 +31,20 @@ class RankAdmin(admin.ModelAdmin):
 
 
 class DivisionAdmin(admin.ModelAdmin):
-    list_display = ['__str__', 'num_participents', 'event', 'gender', 'start_age', 'stop_age', 'start_rank', 'stop_rank']
+    list_display = ['__str__', 'num_participants', 'event', 'gender', 'start_age', 'stop_age', 'start_rank', 'stop_rank']
     list_editable = ['event', 'gender', 'start_age', 'stop_age', 'start_rank', 'stop_rank']
     list_filter = ['event', 'gender', 'start_age', 'start_rank']
     inlines = (PersonInline,)
     
     
-    def num_participents(self, obj):
-        return obj.num_participents
-    num_participents.short_description = "No. of participents"
+    def num_participants(self, obj):
+        return obj.num_participants
+    num_participants.short_description = "No. of participants"
     
     
     def get_queryset(self, request):
         qs = super(DivisionAdmin, self).get_queryset(request)
-        return qs.annotate(num_participents=models.Count('eventlink'))
+        return qs.annotate(num_participants=models.Count('eventlink'))
         
     def get_form(self, request, obj=None, **kwargs):
         # just save obj reference for future processing in Inline

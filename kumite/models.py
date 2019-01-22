@@ -344,7 +344,7 @@ class KumiteElim1Bracket(models.Model):
                     m.save()
                 
             else:
-                raise Exception("Bracket is too big for number of participents.")
+                raise Exception("Bracket is too big for number of participants.")
             
             if round == 1:
                 # Connect consolation match

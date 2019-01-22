@@ -5,7 +5,7 @@
 {% block content %}
 <h1><a href="{% url 'registration:divisions' %}">&lt;</a> {{ object }}</h1>
 
-<h2>Confirmed Participents</h2>
+<h2>Confirmed Participants</h2>
 <table>
   <thead>
     <tr>
@@ -21,7 +21,7 @@
       {% include 'registration/division_detail_row.html' %}
     {% empty %}
       <tr>
-        <td colspan="5">No participents</td>
+        <td colspan="5">No participants</td>
       </tr>
     {% endfor %}
     {% if not locked %}
@@ -52,7 +52,7 @@
 {% endif %}
 
 {# {% if noshow_eventlinks_length > 0 %} #}
-<h2>No Show Participents</h2>
+<h2>No Show Participants</h2>
 <table>
   <thead>
     <tr>
@@ -68,7 +68,7 @@
       {% include 'registration/division_detail_row.html' %}
     {% empty %}
       <tr>
-        <td colspan="5">No participents</td>
+        <td colspan="5">No participants</td>
       </tr>
     {% endfor %}
   </tbody>

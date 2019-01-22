@@ -3,7 +3,7 @@ from django.core.management.base import BaseCommand, CommandError
 from registration.models import export_registrations
 
 class Command(BaseCommand):
-    help = 'Export a csv file of the registered participents.'
+    help = 'Export a csv file of the registered participants.'
 
     def add_arguments(self, parser):
         parser.add_argument('file', nargs=1, type=str)
