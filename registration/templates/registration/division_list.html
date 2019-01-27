@@ -25,7 +25,7 @@
 		<tr>
 			<td><a href="{{ div.get_absolute_url }}">{{ div }}</a></td>
 			<td>{{ div.status }}</td>
-			<td>{{ div.eventlink_set.all |length }}</td>
+			<td>{{ div.get_confirmed_eventlinks |length }} ({{ div.get_noshow_eventlinks |length }} {% if div.event.is_team %}unassigned{% else %}late{% endif %})</td>
 			<td>
 {% if div.status == "Done" %}
 {% for position, person in div.get_format.get_winners %}
