@@ -308,7 +308,13 @@ class DivisionBuild(generic.detail.SingleObjectMixin, generic.View):
         div = self.get_object()
         fmt = div.get_format()
         if fmt is None:
-            fmt = div.build_format()
+            try:
+                fmt = div.build_format()
+            except Exception as e:
+                import logging
+                logging.getLogger().exception(e)
+                messages.error(request, 'Unable to create division. There may not be enough participants. Contact an administrator.')
+                return HttpResponseRedirect(div.get_absolute_url())
         
         return HttpResponseRedirect(fmt.get_absolute_url())
 
