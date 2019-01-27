@@ -7,10 +7,13 @@ from registration.models import Event, EventLink
 from .forms import KumiteMatchPersonSwapForm
 from .models import KumiteElim1Bracket, KumiteRoundRobinBracket, Kumite2PeopleBracket, KumiteMatchPerson, KumiteMatch
 from .test_models import make_bracket
+from accounts.models import RightsSupport
 
 class KumiteMatchPersonSwapForm(TestCase):
     
     def test_run(self):
+        
+        self.client.force_login(RightsSupport.create_edit_user())
         
         #       a ---\___
         #  d --\_____/    \____

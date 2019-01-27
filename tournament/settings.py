@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'registration.apps.RegistrationConfig',
     'kata.apps.KataConfig',
     'kumite.apps.KumiteConfig',
+    'accounts.apps.AccountsConfig',
     
     'django.contrib.admin',
     'django.contrib.auth',

@@ -5,9 +5,13 @@ from django_webtest import WebTest
 
 from registration.models import Event, Division, Person, Rank, EventLink
 from .views import KataBracketDetails
+from accounts.models import RightsSupport
 
 
 class KataDetailTestCase(WebTest):
+    
+    def setUp(self):
+        self.app.set_user(RightsSupport.create_edit_user())
     
     def test_person_form(self):
         e = Event(name="Team kata", format=Event.EventFormat.kata)

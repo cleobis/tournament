@@ -1,3 +1,4 @@
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.views import generic
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, ModelFormMixin, FormView
 from django.urls import reverse_lazy, reverse
@@ -12,9 +13,10 @@ from .forms import KataMatchForm, KataBracketAddPersonForm, KataBracketAddTeamFo
 
 # Create your views here.
 
-class KataBracketDetails(generic.DetailView):
+class KataBracketDetails(PermissionRequiredMixin, generic.DetailView):
     model = KataBracket
     context_object_name = "bracket"
+    permission_required = 'accounts.view'
     
     
     def get_context_data(self, **kwargs):
@@ -44,10 +46,11 @@ def check_match_bracket(view, obj):
         raise Http404("No KataBrackets found matching the query")
     
 
-class KataBracketEditMatch(UpdateView):
+class KataBracketEditMatch(PermissionRequiredMixin, UpdateView):
     template_name = 'kata/katabracket_detail.html'
     model = KataMatch
     form_class = KataMatchForm
+    permission_required = 'accounts.edit'
     
     
     def get_object(self, queryset=None):
@@ -69,9 +72,10 @@ class KataBracketEditMatch(UpdateView):
 
 
 @method_decorator(require_POST, name='dispatch')
-class KataBracketDeleteMatch(DeleteView):
+class KataBracketDeleteMatch(PermissionRequiredMixin, DeleteView):
     template_name = 'kata/katabracket_detail.html'
     model = KataMatch
+    permission_required = 'accounts.edit'
     
     def get_object(self, queryset=None):
         
@@ -103,8 +107,8 @@ class KataBracketDeleteMatch(DeleteView):
 
 class KataBracketAddMatch(KataBracketDetails, FormView):
     template_name = 'kata/katabracket_detail.html'
-    
     form_class = KataBracketAddPersonForm
+    permission_required = 'accounts.edit'
     
     
     def get_form_kwargs(self):
@@ -143,6 +147,7 @@ class KataBracketAddMatch(KataBracketDetails, FormView):
 
 class KataBracketAddTeamMatch(KataBracketAddMatch):
     form_class = KataBracketAddTeamForm
+    permission_required = 'accounts.edit'
     
     
     def form_valid(self, form):

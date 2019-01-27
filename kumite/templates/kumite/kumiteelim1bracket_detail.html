@@ -223,7 +223,7 @@
 {% endif %}
 
 <h1>Reset</h1>
-{% if request.user.is_staff %}
+{% if perms.accounts.admin %}
 <form action="{{ delete_url }}" method="post">
   {% csrf_token %}
   <button type="submit">Delete</button>

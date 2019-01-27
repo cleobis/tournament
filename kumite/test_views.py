@@ -9,7 +9,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 
 from .test_models import make_bracket
-
+from accounts.models import RightsSupport
 
 class MatchViewTestCase(LiveServerTestCase):
 
@@ -149,6 +149,10 @@ class MatchViewTestCase(LiveServerTestCase):
 
 
 class TestSwap(WebTest):
+    
+    def setUp(self):
+        self.app.set_user(RightsSupport.create_edit_user())
+    
     
     def test_swap(self):
         

@@ -1,0 +1,12 @@
+{% extends 'tournament/__base_styled.html' %}
+
+{% block title %}
+  Permission Denied | {{ block.super }}
+{% endblock %}
+
+
+{% block content %}
+<div class="alert alert-danger"><h1 class="alert-heading">403 - Permission denied</h1><p>You do not have sufficient privilages to view this page or perform this action. Contact an administrator if you believe this is an error.</p>
+<button onclick="window.history.back()">Back</button>
+</div>
+{% endblock %}

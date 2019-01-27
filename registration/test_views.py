@@ -14,7 +14,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 
 from .models import Event, Division, Person, Rank, EventLink
 from .views import IndexView
-
+from accounts.models import RightsSupport
 
 class PersonListTestCase(WebTest):
     
@@ -158,6 +158,10 @@ class PersonListTestCase(WebTest):
         
     
 class DivisionDetailTestCase(WebTest):
+    
+    def setUp(self):
+        self.app.set_user(RightsSupport.create_edit_user())
+    
     
     def test_manual_eventlink(self):
         for is_team in [False, True]:

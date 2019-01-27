@@ -25,7 +25,7 @@ class IndexView(PermissionRequiredMixin, generic.ListView, generic.edit.FormMixi
 
     model = Person
     form_class = PersonFilterForm
-    permission_required = 'accounts.edit'
+    permission_required = 'accounts.view'
     
     
     def __init__(self, *args, **kwargs):
@@ -72,15 +72,18 @@ class IndexViewTable(IndexView):
 class IndexViewTableRow(PermissionRequiredMixin, generic.DetailView):
     model = Person
     template_name = "registration/person_list_table_row.html"
-    permission_required = 'account.edit'
+    permission_required = 'accounts.view'
 
-class DetailView(generic.DetailView):
+
+class DetailView(PermissionRequiredMixin, generic.DetailView):
     model = Person
+    permission_required = 'accounts.view'
 
 
-class PersonCreate(CreateView):
+class PersonCreate(PermissionRequiredMixin, CreateView):
     model = Person
     form_class = PersonForm
+    permission_required = 'accounts.edit'
     
     def form_valid(self, form):
         self.object = form.save(commit=False)
@@ -91,10 +94,11 @@ class PersonCreate(CreateView):
         return HttpResponseRedirect(self.get_success_url())
     
 
-class PersonUpdate(UpdateView):
+class PersonUpdate(PermissionRequiredMixin, UpdateView):
     model = Person
     form_class = PersonForm
-    
+    permission_required = 'accounts.edit'
+        
     def form_valid(self, form):
         self.object = form.save(commit=False)
         self.object.save()
@@ -112,14 +116,16 @@ class PersonUpdate(UpdateView):
         return HttpResponseRedirect(self.get_success_url())
 
 
-class PersonDelete(DeleteView):
+class PersonDelete(PermissionRequiredMixin, DeleteView):
     model = Person
     success_url = reverse_lazy('registration:index')
+    permission_required = 'accounts.admin'
 
 
-class PersonCheckin(UpdateView):
+class PersonCheckin(PermissionRequiredMixin, UpdateView):
     model = Person
     form_class = PersonCheckinForm
+    permission_required = 'accounts.edit'
     inline = False
     
     def dispatch(self, request, *args, **kwargs):
@@ -134,9 +140,10 @@ class PersonCheckin(UpdateView):
             return reverse('registration:index')
 
 
-class PersonPaid(UpdateView):
+class PersonPaid(PermissionRequiredMixin, UpdateView):
     model = Person
     form_class = PersonPaidForm
+    permission_required = 'accounts.edit'
     inline = False
     
     def dispatch(self, request, *args, **kwargs):
@@ -173,8 +180,9 @@ def add_division_info_context_data(view, context, **kwargs):
     return context
 
 
-class DivisionInfo(generic.DetailView):
+class DivisionInfo(PermissionRequiredMixin, generic.DetailView):
     model = Division
+    permission_required = 'accounts.view'
     
     def get_template_names(self):
         if self.object.event.is_team:
@@ -189,9 +197,10 @@ class DivisionInfo(generic.DetailView):
 
 
 @method_decorator(require_POST, name='dispatch')
-class DivisionAddManualPerson(generic.detail.SingleObjectMixin, generic.FormView):
+class DivisionAddManualPerson(PermissionRequiredMixin, generic.detail.SingleObjectMixin, generic.FormView):
     form_class = ManualEventLinkForm
     model = Division
+    permission_required = 'accounts.edit'
     
     def get_template_names(self):
         if self.object.event.is_team:
@@ -226,6 +235,7 @@ class DivisionAddManualPerson(generic.detail.SingleObjectMixin, generic.FormView
 @method_decorator(require_POST, name='dispatch')
 class TeamAssignView(DivisionInfo, FormView):
     form_class = TeamAssignForm
+    permission_required = 'accounts.edit'
     
     
     def get_context_data(self, **kwargs):
@@ -277,9 +287,10 @@ class TeamAssignView(DivisionInfo, FormView):
 
 
 @method_decorator(require_POST, name='dispatch')
-class DivisionDeleteManaualPerson(generic.DeleteView):
+class DivisionDeleteManaualPerson(PermissionRequiredMixin, generic.DeleteView):
     template_name = 'registration/division_detail.html' # Value doesn't matter since HTTP Get is forbidden
     model = EventLink
+    permission_required = 'accounts.edit'
     
     def get_object(self):
       obj = super().get_object()
@@ -300,8 +311,9 @@ class DivisionDeleteManaualPerson(generic.DeleteView):
 
 
 @method_decorator(require_POST, name='dispatch')
-class DivisionBuild(generic.detail.SingleObjectMixin, generic.View):
+class DivisionBuild(PermissionRequiredMixin, generic.detail.SingleObjectMixin, generic.View):
     model = Division
+    permission_required = 'accounts.edit'
     
     def post(self, request, *args, **kwargs):
         
@@ -319,8 +331,9 @@ class DivisionBuild(generic.detail.SingleObjectMixin, generic.View):
         return HttpResponseRedirect(fmt.get_absolute_url())
 
 
-class MessageDemoView(generic.TemplateView):
+class MessageDemoView(PermissionRequiredMixin, generic.TemplateView):
     template_name = 'registration/message_demo.html'
+    permission_required = 'accounts.view'
     
     def get(self, request, *args, **kwargs):
         messages.debug(request, 'Debug message.')

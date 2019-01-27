@@ -1,3 +1,4 @@
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.shortcuts import render
 from django.views.generic import DetailView
 from django.views.generic.detail import SingleObjectMixin
@@ -74,8 +75,9 @@ class BracketGrid():
             yield None
 
 
-class BracketDetails(DetailView):
+class BracketDetails(PermissionRequiredMixin, DetailView):
     model = KumiteElim1Bracket
+    permission_required = 'accounts.view'
     
     
     def get_context_object_name(self, object):
@@ -93,18 +95,19 @@ class BracketDetails(DetailView):
         return context
 
 
-@method_decorator(staff_member_required, name='dispatch')
-class BracketDelete(DeleteView):
+class BracketDelete(PermissionRequiredMixin, DeleteView):
     model = KumiteElim1Bracket
+    permission_required = 'accounts.admin'
     
     
     def get_success_url(self):
         return self.object.division.get_absolute_url()
 
 
-class BracketRoundRobinDetails(DetailView):
+class BracketRoundRobinDetails(PermissionRequiredMixin, DetailView):
     model = KumiteRoundRobinBracket
     template_name = 'kumite/kumiteelim1bracket_detail.html'
+    permission_required = 'accounts.view'
     
     
     def get_context_object_name(self, object):
@@ -120,17 +123,19 @@ class BracketRoundRobinDetails(DetailView):
         return context
 
 
-class BracketRoundRobinDelete(DeleteView):
+class BracketRoundRobinDelete(PermissionRequiredMixin, DeleteView):
     model = KumiteRoundRobinBracket
+    permission_required = 'accounts.admin'
     
     
     def get_success_url(self):
         return self.object.division.get_absolute_url()
 
 
-class Bracket2PeopleDetails(DetailView):
+class Bracket2PeopleDetails(PermissionRequiredMixin, DetailView):
     model = Kumite2PeopleBracket
     template_name = 'kumite/kumiteelim1bracket_detail.html'
+    permission_required = 'accounts.view'
     
     
     def get_context_object_name(self, object):
@@ -146,8 +151,9 @@ class Bracket2PeopleDetails(DetailView):
         return context
 
 
-class Bracket2PeopleDelete(DeleteView):
+class Bracket2PeopleDelete(PermissionRequiredMixin, DeleteView):
     model = Kumite2PeopleBracket
+    permission_required = 'accounts.admin'
     
     
     def get_success_url(self):
@@ -157,6 +163,7 @@ class Bracket2PeopleDelete(DeleteView):
 @method_decorator(require_POST, name='dispatch')
 class KumiteMatchPersonSwapView(BracketDetails, FormView):
     form_class = KumiteMatchPersonSwapForm
+    permission_required = 'accounts.edit'
     
     
     def get_context_data(self, form=None):
@@ -206,9 +213,10 @@ class KumiteMatchPersonSwapView(BracketDetails, FormView):
         return self.object.get_absolute_url()
 
 
-class KumiteMatchUpdate(UpdateView):
+class KumiteMatchUpdate(PermissionRequiredMixin, UpdateView):
     model = KumiteMatch
     form_class = KumiteMatchCombinedForm
+    permission_required = 'accounts.edit'
     
     def __init__(self):
         self.swap_changed = False
