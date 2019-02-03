@@ -11,6 +11,38 @@
       display:inline;
     }
     td input {width: 60px;}
+    
+    
+    @-webkit-keyframes fadeInOut {
+        0% {
+          color: #155724;
+          background-color: #d4edda;
+          border-color: #c3e6cb;
+        }
+        84% {
+          color: #155724;
+          background-color: #d4edda;
+          border-color: #c3e6cb;
+        }
+        100% {
+        }
+    }
+    @keyframes fadeInOut {
+        0% {
+          color: #155724;
+          background-color: #d4edda;
+      }
+      84% {
+        color: #155724;
+        background-color: #d4edda;
+      }
+      100% {
+      }
+    }
+    .highlight {
+        -webkit-animation: fadeInOut 6s;
+        animation: fadeInOut 6s;
+    }
   </style>
 {% endblock %}
 
@@ -51,7 +83,7 @@
   <tbody>
     {% for match in round.matches %}
     {% if form.instance.id != match.id %}
-      <tr>
+      <tr {% if request.GET.highlight == match.id|stringformat:"s" %}class="highlight"{% endif %}>
         <td>{{ match.eventlink.name }}</td>
         {% for score in match.scores %}
         <td>{{ score |default:"" }}</td>

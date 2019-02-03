@@ -68,7 +68,7 @@ class KataBracketEditMatch(PermissionRequiredMixin, UpdateView):
     
     
     def get_success_url(self):
-        return reverse('kata:bracket', args=[self.bracket.id])
+        return reverse('kata:bracket', args=[self.bracket.id]) + "?highlight={}".format(self.object.id)
 
 
 @method_decorator(require_POST, name='dispatch')
