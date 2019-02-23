@@ -8,5 +8,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "license": "Other",
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "@fortawesome/fontawesome-free": "^5.7.1"
+  }
 }

@@ -1,0 +1,52 @@
+<html>
+<head>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      color: #333;
+      font-family: Arial;
+      font-family: "Helvetica Neue",Helvetica,Arial,"Lucida Grande",sans-serif;
+      font-size: 13px;
+    }
+    .center {
+      display: table;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align:center;
+    }
+    .center img { 
+      width:25vw;
+      max-width:35vh;
+      padding: 0px 25px;
+    }
+    h1 {
+      color: #444;
+      font-weight: 500;
+      font-size: 5vh;
+    }
+    .footer {
+      margin: 10px;
+      position: absolute;
+      bottom: 0;
+    }
+  </style>
+  <script>
+  window.addEventListener('load', function() {
+    if( top === self ) { // not in a frame
+         location.href = "/kumite/slave/";
+    }
+  }) ;
+  </script>
+</head>
+<body>
+  <div class="center">
+    <h1>Shikomu Karate Club &<br/> Traditional Karate Arts Canada<br/> Invitational Tournament</h1>
+    <img src="/static/tournament/logo-512.png">&nbsp;
+    <img src="/static/tournament/tkac-logo-412.png">
+  </div>
+  <p class="footer">Kumite match information will be automatically displayed in this window.</p>
+</body>
+</html>

@@ -1,0 +1,56 @@
+{% load static %}
+<html>
+<head>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
+    iframe {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      max-width: 100%;
+      margin: 0;
+      padding: 0;
+      border: 0 none;
+      box-sizing: border-box;
+    } 
+  </style>
+</head>
+<body>
+  <iframe id="frame" src="{% url 'kumite:slave-waiting' %}"></iframe>
+  <script src="{% static '/kumite/broadcast-channel.js' %}"></script>
+  <script>
+    /* Debounce is used to space out sets to the iframe src property. If you 
+     * set multiple times too quickly, e.g. if the master page is reloaded, 
+     * the second set is sometimes ignored.
+     */
+    const debounce = function(func, delay) {
+      let inDebounce
+      return function() {
+        const context = this
+        const args = arguments
+        clearTimeout(inDebounce)
+        inDebounce = setTimeout(() => func.apply(context, args), delay)
+      }
+    };
+
+    const channel = new BroadcastChannel('channel');
+    channel.onmessage = function(e) {
+      /* master -> slave
+       * load-page
+       * 
+       * slave -> master
+       * new-slave
+       */
+      if (e.data['cmd'] === 'load-page') {
+        url = e.data['data'] ;
+        debounce(function(){document.getElementById('frame').src = url ;}, 100)() ;
+      }
+    } ;
+    
+    window.addEventListener("load", function(){channel.postMessage({cmd: "new-slave", data: null})}) ;
+  </script>
+</body>
+</html>

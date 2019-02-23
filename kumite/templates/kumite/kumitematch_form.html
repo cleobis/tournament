@@ -1,3 +1,4 @@
+{% load static %}
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -68,7 +69,11 @@
     }
         
     .people h2 {
-      height: 5vh;
+      {% if is_master %}
+        height: 5vh;
+      {% else %}
+        height: 10vh;
+      {% endif %}
       font-size: 4vh;
       overflow: auto;
       width: calc(100% - 10px - 10vh);
@@ -100,7 +105,11 @@
     }
     
     .input_pm input {
-      width: calc(100% - 7.5vh);
+      {% if is_master %}
+        width: calc(100% - 7.5vh);
+      {% else %}
+        width: 100%;
+      {% endif %}
       padding: 0px;
       text-align: center;
       border: none;
@@ -112,8 +121,13 @@
     }
     
     .warnings .input_pm input {
+      {% if is_master %}
       height: 10vh;
       font-size: 8vh;
+      {% else %}
+      height: 15vh;
+      font-size: 12vh;
+      {% endif %}
     }
     
     .input_pm button {
@@ -159,7 +173,11 @@
     }
 
     .disqualified input[type=checkbox] + label {
-      height: 5vh;
+      {% if is_master %}
+        height: 5vh;
+      {% else %}
+        height: 10vh;
+      {% endif %}
       box-sizing: border-box;
       font-size: 3vh;
       line-height: 5vh;
@@ -260,8 +278,10 @@
       {{ form.shiro.points.label_tag }}
       <div class="input_pm">
         {{ form.shiro.points }}
-        <button type="button">+</button>
-        <button type="button">-</button>
+        {% if is_master %}
+          <button type="button">+</button>
+          <button type="button">-</button>
+        {% endif %}
       </div>
       {{ form.shiro.points.errors }}
     </div>
@@ -269,8 +289,10 @@
       {{ form.shiro.warnings.label_tag }}
       <div class="input_pm" style="position:relative;">
         {{ form.shiro.warnings }}
-        <button type="button">+</button>
-        <button type="button">-</button>
+        {% if is_master %}
+          <button type="button">+</button>
+          <button type="button">-</button>
+        {% endif %}
       </div>
       {{ form.shiro.warnings.errors }}
     </div>
@@ -285,8 +307,10 @@
       {{ form.aka.points.label_tag }}
       <div class="input_pm">
         {{ form.aka.points }}
-        <button type="button">+</button>
-        <button type="button">-</button>
+        {% if is_master %}
+          <button type="button">+</button>
+          <button type="button">-</button>
+        {% endif %}
       </div>
       {{ form.aka.points.errors }}
     </div>
@@ -294,8 +318,10 @@
       {{ form.aka.warnings.label_tag }}
       <div class="input_pm" style="position:relative;">
         {{ form.aka.warnings }}
-        <button type="button">+</button>
-        <button type="button">-</button>
+        {% if is_master %}
+          <button type="button">+</button>
+          <button type="button">-</button>
+        {% endif %}
       </div>
       {{ form.aka.warnings.errors }}
     </div>
@@ -303,7 +329,7 @@
   </div>
 </div>
 
-
+{% if is_master %}
 <div class="buttons">
   <button id="start" type="button">Start</button>
   <button id="stop" type="button">Stop</button>
@@ -324,6 +350,7 @@
     {% endif %}
   {% endif %}
 </div>
+{% endif %}
 </form>
 
 <!-- see https://stackoverflow.com/a/20618517 for timer help. -->
@@ -464,14 +491,31 @@ CountDownTimer.prototype.parse = function(seconds) {
     'sub_seconds': sub_sec
   };
 };
-</script>
 
-<!-- start button -->
-<script lang="text/javascript">
-window.onload = function () {
+function format(minutes, seconds, sub_sec) {
     var display = document.querySelector('#time'),
-        display_box = display.parentElement,
-        timer = new CountDownTimer({{ config.KUMITE_DURATION_S }});
+        display_box = display.parentElement
+  
+    minutes = minutes < 10 ? "0" + minutes : minutes;
+    seconds = seconds < 10 ? "0" + seconds : seconds;
+    display.textContent = minutes + ':' + seconds + sub_sec;
+    
+    soon = minutes == 0 && seconds <= 10;
+    if (display_box.classList.contains("timer_soon")) {
+      if (!soon) {
+        display_box.classList.remove("timer_soon");
+      }
+  } else {
+    if (soon) {
+        display_box.classList.add("timer_soon");
+    }
+  }
+};
+    
+{% if is_master %}
+window.onload = function () {
+    
+    timer = new CountDownTimer({{ config.KUMITE_DURATION_S }});
     
     timer.onTick(format);
     timer.notify();
@@ -506,23 +550,6 @@ window.onload = function () {
     document.querySelector('#reset').addEventListener('click', reset);
     document.querySelector('#clear').addEventListener('click', reset);
     
-    function format(minutes, seconds, sub_sec) {
-        minutes = minutes < 10 ? "0" + minutes : minutes;
-        seconds = seconds < 10 ? "0" + seconds : seconds;
-        display.textContent = minutes + ':' + seconds + sub_sec;
-        
-        soon = minutes == 0 && seconds <= 10;
-        if (display_box.classList.contains("timer_soon")) {
-          if (!soon) {
-            display_box.classList.remove("timer_soon");
-          }
-      } else {
-        if (soon) {
-            display_box.classList.add("timer_soon");
-        }
-      }
-    };
-    
     function update_button(running) {
       if (running) {
         document.querySelector('#toggle').innerText = "Stop";
@@ -546,12 +573,14 @@ window.onload = function () {
       obj.onclick = generator(id, obj.innerText == '+');
     };
 };
+{% endif %}
 
 function inc(id) {
     obj = document.getElementById(id);
     x = obj.value;
     x++;
     obj.value = x;
+    send_scores() ;
 };
 
 
@@ -563,7 +592,91 @@ function dec(id) {
       x = 0;
     }
     obj.value = x;
+    send_scores() ;
 };
+</script>
+
+<script src="{% static '/kumite/broadcast-channel.js' %}"></script>
+<script>
+/* Master-Slave synchronization */
+  const channel = new BroadcastChannel('channel');
+  channel.onmessage = function(e) {
+    /* master -> slave
+     * load-page
+     * kumite-set-scores
+     * kumite-set-time
+     *
+     * slave -> master
+     * new-slave
+     * kumite-init
+     */
+    {% if is_master %}
+      if (e.data['cmd'] === 'new-slave') {
+        send_message('load-page', "{{ request.path }}?slave=true") ;
+      } else if (e.data['cmd'] === 'kumite-init') {
+        send_scores() ;
+        timer.notify() ;
+      }
+    {% else %}
+      if (e.data['cmd'] === 'load-page') {
+        // handeled by parent slave.html.
+      } else if (e.data['cmd'] === 'kumite-set-scores') {
+        document.getElementById('id_shiro-points').value = e.data['data']['shiro-points'] ;
+        document.getElementById('id_shiro-warnings').value = e.data['data']['shiro-warnings'] ;
+        document.getElementById('id_aka-points').value = e.data['data']['aka-points'] ;
+        document.getElementById('id_aka-warnings').value = e.data['data']['aka-warnings'] ;
+        document.getElementById('id_shiro-disqualified').checked = e.data['data']['shiro-disqualified'] ;
+        document.getElementById('id_aka-disqualified').checked = e.data['data']['aka-disqualified'] ;
+      
+      } else if (e.data['cmd'] === 'kumite-set-time') {
+        var data = e.data['data'] ;
+        format(data[0], data[1], data[2]) ;
+      }
+    {% endif %}
+    
+  };
+  
+  function send_message(cmd, data) {
+    channel.postMessage({cmd: cmd, data: data})
+  }
+  
+  function send_scores() {
+    var data = {
+      'shiro-points': document.getElementById('id_shiro-points').value,
+      'shiro-warnings': document.getElementById('id_shiro-warnings').value,
+      'aka-points': document.getElementById('id_aka-points').value,
+      'aka-warnings': document.getElementById('id_aka-warnings').value,
+      'shiro-disqualified': document.getElementById('id_shiro-disqualified').checked,
+      'aka-disqualified': document.getElementById('id_aka-disqualified').checked,
+      } ;
+      send_message('kumite-set-scores', data) ;
+  }
+  
+  function send_time(minutes, seconds, sub_sec) {
+    send_message('kumite-set-time', [minutes, seconds, sub_sec]) ;
+  }
+  
+  {% if is_master %}
+  window.addEventListener("load", function(){
+    document.getElementById('id_shiro-disqualified').addEventListener('change', send_scores)
+    document.getElementById('id_aka-disqualified').addEventListener('change', send_scores)
+    timer.onTick(send_time) ;
+  }) ;
+  {% endif %}
+  
+  window.addEventListener("pageshow", function(){    
+    {% if is_master %}
+      send_message('load-page', "{{ request.path }}?slave=true")
+    {% else %}
+      send_message('kumite-init', null) ;
+    {% endif %}
+  });
+
+  {% if is_master %}
+    window.addEventListener("pagehide", function() {
+      send_message('load-page', '{% url "kumite:slave-waiting" %}') ;
+    });
+  {% endif %}
 </script>
 
 </body>

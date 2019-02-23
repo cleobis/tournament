@@ -2,14 +2,22 @@
 # yarn lockfile v1
 
 
+"@fortawesome/fontawesome-free@^5.7.1":
+  version "5.7.1"
+  resolved "https://registry.yarnpkg.com/@fortawesome/fontawesome-free/-/fontawesome-free-5.7.1.tgz#e4bdc6fd2a7b5a41d5b599bcb62cf22c78f7f535"
+  integrity sha512-gukWJ7Mwf0WXQbkcwcm5zi8+H8aT5MMnphf5hpydOw898H1ibgm2cyejHgk6Km/FTvrPp5ppUHLrlFwt0QxsQw==
+
 drag-drop-polyfill@^2.0.0-rc.0:
   version "2.0.0-rc.0"
   resolved "https://registry.yarnpkg.com/drag-drop-polyfill/-/drag-drop-polyfill-2.0.0-rc.0.tgz#b38801d5b5f78e95fc8bd5b0652650d9bc0d40b8"
+  integrity sha512-V+E+2WsZ43rW6glRMgfR2+vdbcbD9Rw0gtsQP1L5a8Vno2XH9C4AjIaWH33SC6YVoAzwuEUL0lGP0454pdZlMQ==
 
 intercooler@^1.1.2:
-  version "1.1.2"
-  resolved "https://registry.yarnpkg.com/intercooler/-/intercooler-1.1.2.tgz#31256de240909d1fa9c52e0e7b9401c2f0387073"
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/intercooler/-/intercooler-1.2.1.tgz#50e9727ef2643ef7d5130c8e58f2af78098aa01f"
+  integrity sha512-2/UV4RTZltP8tlV16fqu94aum4zO3uTbDcv843qjGInd+Lf2Pfm2gs2gIlCx5fYo6yUSz9cEwqc3r/+SddugMg==
 
 jquery@^3.2.1:
-  version "3.2.1"
-  resolved "https://registry.yarnpkg.com/jquery/-/jquery-3.2.1.tgz#5c4d9de652af6cd0a770154a631bba12b015c787"
+  version "3.3.1"
+  resolved "https://registry.yarnpkg.com/jquery/-/jquery-3.3.1.tgz#958ce29e81c9790f31be7792df5d4d95fc57fbca"
+  integrity sha512-Ubldcmxp5np52/ENotGxlLe6aGMvmF4R8S6tZjsP6Knsaxd/xp3Zrh50cG93lR6nPXyUFwzN3ZSOQI0wRJNdGg==

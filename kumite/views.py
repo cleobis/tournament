@@ -247,6 +247,13 @@ class KumiteMatchUpdate(PermissionRequiredMixin, UpdateView):
         if not self.get_object().is_editable():
             return HttpResponseForbidden()
         return super(KumiteMatchUpdate,self).dispatch(*args, **kwargs)
+    
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['is_master'] = 'slave' not in self.request.GET
+        return context
+    
 
 
 class KumiteMatchManual(FormView):
@@ -263,3 +270,9 @@ class KumiteMatchManual(FormView):
 #             'shiro': self.object.shiro,
 #         })
         return kwargs
+    
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['is_master'] = 'slave' not in self.request.GET
+        return context
