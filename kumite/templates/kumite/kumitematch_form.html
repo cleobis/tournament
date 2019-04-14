@@ -3,6 +3,10 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="styesheet" href="normalize.css">
+    <link rel="icon" href="/static/tournament/logo-32.png" sizes="32x32" />
+    <link rel="icon" href="/static/tournament/logo-192.png" sizes="192x192" />
+    <link rel="apple-touch-icon-precomposed" href="/static/tournament/logo-180.png" />
+    <meta name="msapplication-TileImage" content="/static/tournament/logo-270.png" />
     <!--<link rel="stylesheet" href="w3.css">-->
   <style>
     
@@ -619,7 +623,7 @@ function dec(id) {
       }
     {% else %}
       if (e.data['cmd'] === 'load-page') {
-        // handeled by parent slave.html.
+        // handeled by parent 
       } else if (e.data['cmd'] === 'kumite-set-scores') {
         document.getElementById('id_shiro-points').value = e.data['data']['shiro-points'] ;
         document.getElementById('id_shiro-warnings').value = e.data['data']['shiro-warnings'] ;

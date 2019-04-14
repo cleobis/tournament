@@ -6,6 +6,7 @@ from django_webtest import WebTest
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 
 from selenium import webdriver
+from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
@@ -15,7 +16,25 @@ import selenium.webdriver.support.expected_conditions as EC
 from .test_models import make_bracket
 from accounts.models import RightsSupport
 
-class MatchViewTestCase(LiveServerTestCase):
+
+def assert_selenium_logs(test, selenium):
+    try:
+        errors = selenium.get_log('browser')
+    except (ValueError, WebDriverException) as e:
+        # Some browsers do not support getting logs
+        if selenium.capabilities['browserName'] == 'Safari':
+            # Safari doesn't support logs
+            print("Could not get browser logs for driver {} due to exception: {}".format(selenium, e))
+            return
+        else:
+            raise(e)
+    
+    errors = [x for x in errors if x['level'] == 'SEVERE']
+    
+    test.assertFalse(errors, 'Console errors detected.')
+
+
+class MatchViewTestCase(StaticLiveServerTestCase):
 
     def setUp(self):
         super().setUp()
@@ -27,7 +46,7 @@ class MatchViewTestCase(LiveServerTestCase):
         username = os.environ.get('SAUCE_USERNAME')
         password = os.environ.get('SAUCE_ACCESS_KEY')
         if None in (username, password):
-            self.selenium = webdriver.Safari()
+            self.selenium = webdriver.Chrome()
             self.selenium.implicitly_wait(5)
         else:
             # desired_cap = {
@@ -148,6 +167,7 @@ class MatchViewTestCase(LiveServerTestCase):
         input = selenium.find_element_by_css_selector('.shiro .warnings input')
         self.assertEqual(input.get_attribute("value"), "0")
         
+        assert_selenium_logs(self, selenium)
         
         # TODO: Test timer, manually editing field, data saved to model correctly
 
@@ -353,6 +373,13 @@ class SlaveTestCase(StaticLiveServerTestCase):
         selenium.switch_to_frame(iframe)
         self.assertEqual(selenium.find_element_by_id("time").text, time)
         
+        # Check logs before leaving page
+        selenium.switch_to_window(master_window)
+        assert_selenium_logs(self, selenium)
+        
+        self.selenium.switch_to_window(slave_window)
+        assert_selenium_logs(self, self.selenium)
+        
         # Leave page
         selenium.switch_to_window(master_window)
         if is_manual:
@@ -365,14 +392,21 @@ class SlaveTestCase(StaticLiveServerTestCase):
         sleep(.2)
         self.assertEqual(iframe.get_attribute("src"), self.live_server_url + "/kumite/slave/waiting/")
         
+        # Check logs
+        selenium.switch_to_window(master_window)
+        assert_selenium_logs(self, selenium)
+        
+        self.selenium.switch_to_window(slave_window)
+        assert_selenium_logs(self, self.selenium)
+        
         return (master_window, slave_window, iframe)
     
     
     def test_slave_manual(self):
         """Tests slave functionality for manual matches."""
         
-        self.slave_helper(None)
-    
+        (master_window, slave_window, iframe) = self.slave_helper(None)
+        
     
     def test_slave_bracket(self):
         """Tests slave functionality for bracket matches.
@@ -434,6 +468,19 @@ class SlaveTestCase(StaticLiveServerTestCase):
         self.assertEqual(selenium.find_element_by_id("id_shiro-points").get_attribute("value"), "2")
         self.assertEqual(selenium.find_element_by_css_selector(".aka h2").text, "Aka: b")
         self.assertEqual(selenium.find_element_by_id("id_aka-points").get_attribute("value"), "4")
+        
+        self.selenium.switch_to_window(master_window)
+        assert_selenium_logs(self, self.selenium)
+        
+        self.selenium.switch_to_window(slave_window)
+        assert_selenium_logs(self, self.selenium)
+        
+        # Check logs
+        selenium.switch_to_window(master_window)
+        assert_selenium_logs(self, selenium)
+        
+        self.selenium.switch_to_window(slave_window)
+        assert_selenium_logs(self, self.selenium)
     
     
     def test_new_slave(self):
@@ -458,6 +505,12 @@ class SlaveTestCase(StaticLiveServerTestCase):
         iframe = selenium.find_element_by_id("frame")
         sleep(.2)
         self.assertEqual(iframe.get_attribute("src"), self.live_server_url + "/kumite/match/manual/edit/?slave=true")
+        
+        self.selenium.switch_to_window(master_window)
+        assert_selenium_logs(self, self.selenium)
+        
+        self.selenium.switch_to_window(slave_window)
+        assert_selenium_logs(self, self.selenium)
         
         
 # HTML5 drag and drop doesn't work with Selenium.
