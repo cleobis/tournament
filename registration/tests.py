@@ -501,14 +501,7 @@ class EventLinkTestCase(TestCase):
 
 class ImportExportRegistrationTestCase(TestCase):
     
-    def test_import_registration(self):
-        
-        input = StringIO("""Timestamp,First Name,Last Name,Gender,Age,Rank,Instructor,Phone number,Email,Events,Notes,Address,City,Province,Postal Code,Waiver,Email Address,Name of parent or guardian (competitors under 18 years),Address
-1/8/2018 18:46:43,HHH,PPP,Male,15,Purple (4th kyu),FFF SSS,5191234567,,"Kumite",,40 WWW,CCC,OOO,NNN 555,I agree,asdf@hotmail.com,AAA PPP,
-1/10/2018 14:39:21,SSS,GGG,Male,30,Nidan (2nd dan black belt),SSS RRR/ KKK DDD/ TTT OOO,9051234567,,"Kata, Kumite",,50 GGG,HHH,ON,LLL444,I agree,sss@gmail.com,,""", newline='')
-        
-        self.assertEqual(len(Person.objects.all()), 0)
-        
+    def setUp(self):
         kata = Event(name="Kata", format=Event.EventFormat.elim1)
         kata.save()
         kumite = Event(name="Kumite", format=Event.EventFormat.elim1)
@@ -522,6 +515,21 @@ class ImportExportRegistrationTestCase(TestCase):
         d_kumite = Division(event=kumite, gender='M',  start_age=1,  stop_age = 99, start_rank=white, stop_rank=bb9)
         d_kumite.save()
         # No female kumite: Division(event=kumite, gender='F',  start_age=1,  stop_age = 99, start_rank=white, stop_rank=bb9).save()
+        
+    
+    def test_import_registration(self):
+        
+        kata = Event.objects.get(name="Kata")
+        kumite = Event.objects.get(name="Kumite")
+        d_kata = Division.objects.get(event=kata)
+        d_kumite = Division.objects.get(event=kumite)
+        
+        input = StringIO("""Timestamp,First Name,Last Name,Gender,Age,Rank,Instructor,Phone number,Email,Events,Notes,Address,City,Province,Postal Code,Waiver,Email Address,Name of parent or guardian (competitors under 18 years),Address
+1/8/2018 18:46:43,HHH,PPP,Male,15,Purple (4th kyu),FFF SSS,5191234567,,"Kumite",,40 WWW,CCC,OOO,NNN 555,I agree,asdf@hotmail.com,AAA PPP,
+1/10/2018 14:39:21,SSS,GGG,Male,30,Nidan (2nd dan black belt),SSS RRR/ KKK DDD/ TTT OOO,9051234567,,"Kata, Kumite",,50 GGG,HHH,ON,LLL444,I agree,sss@gmail.com,,""", newline='')
+        
+        self.assertEqual(len(Person.objects.all()), 0)
+        
         
         stats = import_registrations(input)
         self.assertEqual(stats, {"added": 2, "skipped": 0})
@@ -636,19 +644,40 @@ teammates => Anyone
 """)
     
     
+    def test_import_error(self):
+        
+        input = StringIO("""Timestamp,First Name,Last Name,Gender,Age,Rank,Instructor,Phone number,Email,Events,Notes,Address,City,Province,Postal Code,Waiver,Email Address,Name of parent or guardian (competitors under 18 years),Address
+1/8/2018 18:46:43,HHH,PPP,Male,15,Purple (4th kyu),FFF SSS,5191234567,,"Kumite",,40 WWW,CCC,OOO,NNN 555,I agree,asdf@hotmail.com,AAA PPP,
+1/10/2018 14:39:21,SSS,GGG,ERROR ERROR ERROR,30,Nidan (2nd dan black belt),SSS RRR/ KKK DDD/ TTT OOO,9051234567,,"Kata, Kumite",,50 GGG,HHH,ON,LLL444,I agree,sss@gmail.com,,
+1/11/2018 21:31:54,CCC,RRR,Female,11,Blue (5th kyu),RRR,905 123 4567,,"Kata, Kumite","Hello
+there",555 DDD,BBB,Ontario,LLL 555,I agree,ccc@icloud.com,GGG RRR,""", newline='')
+
+        with self.assertRaises(ValueError):
+            stats = import_registrations(input)
+        
+        self.assertEqual(len(Person.objects.all()), 0)
+        self.assertEqual(len(EventLink.objects.all()), 0)
+        
+        input = StringIO("""Timestamp,First Name,Last Name,Gender,Age,Rank,Instructor,Phone number,Email,Events,Notes,Address,City,Province,Postal Code,Waiver,Email Address,Name of parent or guardian (competitors under 18 years),Address
+1/8/2018 18:46:43,HHH,PPP,Male,15,Purple (4th kyu),FFF SSS,5191234567,,"Kumite",,40 WWW,CCC,OOO,NNN 555,I agree,asdf@hotmail.com,AAA PPP,
+1/10/2018 14:39:21,SSS,GGG,Male,30,Nidan (2nd dan black belt),SSS RRR/ KKK DDD/ TTT OOO,9051234567,,"Kata, Kumite",,50 GGG,HHH,ON,LLL444,I agree,sss@gmail.com,,
+1/11/2018 21:31:54,CCC,RRR,Female,11,Blue (5th kyu),RRR,905 123 4567,,"Kata, Kumite","Hello
+there",555 DDD,BBB,Ontario,LLL 555,I agree,ccc@icloud.com,GGG RRR,""", newline='')
+
+        stats = import_registrations(input)
+        self.assertEqual(stats, {"added": 3, "skipped": 0})
+        
+        self.assertEqual(len(Person.objects.all()), 3)
+        self.assertEqual(len(EventLink.objects.all()), 5)
+        
+    
     def test_export_registration(self):
         
-        kata = Event(name="Kata", format=Event.EventFormat.elim1)
-        kata.save()
-        kumite = Event(name="Kumite", format=Event.EventFormat.elim1)
-        kumite.save()
-        white = Rank.get_kyu(9)
+        kata = Event.objects.get(name="Kata")
+        kumite = Event.objects.get(name="Kumite")
+        d_kata = Division.objects.get(event=kata)
+        d_kumite = Division.objects.get(event=kumite)
         bb2 = Rank.get_dan(2)
-        d_kata   = Division(event=kata,   gender='MF', start_age=1,  stop_age = 99, start_rank=white, stop_rank=bb2)
-        d_kata.save()
-        # No kumite division created
-        # d_kumite = Division(event=kumite, gender='M',  start_age=1,  stop_age = 99, start_rank=white, stop_rank=bb9)
-        # d_kumite.save()
         
         p = Person(first_name='Mark', last_name='Patterson', gender='M', age=32, rank=bb2, instructor='Sandy',
             phone_number='123 456 7890', email="asdf@asdf.com", parent="", 

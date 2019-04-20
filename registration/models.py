@@ -14,7 +14,7 @@ event are provided by other modules.
 from datetime import date, datetime
 
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Q, F
 from django.db.models.signals import pre_delete, post_delete
 from django.db.models.aggregates import Count, Max, Min
@@ -583,9 +583,9 @@ def create_divisions():
     for r1, r2 in ranks(rank_starts):
         d = Division(event=team_kata, gender='MF', start_rank=r1, stop_rank=r2, start_age=1, stop_age=99)
         d.save()
-    
 
 
+@transaction.atomic # Fail the whole import if there is a parse error
 def import_registrations(f):
     """Import registration data from Google Forms csv.
     
@@ -638,7 +638,11 @@ def import_registrations(f):
     t_max = t_min
     added = 0
     skipped = 0
+    line = 1 # Since first row is header
     for row in c:
+        
+        line += 1
+        err_str = " while parsing line {}:\n{}".format(line, row)
         
         # Parse datestamp.
         tstamp = dateutil.parser.parse(row[csv_map['tstamp'].name])
@@ -666,7 +670,7 @@ def import_registrations(f):
                 if field in ('teammates',):
                     continue
                 else:
-                    raise ValueError('Unable to find ' + field_info.name)
+                    raise ValueError('Unable to find ' + field_info.name + err_str)
             
             if field == 'rank':
                 v = Rank.parse(v)
@@ -686,7 +690,7 @@ def import_registrations(f):
                 elif v == 'Female':
                     v = 'F'
                 else:
-                    raise ValueError("Unexpected gender {} for {} {}.".format(v, row[csv_map['first_name'].name], row[csv_map['last_name'].name]))
+                    raise ValueError("Unexpected gender {}{}".format(v, err_str))
             else:
                 pass
             setattr(p, field, v)
