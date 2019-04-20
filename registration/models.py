@@ -18,6 +18,7 @@ from django.db import models, transaction
 from django.db.models import Q, F
 from django.db.models.signals import pre_delete, post_delete
 from django.db.models.aggregates import Count, Max, Min
+from django.db.models.functions import Lower
 from django.dispatch import receiver
 from django.utils import timezone
 from django.urls import reverse
@@ -203,7 +204,7 @@ class Division(models.Model):
     
     
     class Meta:
-        ordering = ['start_age', 'start_rank', 'event']
+        ordering = ['event__is_team', 'start_age', 'start_rank', 'event']
     
     def __str__(self):
         if self.name:
@@ -416,9 +417,8 @@ class Person(models.Model):
     
     notes = models.TextField(max_length=512, blank=True)
     
-    
     class Meta:
-        ordering = ['last_name', 'first_name']
+        ordering = [Lower('last_name'), Lower('first_name')]
     
     def full_name(self):
         return self.first_name + (" " if len(self.first_name) > 0 and len(self.last_name) > 0 else "") + self.last_name
