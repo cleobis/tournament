@@ -44,7 +44,6 @@
       
       count = Number(ev.currentTarget.getAttribute('data-hover-count')) + 1
       ev.currentTarget.setAttribute('data-hover-count', count)
-      console.info("dragenter " + count)
       if (count != 1)
         return ;
       
@@ -59,7 +58,6 @@
     function dragleave_handler(ev, tgt) {
       count = -1 + Number(ev.currentTarget.getAttribute('data-hover-count'))
       ev.currentTarget.setAttribute('data-hover-count', count)
-      console.info("dragleave " + count)
       if (count != 0)
         return ;
       

@@ -2,6 +2,7 @@
       class="{% if el.person and not el.person.confirmed %}noshow{% endif %} {% if el.team is None %}noteam{% endif %}"
       draggable="true"
       ondragstart="dragstart_handler(event, {{ el.id }});"
+      ondragend="return false;"
       >
   <td/>
   <td>{% if not el.is_manual %}<a href="{{ el.person.get_absolute_url }}">{% endif %}{{ el.name }}{% if not el.is_manual %}</a>{% endif %}</td>
