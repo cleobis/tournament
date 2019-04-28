@@ -31,12 +31,12 @@
      * the second set is sometimes ignored.
      */
     const debounce = function(func, delay) {
-      let inDebounce
+      var inDebounce ;
       return function() {
         const context = this
         const args = arguments
         clearTimeout(inDebounce)
-        inDebounce = setTimeout(() => func.apply(context, args), delay)
+        inDebounce = setTimeout(function(){func.apply(context, args)}, delay)
       }
     };
 
