@@ -23,7 +23,7 @@ class RightsSupport(models.Model):
     def create_view_user():
         """Returns a new user with view permissions. Used primarily for test cases."""
         
-        user = User.objects.create_user('view')
+        user = User.objects.create_user('view', password='view')
         user.user_permissions.add(Permission.objects.get(content_type__app_label='accounts', codename='view'))
         user.save()
         
@@ -34,7 +34,7 @@ class RightsSupport(models.Model):
     def create_edit_user():
         """Returns a new user with view and edit permissions. Used primarily for test cases."""
         
-        user = User.objects.create_user('view')
+        user = User.objects.create_user('edit', password='edit')
         user.user_permissions.add(Permission.objects.get(content_type__app_label='accounts', codename='view'))
         user.user_permissions.add(Permission.objects.get(content_type__app_label='accounts', codename='edit'))
         user.save()
@@ -46,7 +46,7 @@ class RightsSupport(models.Model):
     def create_admin_user():
         """Returns a new user with view, edit, and admin permissions. Used primarily for test cases."""
         
-        user = User.objects.create_user('view')
+        user = User.objects.create_user('admin', password='admin')
         user.user_permissions.add(Permission.objects.get(content_type__app_label='accounts', codename='view'))
         user.user_permissions.add(Permission.objects.get(content_type__app_label='accounts', codename='edit'))
         user.user_permissions.add(Permission.objects.get(content_type__app_label='accounts', codename='admin'))

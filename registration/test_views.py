@@ -7,6 +7,8 @@ from django.contrib.auth import get_user_model
 
 from django_webtest import WebTest
 
+from parameterized import parameterized_class
+
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
@@ -15,6 +17,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from .models import Event, Division, Person, Rank, EventLink
 from .views import IndexView
 from accounts.models import RightsSupport
+import common.selenium
 
 class PersonListTestCase(WebTest):
     
@@ -327,7 +330,18 @@ class DivisionDetailTestCase(WebTest):
         form['assign-tgt'] = el4.id
         resp = form.submit()
         self.assertFormError(resp, 'team_assign_form', 'tgt', "Select a valid choice. That choice is not one of the available choices.")
+
+
+@parameterized_class(common.selenium.Env(include="Chrome").parameterized_class())
+class ConsoleTestCase(common.selenium.SeleniumTestCaseHelper):
+    
+    def test_console(self):
         
+        selenium = self.selenium
+        selenium.get(self.live_server_url)
+        
+        self.assert_selenium_logs()
+    
 # Disabled because the events don't work properly with Selenium.
 # class IndexViewTestCase(LiveServerTestCase):
 #

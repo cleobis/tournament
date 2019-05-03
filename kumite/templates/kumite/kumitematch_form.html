@@ -462,6 +462,7 @@ CountDownTimer.prototype.notify_running = function () {
   this.stateFtns.forEach(function(ftn) {
     ftn.call(this, this.running);
   }, this);
+  this.notify() ;
 };
 
 CountDownTimer.prototype.onTick = function(ftn) {

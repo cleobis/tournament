@@ -1,9 +1,12 @@
+import datetime
 import os
 from time import sleep
 
 from django.test import LiveServerTestCase, TestCase
 from django_webtest import WebTest
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
+
+from parameterized import parameterized_class
 
 from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
@@ -15,99 +18,14 @@ import selenium.webdriver.support.expected_conditions as EC
 
 from .test_models import make_bracket
 from accounts.models import RightsSupport
+import common.selenium
 
 
-def assert_selenium_logs(test, selenium):
-    try:
-        errors = selenium.get_log('browser')
-    except (ValueError, WebDriverException) as e:
-        # Some browsers do not support getting logs
-        if selenium.capabilities['browserName'] == 'Safari':
-            # Safari doesn't support logs
-            print("Could not get browser logs for driver {} due to exception: {}".format(selenium, e))
-            return
-        else:
-            raise(e)
-    
-    errors = [x for x in errors if x['level'] == 'SEVERE']
-    
-    test.assertFalse(errors, 'Console errors detected.')
-
-
-class MatchViewTestCase(StaticLiveServerTestCase):
-
-    def setUp(self):
-        super().setUp()
-    
-    
-    def config_driver(self, desired_cap):
-        from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-        
-        username = os.environ.get('SAUCE_USERNAME')
-        password = os.environ.get('SAUCE_ACCESS_KEY')
-        if None in (username, password):
-            self.selenium = webdriver.Chrome()
-            self.selenium.implicitly_wait(5)
-        else:
-            # desired_cap = {
-            #     # 'platform': "Mac OS X 10.9",
-            #     'browserName': "internet explorer", # safari, chrome, firefox, android, iphone
-            #     # 'version': "31",
-            # }
-            job = os.environ.get('TRAVIS_JOB_NUMBER')
-            if job is not None:
-                desired_cap['tunnel-identifier'] = job
-            build = os.environ.get("TRAVIS_BUILD_NUMBER")
-            if build is not None:
-                desired_cap['build'] = build
-            tag = os.environ.get("TRAVIS_PYTHON_VERSION")
-            if tag is not None:
-                desired_cap['tags'] = [tag, "CI"]
-            self.selenium = webdriver.Remote(
-               command_executor='http://' + username + ':' + password + '@ondemand.saucelabs.com:80/wd/hub',
-               desired_capabilities=desired_cap)
-    
-    
-    def tearDown(self):
-        # self.selenium.quit()
-        super().tearDown()
-    
+@parameterized_class(common.selenium.Env().parameterized_class())
+class MatchViewTestCase(common.selenium.SeleniumTestCaseHelper):
     
     def test_manual_match(self):
         
-        caps = [
-            # {'browserName': "internet explorer", 'version': "8"}, # Renders wrong
-            # {'browserName': "internet explorer", 'version': "9"}, # Renders wrong
-            # {'browserName': "internet explorer", 'version': "10"}, # Renders wrong
-            {'browserName': "internet explorer", 'version': "11"},
-            {'browserName': 'MicrosoftEdge'}, # Failed to connect
-            {'browserName': 'Chrome'},
-            {'browserName': 'firefox'},
-            # {'browserName': "Safari", 'version': "7"}, # Renders wrong
-            # {'browserName': "Safari", 'version': "8"}, # Fails to connect
-            {'browserName': "Safari", 'version': "9"}, # Fails to connect
-            {'browserName': "Safari", 'version': "10"},
-            {'browserName': "Safari", 'platformVersion': "11"},
-            {'browserName': "Safari", 'platformVersion': "10.3"},
-            {'browserName': "Safari", 'platformVersion': "9.3"},
-            {'browserName': "Android", 'platformVersion': "4.4"},
-            {'browserName': "Android", 'platformVersion': "5.1"},
-            {'browserName': "Android", 'platformVersion': "6.0"},
-            ]
-        if os.environ.get('SAUCE_USERNAME') is None:
-            caps = [{}]
-        else:
-            self.skipTest("Selenium not available.")
-        
-        for c in caps:
-            with self.subTest(cap=c):
-                self.config_driver(c)
-                try:
-                    self.helper()
-                finally:
-                    self.selenium.quit()
-        
-    def helper(self):
         selenium = self.selenium
         selenium.get(self.live_server_url + '/kumite/match/manual/edit/')
         
@@ -167,7 +85,7 @@ class MatchViewTestCase(StaticLiveServerTestCase):
         input = selenium.find_element_by_css_selector('.shiro .warnings input')
         self.assertEqual(input.get_attribute("value"), "0")
         
-        assert_selenium_logs(self, selenium)
+        self.assert_selenium_logs()
         
         # TODO: Test timer, manually editing field, data saved to model correctly
 
@@ -217,45 +135,12 @@ class TestSwap(WebTest):
         self.assertEqual(m.loser(), mp2.eventlink)
 
 
-class SlaveTestCase(StaticLiveServerTestCase):
-
-    def setUp(self):
-        super().setUp()
-        self.config_driver()
-        
-        
-    def tearDown(self):
-        self.selenium.quit()
+@parameterized_class(common.selenium.Env(exclude="Safari").parameterized_class())
+class SlaveTestCase(common.selenium.SeleniumTestCaseHelper):
+    """Tests kumite slave display
     
-    
-    def config_driver(self, desired_cap=None):
-        from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-        
-        username = os.environ.get('SAUCE_USERNAME')
-        password = os.environ.get('SAUCE_ACCESS_KEY')
-        if None in (username, password):
-            self.selenium = webdriver.Chrome() # Safari doesn't work. Blocks inter-tab communication.
-            self.selenium.implicitly_wait(5)
-        else:
-            # desired_cap = {
-            #     # 'platform': "Mac OS X 10.9",
-            #     'browserName': "internet explorer", # safari, chrome, firefox, android, iphone
-            #     # 'version': "31",
-            # }
-            self.skipTest("Selenium not available.")
-            job = os.environ.get('TRAVIS_JOB_NUMBER')
-            if job is not None:
-                desired_cap['tunnel-identifier'] = job
-            build = os.environ.get("TRAVIS_BUILD_NUMBER")
-            if build is not None:
-                desired_cap['build'] = build
-            tag = os.environ.get("TRAVIS_PYTHON_VERSION")
-            if tag is not None:
-                desired_cap['tags'] = [tag, "CI"]
-            self.selenium = webdriver.Remote(
-               command_executor='http://' + username + ':' + password + '@ondemand.saucelabs.com:80/wd/hub',
-               desired_capabilities=desired_cap)
-    
+    Safari Webdriver does not allow communication between windows so can't test.
+    """
     
     def slave_helper(self, url):
         """Common tests between test_slave_manual() and test_slave_automatic.
@@ -263,7 +148,7 @@ class SlaveTestCase(StaticLiveServerTestCase):
         Tests the scores, warnings, time, and DQ work correctly on a manual match.
         
         Args:
-            url: None to test manual kumit, a url to test a bracket match.
+            url: None to test manual kumite, a url to test a bracket match.
         Returns:
             (master_window, slave_window, iframe) selenium references.
         
@@ -284,6 +169,7 @@ class SlaveTestCase(StaticLiveServerTestCase):
         
         selenium.switch_to_window(slave_window)
         self.assertEqual(selenium.current_url, self.live_server_url + "/kumite/slave/")
+        WebDriverWait(selenium, 5).until(EC.presence_of_element_located((By.ID, "frame"))) # Safari fix
         iframe = selenium.find_element_by_id("frame")
         self.assertEqual(iframe.get_attribute("src"), self.live_server_url + "/kumite/slave/waiting/")
         
@@ -356,29 +242,36 @@ class SlaveTestCase(StaticLiveServerTestCase):
         selenium.find_element_by_css_selector(".aka .disqualified label").click()
         
         selenium.switch_to_window(slave_window)
+        selenium.switch_to_default_content() # Firefox fix
         selenium.switch_to_frame(iframe)
         self.assertEqual(selenium.find_element_by_id("time").text, "02:00")
         self.assertEqual(selenium.find_element_by_css_selector(".shiro .disqualified input").is_selected(), False)
         self.assertEqual(selenium.find_element_by_css_selector(".aka .disqualified input").is_selected(), True)
         
-        # Timer countdown
+        # Timer countdown. With remote agents, there can be extra time delay so we try to compensate
         selenium.switch_to_window(master_window)
-        selenium.find_element_by_id("start").click()
-        sleep(1.1)
-        selenium.find_element_by_id("stop").click()
+        start = selenium.find_element_by_id("start")
+        stop = selenium.find_element_by_id("stop")
+        t = datetime.datetime.now()
+        start.click()
+        t  = datetime.datetime.now() - t
+        sleep(1.1 - t.total_seconds())
+        stop.click()
         time = selenium.find_element_by_id("time").text
         self.assertEqual(time, "01:59")
         
         selenium.switch_to_window(slave_window)
+        selenium.switch_to_default_content() # Firefox fix
         selenium.switch_to_frame(iframe)
         self.assertEqual(selenium.find_element_by_id("time").text, time)
         
         # Check logs before leaving page
         selenium.switch_to_window(master_window)
-        assert_selenium_logs(self, selenium)
+        self.assert_selenium_logs()
         
         self.selenium.switch_to_window(slave_window)
-        assert_selenium_logs(self, self.selenium)
+        selenium.switch_to_default_content() # Firefox fix
+        self.assert_selenium_logs()
         
         # Leave page
         selenium.switch_to_window(master_window)
@@ -388,27 +281,29 @@ class SlaveTestCase(StaticLiveServerTestCase):
             selenium.find_element_by_id("submit").click()
         
         selenium.switch_to_window(slave_window)
+        selenium.switch_to_default_content() # Firefox fix
         iframe = selenium.find_element_by_id("frame")
         sleep(.2)
         self.assertEqual(iframe.get_attribute("src"), self.live_server_url + "/kumite/slave/waiting/")
         
         # Check logs
         selenium.switch_to_window(master_window)
-        assert_selenium_logs(self, selenium)
+        self.assert_selenium_logs()
         
         self.selenium.switch_to_window(slave_window)
-        assert_selenium_logs(self, self.selenium)
+        selenium.switch_to_default_content() # Firefox fix
+        self.assert_selenium_logs()
         
         return (master_window, slave_window, iframe)
     
     
-    def test_slave_manual(self):
+    def do_slave_manual(self):
         """Tests slave functionality for manual matches."""
         
         (master_window, slave_window, iframe) = self.slave_helper(None)
         
     
-    def test_slave_bracket(self):
+    def do_slave_bracket(self):
         """Tests slave functionality for bracket matches.
         
         In addition to the tests from slave_helper, also tests swap functionality.
@@ -423,11 +318,15 @@ class SlaveTestCase(StaticLiveServerTestCase):
         selenium.get(self.live_server_url)
         
         # Login
+        WebDriverWait(selenium, 5).until(EC.presence_of_element_located((By.LINK_TEXT, "Login")))
         selenium.find_element_by_link_text("Login").click()
         user = RightsSupport.create_edit_user()
         selenium.find_element_by_id("id_username").send_keys("edit")
-        selenium.find_element_by_id("id_password").send_keys("edit" + Keys.RETURN)
+        selenium.find_element_by_id("id_password").send_keys("edit")
+        with self.wait_for_safari_load():
+            selenium.find_element_by_id("login").click()
         
+        # self.wait_for_safari_load(id=id_usernamelogin)
         selenium.find_element_by_link_text("Logout edit") # errors if not found
         
         # Run common tests
@@ -469,21 +368,15 @@ class SlaveTestCase(StaticLiveServerTestCase):
         self.assertEqual(selenium.find_element_by_css_selector(".aka h2").text, "Aka: b")
         self.assertEqual(selenium.find_element_by_id("id_aka-points").get_attribute("value"), "4")
         
-        self.selenium.switch_to_window(master_window)
-        assert_selenium_logs(self, self.selenium)
-        
-        self.selenium.switch_to_window(slave_window)
-        assert_selenium_logs(self, self.selenium)
-        
         # Check logs
         selenium.switch_to_window(master_window)
-        assert_selenium_logs(self, selenium)
+        self.assert_selenium_logs()
         
         self.selenium.switch_to_window(slave_window)
-        assert_selenium_logs(self, self.selenium)
+        self.assert_selenium_logs()
     
     
-    def test_new_slave(self):
+    def do_new_slave(self):
         """Tests a slave being opened after the kumite match has started.
         
         """
@@ -495,7 +388,7 @@ class SlaveTestCase(StaticLiveServerTestCase):
         
         # Launch slave manually after the match has started.
         selenium.execute_script("window.open('" + self.live_server_url + "/kumite/slave/" + "','_blank');");
-        WebDriverWait(selenium, 5).until(EC.number_of_windows_to_be(2))
+        WebDriverWait(selenium, 5).until(EC.number_of_windows_to_be(2))     # Some pop-up blockers have issues here.
         slave_window = selenium.window_handles
         slave_window = slave_window[1 if master_window == slave_window[0] else 0]
         self.assertNotEqual(slave_window, master_window)
@@ -507,11 +400,24 @@ class SlaveTestCase(StaticLiveServerTestCase):
         self.assertEqual(iframe.get_attribute("src"), self.live_server_url + "/kumite/match/manual/edit/?slave=true")
         
         self.selenium.switch_to_window(master_window)
-        assert_selenium_logs(self, self.selenium)
+        self.assert_selenium_logs()
         
         self.selenium.switch_to_window(slave_window)
-        assert_selenium_logs(self, self.selenium)
-        
+        self.assert_selenium_logs()
+    
+    
+    # def test_slave_bracket(self):
+        # self.do_slave_bracket()
+    
+    # def test_slave_manual(self):
+    #     self.do_slave_manual()
+    
+    # def test_new_slave(self):
+    #     self.do_new_slave()
+    
+    def test_run(self):
+        """Run the test cases in the class under a single function to reuse the Webdriver."""
+        self.run_as_sub_tests([self.do_slave_manual, self.do_slave_bracket, self.do_new_slave])
         
 # HTML5 drag and drop doesn't work with Selenium.
 # class KumiteMatchPersonSwapViewTestCase(LiveServerTestCase):

@@ -36,6 +36,7 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
+    'common.apps.CommonConfig',
     'registration.apps.RegistrationConfig',
     'kata.apps.KataConfig',
     'kumite.apps.KumiteConfig',
