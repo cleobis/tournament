@@ -11,3 +11,4 @@ wvenv
 django-master
 docs/_build
 .idea
+node_modules
