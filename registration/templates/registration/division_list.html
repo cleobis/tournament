@@ -2,6 +2,16 @@
 
 {% load division_person_list %}
 
+{% block stylesheets %}
+  {{ block.super }}
+  
+  <style>
+  .single_person {
+    color: #721c24;
+    background-color: #f8d7da;
+  }
+  </style>
+{% endblock %}
 
 {% block content %}
 
@@ -25,7 +35,7 @@
 		<tr>
 			<td><a href="{{ div.get_absolute_url }}">{{ div }}</a></td>
 			<td>{{ div.status }}</td>
-			<td>{{ div.get_confirmed_eventlinks |length }} {% if div.get_noshow_eventlinks %}({{ div.get_noshow_eventlinks |length }} {% if div.event.is_team %}unassigned{% else %}late{% endif %}){% endif %}</td>
+			<td {% if div.eventlink_set.count == 1 %}class="single_person"{% endif %}>{{ div.get_confirmed_eventlinks |length }} {% if div.get_noshow_eventlinks %}({{ div.get_noshow_eventlinks |length }} {% if div.event.is_team %}unassigned{% else %}late{% endif %}){% endif %}</td>
 			<td>
 {% if div.status == "Done" %}
 {% for position, person in div.get_format.get_winners %}
