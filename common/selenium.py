@@ -24,6 +24,8 @@ class Env():
                 {'browserName': 'Safari'},
                 {'browserName': 'Chrome'},
                 ]
+        elif self.provider['host'] == 'none':
+            browsers = []
         else:
             browsers = [
                 # {'browserName': "internet explorer", 'version': "8"}, # Renders wrong
@@ -93,7 +95,10 @@ class Env():
                 extra_caps['name'] = ''
             
             # extra_caps['browserstack.debug'] = 'true'
-    
+        
+        if self.in_travis and host == 'local':
+            host = 'none'
+        
         # Export settings
         self.provider = {}
         self.provider['host'] = host
