@@ -694,8 +694,10 @@ def import_registrations(f):
             else:
                 pass
             setattr(p, field, v)
-        
-        p.full_clean()
+        try:
+            p.full_clean()
+        except ValidationError as e:
+            raise ValueError("Validation error{}:\n{}".format(err_str, e))
         p.save()
         for e in events:
             el = EventLink(person=p,event=e)
