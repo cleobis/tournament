@@ -176,9 +176,12 @@ STATICFILES_DIRS = [
 CONSTANCE_BACKEND = 'constance.backends.database.DatabaseBackend'
 CONSTANCE_CONFIG = {
     'KUMITE_DURATION_S': (120, 'Duration of kumite match in seconds'),
-    'SIGNUP_IMPORT_LAST_TSTAMP': (datetime.datetime.min,
+    'SIGNUP_IMPORT_LAST_TSTAMP': (datetime.datetime(1970,1,1),
         'Registration date of last person from registration date import. Used to prevent duplicate imports'),
 }
+CONSTANCE_CONFIG_FIELDSETS = {
+    "": ('KUMITE_DURATION_S', 'SIGNUP_IMPORT_LAST_TSTAMP',),
+    }
 
 # Phone numbers
 PHONENUMBER_DEFAULT_REGION = "CA"
