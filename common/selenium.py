@@ -72,8 +72,8 @@ class Env():
         
             if self.in_travis:
                 extra_caps['tunnel-identifier'] = os.environ.get('TRAVIS_JOB_NUMBER')
-                extra_cap['build'] = os.environ.get("TRAVIS_BUILD_NUMBER")
-                extra_cap['tags'] =[os.environ.get("TRAVIS_PYTHON_VERSION"), "CI"]
+                extra_caps['build'] = os.environ.get("TRAVIS_BUILD_NUMBER")
+                extra_caps['tags'] =[os.environ.get("TRAVIS_PYTHON_VERSION"), "CI"]
     
         # Configure for BrowserStack
         params = get_envs('BROWSERSTACK_USER', 'BROWSERSTACK_ACCESS_KEY')
