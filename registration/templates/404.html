@@ -1,0 +1,12 @@
+{% extends 'tournament/__base_styled.html' %}
+
+{% block title %}
+  404 Page not found | {{ block.super }}
+{% endblock %}
+
+
+{% block content %}
+<div class="alert alert-danger"><h1 class="alert-heading">404 - Page not found</h1><p>The requested page was not found.</p>
+<button onclick="window.history.back()">Back</button>
+</div>
+{% endblock %}

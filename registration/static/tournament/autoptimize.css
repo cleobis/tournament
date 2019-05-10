@@ -34,6 +34,15 @@ img#wpstats{display:none}
 #wpadminbar .quicklinks li#wp-admin-bar-stats{height:32px}#wpadminbar .quicklinks li#wp-admin-bar-stats a{height:32px;padding:0}#wpadminbar .quicklinks li#wp-admin-bar-stats a div{height:32px;width:95px;overflow:hidden;margin:0 10px}#wpadminbar .quicklinks li#wp-admin-bar-stats a:hover div{width:auto;margin:0 8px 0 10px}#wpadminbar .quicklinks li#wp-admin-bar-stats a img{height:24px;padding:4px 0;max-width:none;border:0}
 header#masthead .masthead-sidebar{padding-top:20px;padding-bottom:20px}ul.category-posts-internal{margin-left:0}
 
+/* Print settings */
+@media print {
+  header#masthead {
+    display: none;
+  }
+  footer {
+    display: none;
+  }
+}
 /* Alerts from Bootstrap */
 .alert {
   position: relative;
