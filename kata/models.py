@@ -33,6 +33,12 @@ class KataMatch(models.Model):
         ordering = ['-combined_score', '-tie_score']
     
     
+    def __str__(self):
+        s = str(self.round) if self.round else "Orphan"
+        s = s + " - " + str(self.eventlink)
+        return s
+    
+    
     @property
     def scores(self):
         return (self.score1, self.score2, self.score3, self.score4, self.score5)
@@ -122,6 +128,12 @@ class KataRound(models.Model):
     prev_round = models.ForeignKey('KataRound', blank=True, null=True, on_delete=models.CASCADE)
     locked = models.BooleanField(default=False)
     n_winner_needed = models.PositiveSmallIntegerField()
+    
+    
+    def __str__(self):
+        s = str(self.bracket) if self.bracket else "Orphan"
+        s = s + " - round {}, {}".format(self.round, self.order)
+        return s
     
     @property
     def done(self):
