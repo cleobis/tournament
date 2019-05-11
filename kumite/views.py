@@ -118,7 +118,7 @@ class BracketRoundRobinDetails(PermissionRequiredMixin, DetailView):
         
         context = super().get_context_data(object=object)
         context.update({'grid': BracketGrid(object), 'consolation_grid': None,
-            'next': object.get_next_match(), 'on_dect': None,
+            'next': object.get_next_match(), 'on_deck': object.get_on_deck_match(),
             'delete_url': reverse('kumite:bracket-rr-delete', args=[object.id])})
         return context
 
@@ -146,7 +146,7 @@ class Bracket2PeopleDetails(PermissionRequiredMixin, DetailView):
         
         context = super().get_context_data(object=object)
         context.update({'grid': BracketGrid(object), 'consolation_grid': None,
-            'next': object.get_next_match(), 'on_dect': None,
+            'next': object.get_next_match(), 'on_deck': None,
             'delete_url': reverse('kumite:bracket-2-delete', args=[object.id])})
         return context
 

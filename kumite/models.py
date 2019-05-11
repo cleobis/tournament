@@ -711,15 +711,19 @@ class KumiteRoundRobinBracket(models.Model):
     
     
     def get_next_match(self):
-        raise NotImplementedError()
-    
-    
-    def get_next_match(self):
         m = self.kumitematch_set.filter(done=False)
         if len(m) == 0:
             return None
         else:
             return m[0]
+    
+    
+    def get_on_deck_match(self):
+        m = self.kumitematch_set.filter(done=False)
+        if len(m) < 2:
+            return None
+        else:
+            return m[1]
     
     
     def build(self, people):

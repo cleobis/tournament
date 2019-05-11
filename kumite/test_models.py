@@ -660,7 +660,8 @@ class KumiteRoundRobinBracketTestCase(TestCase):
         self.assertEqual(m3.aka.name, "c")
         self.assertEqual(m3.shiro.name, "a")
         
-        self.assertEqual(m1, b.get_next_match())
+        self.assertEqual(b.get_next_match(), m1)
+        self.assertEqual(b.get_on_deck_match(), m2)
         
         self.assertEqual(b.get_winners(), ((1, None), (2, None), (3, None)))
         
@@ -697,7 +698,8 @@ class KumiteRoundRobinBracketTestCase(TestCase):
         self.assertEqual(m3.aka.name, "c")
         self.assertEqual(m3.shiro.name, "a")
         
-        self.assertEqual(m2, b.get_next_match())
+        self.assertEqual(b.get_next_match(), m2)
+        self.assertEqual(b.get_on_deck_match(), m3)
         
         self.assertEqual(b.get_winners(), ((1, None), (2, None), (3, None)))
         
@@ -734,6 +736,7 @@ class KumiteRoundRobinBracketTestCase(TestCase):
         self.assertEqual(m3.shiro.name, "a")
         
         self.assertEqual(m2, b.get_next_match())
+        self.assertEqual(None, b.get_on_deck_match())
         
         self.assertEqual(b.get_winners(), ((1, None), (2, None), (3, None)))
         
@@ -770,6 +773,7 @@ class KumiteRoundRobinBracketTestCase(TestCase):
         self.assertEqual(m3.shiro.name, "a")
         
         self.assertEqual(b.get_next_match(), None)
+        self.assertEqual(b.get_on_deck_match(), None)
         
         self.assertEqual(b.get_winners(), ((1, m3.aka.eventlink), (2, m2.aka.eventlink), (3, m1.aka.eventlink)))
         
@@ -822,6 +826,7 @@ class KumiteRoundRobinBracketTestCase(TestCase):
         self.assertEqual(m3.shiro.name, "a")
         
         self.assertEqual(b.get_next_match(), None)
+        self.assertEqual(b.get_on_deck_match(), None)
         
         self.assertEqual(b.get_winners(), ((1, m2.aka.eventlink), (2, m3.aka.eventlink), (3, m1.aka.eventlink)))
         
@@ -866,6 +871,7 @@ class KumiteRoundRobinBracketTestCase(TestCase):
         self.assertEqual(m3.shiro.name, "a")
         
         self.assertEqual(b.get_next_match(), None)
+        self.assertEqual(b.get_on_deck_match(), None)
         
         self.assertEqual(b.get_winners(), ((1, m1.aka.eventlink), (2, m2.aka.eventlink), (3, m3.aka.eventlink)))
         
