@@ -97,7 +97,10 @@ class KumiteMatch(models.Model):
             name = "Semi-finals, Match {}".format(self.order + 1)
         elif self.round == 2:
             name = "Quarter-finals, Match {}".format(self.order + 1)
+        elif self.bracket_rr is not None:
+            name = "Round robin, Match {}".format(self.order + 1)
         else:
+            # Also works for 2 person bracket
             name = "Round of {:.0f}, Match {}".format(math.pow(2,self.round + 1), self.order + 1)
         return name
     
@@ -178,11 +181,11 @@ class KumiteMatch(models.Model):
     
     
     def is_final(self):
-        return self.round == 0 and self.order == 0
+        return self.bracket_elim1 is not None and self.round == 0 and self.order == 0
     
     
     def is_consolation(self):
-        return self.round == 0 and self.order == -1
+        return self.bracket_elim1 is not None and self.round == 0 and self.order == -1
     
     
     def is_ready(self):
