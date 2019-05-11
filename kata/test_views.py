@@ -24,7 +24,7 @@ class KataDetailTestCase(WebTest):
         d = Division(event=e, gender='MF', start_age=1,  stop_age = 99, start_rank=white, stop_rank=bb9)
         d.save()
         
-        p1 = Person(first_name="a", last_name="", gender='M', age=1, rank=Rank.get_kyu(8), instructor="asdf", confirmed=True)
+        p1 = Person(first_name="pre-registered person", last_name="", gender='M', age=1, rank=Rank.get_kyu(8), instructor="asdf", confirmed=True)
         p1.save()
         el1 = EventLink(person=p1, event=e)
         el1.save()
@@ -39,7 +39,8 @@ class KataDetailTestCase(WebTest):
         
         d.build_format()
         
-        url = d.get_format().get_absolute_url()
+        format = d.get_format()
+        url = format.get_absolute_url()
         resp = self.app.get(url)
         
         # Submit blank form. Fails
@@ -70,6 +71,22 @@ class KataDetailTestCase(WebTest):
         self.assertRedirects(resp, url)
         resp = resp.follow()
         resp.mustcontain("<td>late arrival</td>")
+        
+        # Delete "a"
+        match = el1.katamatch_set.all()[0]
+        form = resp.forms['delete_' + str(match.id)]
+        resp = form.submit()
+        self.assertRedirects(resp, url)
+        resp = resp.follow()
+        resp.mustcontain(no=("<dt>pre-registered person</td>",))
+        
+        # Delete "manual added"
+        match = el3.katamatch_set.all()[0]
+        form = resp.forms['delete_' + str(match.id)]
+        resp = form.submit()
+        self.assertRedirects(resp, url)
+        resp = resp.follow()
+        resp.mustcontain(no=("<td>m</td>",))
     
     def test_add_team_form(self):
         e = Event(name="Team kata", format=Event.EventFormat.kata, is_team=True)

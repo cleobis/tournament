@@ -98,7 +98,7 @@
           <button type="submit">Edit</button>
           </form>
           {% if round.round == 0 %}
-          <form method="post" action="{% url 'kata:bracket-match-delete' bracket.id match.id %}">
+          <form id="delete_{{ match.id }}" method="post" action="{% url 'kata:bracket-match-delete' bracket.id match.id %}">
           {% csrf_token %}
           <button type="Delete">Delete</button>
           </form>
