@@ -41,10 +41,25 @@ class KumiteElim1BracketAdmin(AbstractKumiteBracketAdmin):
 
 class KumiteRoundRobinBracketAdmin(AbstractKumiteBracketAdmin):
     model = KumiteRoundRobinBracket
+    
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        
+        if db_field.name in ("gold", "silver", "bronze", ):
+            kwargs["queryset"] = request.bracket.division.eventlink_set.all()
+           
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 class Kumite2PeopleBracketAdmin(AbstractKumiteBracketAdmin):
     model = Kumite2PeopleBracket
+    
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        
+        if db_field.name in ("winner", "loser", ):
+            kwargs["queryset"] = request.bracket.division.eventlink_set.all()
+           
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+    
 
 
 class KumiteBracketListFilter(admin.SimpleListFilter):
@@ -101,9 +116,7 @@ class KumiteMatchAdmin(admin.ModelAdmin):
     
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         
-        if request.bracket is None:
-            kwargs["queryset"] = KumiteMatchPerson.objects.all()
-        elif db_field.name in ("aka", "shiro", ):
+        if db_field.name in ("aka", "shiro", ):
             kwargs["queryset"] = KumiteMatchPerson.objects.filter(
                 Q(**{"match_aka__" + request.bracket.kumite_match_bracket_field: request.bracket})
                 | Q(**{"match_shiro__" + request.bracket.kumite_match_bracket_field: request.bracket})
