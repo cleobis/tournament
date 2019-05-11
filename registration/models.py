@@ -207,11 +207,26 @@ class Division(models.Model):
         ordering = ['event__is_team', 'start_age', 'start_rank', 'event']
     
     def __str__(self):
+        s = str(self.event) + ": "
         if self.name:
-            return "{} - {}".format(self.event, self.name)
+            s = s + self.name
         else:
-            return "{} - Age {}-{}, {}-{}, {}".format(self.event, self.start_age,
-                self.stop_age, self.start_rank.name, self.stop_rank.name, self.get_gender_display())
+            if self.start_age == 1 and self.stop_age == 99:
+                s = s + "All Ages"
+            elif self.stop_age == 99:
+                s = s + str(self.start_age) + "+"
+            else:
+                s = s + str(self.start_age) + "-" + str(self.stop_age)
+            
+            s = s + ", "
+            if self.start_rank == Rank.get_dan(1) and self.stop_rank == Rank.get_dan(10):
+                s = s + "Black Belt"
+            else:
+                s = s + self.start_rank.name + " - " + self.stop_rank.name
+            
+            s = s + ", " + self.get_gender_display()
+        
+        return s
     
     
     def get_absolute_url(self):
