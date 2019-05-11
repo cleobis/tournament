@@ -604,6 +604,7 @@ class Kumite2PeopleBracket(models.Model):
         matches = self.kumitematch_set.all()
         p1 = matches[0].aka.eventlink
         p2 = matches[0].shiro.eventlink
+        wins = {p1: 0, p2: 0}
         points = {p1: 0, p2: 0}
         disqualifieds = {p1: 0, p2: 0}
         all_done = True
@@ -611,6 +612,8 @@ class Kumite2PeopleBracket(models.Model):
         for im, m in enumerate(matches):
             all_done = all_done and m.done
             if m.done:
+                if not m.winner().disqualified:
+                    wins[m.winner()] += 1
                 points[m.aka.eventlink] += m.aka.points
                 disqualifieds[m.aka.eventlink] += m.aka.disqualified
                 points[m.shiro.eventlink] += m.shiro.points
@@ -619,20 +622,28 @@ class Kumite2PeopleBracket(models.Model):
             if not all_done:
                 break
             
-            have_winner = points[p1] != points[p2] and im >= 1 \
-                or disqualifieds[p1] != 0 or disqualifieds[p2] != 0
-                # Always have at least 2 rounds
+            have_winner = disqualifieds[p1] != 0 or disqualifieds[p2] != 0 \
+                or im >= 1 and wins[p1] != wins[p2] \
+                or im >= 2 and points[p1] != points[p2] 
+                # After 2 matchs, decide based on number of wins
+                # After 3 matchs, can decide based on total points too. However,
+                # since we don't allow a match to tie, this doesn't actually get used.
             if disqualifieds[p1]:
+                wins[p1] = -1
                 points[p1] = -1
             if disqualifieds[p2]:
+                wins[p2] = -1
                 points[p2] = -1
             if have_winner:
-                winner = p1 if points[p1] > points[p2] else p2
+                if wins[p1] != wins[p2]:
+                    winner = p1 if wins[p1] > wins[p2] else p2
+                else:
+                    winner = p1 if points[p1] > points[p2] else p2
                 
                 from registration.models import EventLink
                 if disqualifieds[winner] > 0:
                     winner = EventLink.get_disqualified_singleton(winner.event)
-                loser  = p2 if points[p1] > points[p2] else p1
+                loser  = p2 if winner == p1 else p1
                 if disqualifieds[loser] > 0:
                     loser = EventLink.get_disqualified_singleton(loser.event)
                 

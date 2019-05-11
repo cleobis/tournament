@@ -1172,6 +1172,7 @@ class Kumite2PeopleBracketTestCase(TestCase):
         m1.shiro.points = 1
         m1.shiro.save()
         m1.done = True
+        m1.infer_winner()
         m1.save()
         
         self.assertEqual(len(b.kumitematch_set.all()), 2)
@@ -1188,7 +1189,7 @@ class Kumite2PeopleBracketTestCase(TestCase):
         
         self.assertEqual(b.get_winners(), ((1, None), (2, None)))
         
-        # Finish second match, tie
+        # Finish second match, tie in point
         # a:2 - b:1
         # b:3 - a:2
         # a:? - b:?
@@ -1197,6 +1198,7 @@ class Kumite2PeopleBracketTestCase(TestCase):
         m2.shiro.points = 2
         m2.shiro.save()
         m2.done = True
+        m2.infer_winner()
         m2.save()
         
         self.assertEqual(len(b.kumitematch_set.all()), 3)
@@ -1219,7 +1221,7 @@ class Kumite2PeopleBracketTestCase(TestCase):
         
         self.assertEqual(b.get_winners(), ((1, None), (2, None)))
         
-        # Tie winner
+        # Winner
         # a:2 - b:1
         # b:3 - a:2
         # a:9 - b:0
@@ -1228,6 +1230,7 @@ class Kumite2PeopleBracketTestCase(TestCase):
         m3.shiro.points = 0
         m3.shiro.save()
         m3.done = True
+        m3.infer_winner()
         m3.save()
         
         self.assertEqual(len(b.kumitematch_set.all()), 3)
@@ -1248,9 +1251,10 @@ class Kumite2PeopleBracketTestCase(TestCase):
         
         self.assertEqual(b.get_winners(), ((1, m1.aka.eventlink), (2, m1.shiro.eventlink)))
         
-        # Undo Tie
+        # Undo Tie in points
         # a:2 - b:1
         # b:5 - a:2
+        # a:? - b:?
         m3.done = False
         m3.save()
         
@@ -1259,11 +1263,13 @@ class Kumite2PeopleBracketTestCase(TestCase):
         m2.aka.save()
         m2.shiro.points = 2
         m2.shiro.save()
+        m2.infer_winner()
         m2.save()
         
-        self.assertEqual(len(b.kumitematch_set.all()), 2)
+        self.assertEqual(len(b.kumitematch_set.all()), 3)
         m1 = b.get_match(0, 0)
         m2 = b.get_match(0, 1)
+        m3 = b.get_match(0, 2)
         
         self.assertFalse(m1.is_editable())
         self.assertFalse(m1.is_ready())
@@ -1271,9 +1277,12 @@ class Kumite2PeopleBracketTestCase(TestCase):
         self.assertTrue(m2.is_editable())
         self.assertFalse(m2.is_ready())
         
-        self.assertEqual(b.get_next_match(), None)
+        self.assertTrue(m3.is_editable())
+        self.assertTrue(m3.is_ready())
         
-        self.assertEqual(b.get_winners(), ((1, m1.shiro.eventlink), (2, m1.aka.eventlink)))
+        self.assertEqual(b.get_next_match(), m3)
+        
+        self.assertEqual(b.get_winners(), ((1, None), (2, None)))
     
     
     def test_disqualified(self):
