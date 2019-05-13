@@ -12,21 +12,19 @@ from more_itertools import peekable
 def validate_score(score):
     if score < 0 or score > 10:
         raise ValidationError('{} is not a number between 0 and 10.'.format(score))
-    if round(score,1) != score:
-        raise ValidationError('Maximum 1 decimal place.')
 
 
 class KataMatch(models.Model):
     eventlink = models.ForeignKey(EventLink, on_delete=models.PROTECT)
     round = models.ForeignKey('KataRound', on_delete=models.CASCADE)
     done = models.BooleanField(default=False)
-    score1 = models.FloatField(validators=(validate_score,), blank=True, null=True)
-    score2 = models.FloatField(validators=(validate_score,), blank=True, null=True)
-    score3 = models.FloatField(validators=(validate_score,), blank=True, null=True)
-    score4 = models.FloatField(validators=(validate_score,), blank=True, null=True)
-    score5 = models.FloatField(validators=(validate_score,), blank=True, null=True)
-    combined_score = models.FloatField(editable=False, blank=True, null=True) # Will be populated by save()
-    tie_score = models.FloatField(editable=False, blank=True, null=True) # Will be populated by save()
+    score1 = models.DecimalField(max_digits=3, decimal_places=1, validators=(validate_score,), blank=True, null=True)
+    score2 = models.DecimalField(max_digits=3, decimal_places=1, validators=(validate_score,), blank=True, null=True)
+    score3 = models.DecimalField(max_digits=3, decimal_places=1, validators=(validate_score,), blank=True, null=True)
+    score4 = models.DecimalField(max_digits=3, decimal_places=1, validators=(validate_score,), blank=True, null=True)
+    score5 = models.DecimalField(max_digits=3, decimal_places=1, validators=(validate_score,), blank=True, null=True)
+    combined_score = models.DecimalField(max_digits=3, decimal_places=1, editable=False, blank=True, null=True) # Will be populated by save()
+    tie_score = models.DecimalField(max_digits=3, decimal_places=1, editable=False, blank=True, null=True) # Will be populated by save()
     
     
     class Meta:

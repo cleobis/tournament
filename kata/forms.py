@@ -31,8 +31,11 @@ class KataMatchForm(forms.ModelForm):
             raise forms.ValidationError('Unexpected submit button.', code='done_missing')
         
         # Check that they filled all or none of the scores
-        scores = [cleaned_data['score'+str(i)] for i in range(1,5+1)]
-        if scores.count(None) not in (0, 5):
+        scores = [cleaned_data['score'+str(i)] if 'score'+str(i) in cleaned_data else -1 for i in range(1,5+1)]
+        if -1 in scores:
+            # one of the scores didn't validate
+            return
+        elif scores.count(None) not in (0, 5):
             raise forms.ValidationError("Set either all or none of the scores.")
         
         return cleaned_data

@@ -404,6 +404,73 @@ class TestKataBracket(TestCase):
         # There should be no second round
         m = b.get_next_match()
         self.assertEqual(m, None)
+    
+    
+    def test_rounding_error(self):
+        """Tests for an issue where storing scores as floats has round off error and the wrong person wins.
+        
+        a and d should have the same combined_score but a wins on the tie break. There can be round off error in d's favour.
+        """
+        b = make_bracket(4)
+        self.assertIsInstance(b, KataBracket)
+        
+        # Initial state
+        rounds = b.kataround_set.all()
+        self.assertEqual(len(rounds), 1)
+        self.assertEqual(b.n_round, 1)
+        
+        winners = b.get_winners()
+        self.assertEqual(winners, [(1, None), (2, None), (3, None)])
+        
+        # First round
+        # a - 7.6, 7.5, 7.6, 7.5, 7.6 - 3
+        # b - 7.7, 7.7, 7.7, 7.7, 7.7 - 1
+        # c - 7.7, 7.6, 7.6, 7.7, 7.6 - 2
+        # d - 7.6, 7.6, 7.5, 7.3, 7.6 - 4
+        
+        # a
+        m = b.get_next_match()
+        self.assertEqual(m.round.round, 0)
+        self.assertEqual(m.eventlink.manual_name, "a")
+        m.scores = (7.6, 7.5, 7.6, 7.5, 7.6)
+        m.save()
+        
+        winners = b.get_winners()
+        self.assertEqual(winners, [(1, get_person(b, "a")), (2, None), (3, None)])
+        
+        # b
+        m = b.get_next_match()
+        self.assertEqual(m.round.round, 0)
+        self.assertEqual(m.eventlink.manual_name, "b")
+        m.scores = (7.7, 7.7, 7.7, 7.7, 7.7)
+        m.save()
+        
+        winners = b.get_winners()
+        self.assertEqual(winners, [(1, get_person(b, "b")), (2, get_person(b, "a")), (3, None)])
+        
+        # c
+        m = b.get_next_match()
+        self.assertEqual(m.round.round, 0)
+        self.assertEqual(m.eventlink.manual_name, "c")
+        m.scores = (7.7, 7.6, 7.6, 7.7, 7.6)
+        m.save()
+        
+        winners = b.get_winners()
+        self.assertEqual(winners, [(1, get_person(b, "b")), (2, get_person(b, "c")), (3, get_person(b, "a"))])
+        
+        # d
+        m = b.get_next_match()
+        self.assertEqual(m.round.round, 0)
+        self.assertEqual(m.eventlink.manual_name, "d")
+        m.scores = (7.6, 7.6, 7.5, 7.3, 7.6)
+        m.save()
+        
+        winners = b.get_winners()
+        self.assertEqual(winners, [(1, get_person(b, "b")), (2, get_person(b, "c")), (3, get_person(b, "a"))])
+        
+        # There should be no second round
+        m = b.get_next_match()
+        self.assertEqual(m, None)
 
 
 class TestKataMatch(TestCase):
