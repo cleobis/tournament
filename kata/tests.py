@@ -407,7 +407,7 @@ class TestKataBracket(TestCase):
     
     
     def test_rounding_error(self):
-        """Tests for an issue where storing scores as floats has round off error and the wrong person wins.
+        """Test for an issue where storing scores as floats has round off error and the wrong person wins.
         
         a and d should have the same combined_score but a wins on the tie break. There can be round off error in d's favour.
         """
@@ -471,6 +471,37 @@ class TestKataBracket(TestCase):
         # There should be no second round
         m = b.get_next_match()
         self.assertEqual(m, None)
+    
+    
+    def test_rounding_error_postgres(self):
+        """Test for an issue where storing scores as floats has round off error and the wrong person wins. Only failed on PostgreSQL.
+        
+        a and b should have the same combined_score but b wins on the tie 
+        break. With PostgreSQL, the sort was working incorrectly and Django 
+        was incorrectly finding a tie. Seems like they were using slightly 
+        different numbers. Fixed by switching to DecimalField.
+        """
+        
+        scores = (
+            (8.6, 8.5, 8.6, 8.7, 8.7), # 2
+            (8.6, 8.6, 8.6, 8.7, 8.7), # 1
+            (8.6, 8.6, 8.5, 8.4, 8.7), # 3
+            (1.0, 1.0, 1.0, 1.0, 1.0),
+            (1.0, 1.0, 1.0, 1.0, 1.0),
+            )
+        
+        b = make_bracket(5)
+        self.assertIsInstance(b, KataBracket)
+        
+        for score in scores:
+            m = b.get_next_match()
+            m.scores =score
+            m.save()
+            
+        # There should be no second round
+        m = b.get_next_match()
+        self.assertEqual(m, None)
+        self.assertEqual(b.get_winners(), [(1, get_person(b, "b")), (2, get_person(b, "a")), (3, get_person(b, "c"))])
 
 
 class TestKataMatch(TestCase):
