@@ -267,6 +267,13 @@ class Division(models.Model):
         return self.eventlink_set.filter(is_team=False)
     
     
+    def get_num_registered(self):
+        if self.event.is_team:
+            return self.get_team_eventlinks().count()
+        else:
+            return self.get_non_team_eventlinks().count()
+    
+    
     def filter_eventlinks(self):
         """Return QuerySet of :class:`.EventLink` that should be in this division."""
         links = EventLink.objects.filter(person__age__gte=self.start_age,
