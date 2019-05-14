@@ -107,7 +107,7 @@ class TestSwap(WebTest):
         
         html = resp.html
         self.assertEqual(html.select(".aka h2")[0].string, "Aka: " + mp1.eventlink.name)
-        self.assertEqual(html.select(".shiro h2")[0].string, "Ao: " + mp2.eventlink.name)
+        self.assertEqual(html.select(".shiro h2")[0].string, "Shiro: " + mp2.eventlink.name)
         
         # Fill out the form and click the submit button
         resp.form['aka-points'] = 1
@@ -119,7 +119,7 @@ class TestSwap(WebTest):
         # Check that the fields are swapped
         html = resp.html
         self.assertEqual(html.select(".aka h2")[0].string, "Aka: " + mp2.eventlink.name)
-        self.assertEqual(html.select(".shiro h2")[0].string, "Ao: " + mp1.eventlink.name)
+        self.assertEqual(html.select(".shiro h2")[0].string, "Shiro: " + mp1.eventlink.name)
         self.assertEqual(resp.form['aka-points'].value, "3")
         self.assertEqual(resp.form['aka-warnings'].value, "4")
         self.assertEqual(resp.form['shiro-points'].value, "1")
@@ -336,7 +336,7 @@ class SlaveTestCase(common.selenium.SeleniumTestCaseHelper):
         selenium.switch_to_window(master_window)
         selenium.get(self.live_server_url + m.get_absolute_url())
         
-        self.assertEqual(selenium.find_element_by_css_selector(".shiro h2").text, "Ao: b")
+        self.assertEqual(selenium.find_element_by_css_selector(".shiro h2").text, "Shiro: b")
         self.assertEqual(selenium.find_element_by_id("id_shiro-points").get_attribute("value"), "4")
         self.assertEqual(selenium.find_element_by_css_selector(".aka h2").text, "Aka: a")
         self.assertEqual(selenium.find_element_by_id("id_aka-points").get_attribute("value"), "2")
@@ -345,7 +345,7 @@ class SlaveTestCase(common.selenium.SeleniumTestCaseHelper):
         sleep(.2)
         self.assertEqual(iframe.get_attribute("src"), self.live_server_url + m.get_absolute_url() + "?slave=true")
         selenium.switch_to_frame(iframe)
-        self.assertEqual(selenium.find_element_by_css_selector(".shiro h2").text, "Ao: b")
+        self.assertEqual(selenium.find_element_by_css_selector(".shiro h2").text, "Shiro: b")
         self.assertEqual(selenium.find_element_by_id("id_shiro-points").get_attribute("value"), "4")
         self.assertEqual(selenium.find_element_by_css_selector(".aka h2").text, "Aka: a")
         self.assertEqual(selenium.find_element_by_id("id_aka-points").get_attribute("value"), "2")
@@ -354,7 +354,7 @@ class SlaveTestCase(common.selenium.SeleniumTestCaseHelper):
         selenium.switch_to_window(master_window)
         selenium.find_element_by_name("btn_swap").click()
         
-        self.assertEqual(selenium.find_element_by_css_selector(".shiro h2").text, "Ao: a")
+        self.assertEqual(selenium.find_element_by_css_selector(".shiro h2").text, "Shiro: a")
         self.assertEqual(selenium.find_element_by_id("id_shiro-points").get_attribute("value"), "2")
         self.assertEqual(selenium.find_element_by_css_selector(".aka h2").text, "Aka: b")
         self.assertEqual(selenium.find_element_by_id("id_aka-points").get_attribute("value"), "4")
@@ -363,7 +363,7 @@ class SlaveTestCase(common.selenium.SeleniumTestCaseHelper):
         sleep(.2)
         self.assertEqual(iframe.get_attribute("src"), self.live_server_url + m.get_absolute_url() + "?slave=true")
         selenium.switch_to_frame(iframe)
-        self.assertEqual(selenium.find_element_by_css_selector(".shiro h2").text, "Ao: a")
+        self.assertEqual(selenium.find_element_by_css_selector(".shiro h2").text, "Shiro: a")
         self.assertEqual(selenium.find_element_by_id("id_shiro-points").get_attribute("value"), "2")
         self.assertEqual(selenium.find_element_by_css_selector(".aka h2").text, "Aka: b")
         self.assertEqual(selenium.find_element_by_id("id_aka-points").get_attribute("value"), "4")
