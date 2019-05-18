@@ -55,6 +55,58 @@ Then launch the demo server by running::
 
    ./manage.py runserver
 
+Configuring the tournament
+--------------------------
+
+User accounts
+^^^^^^^^^^^^^
+
+Create a super-user for administration by running :command:`./manage.py createsuperuser`.
+
+Create additional users in the Django admin web page. Views are configured to require one of three permission levels. Grant the appropriate level to the account.
+
+* For read only access, grant the account the :command:`=> Read only access` privileges.
+* For edit access (most tournament staff), grant the account :command:`=> Read only access` privileges. Notably, this does not include deleting brackets if they are created accidentally.
+* For unrestricted access, either create a super-user account or grant the account :command:`=> Edit all data` privileges.
+
+Events and Divisions
+^^^^^^^^^^^^^^^^^^^^
+
+For people to register, :mod:`registration.models.Event` objects must be created first. In the Django admin web page, create the appropriate events. The current implementation is sensitive to the exact names. A typical configuration is
+
+.. list-table:: Typical event configuration
+   :header-rows: 1
+   
+   * - Name
+     - Format
+     - Is Team
+   * - Kata
+     - kata
+     - False
+   * - Team kata
+     - kata
+     - True
+   * - Kumite
+     - elim1
+     - False
+
+:class:`registration.models.Division` objects are the groupings of people who will compete against each other. They do not need to be created immediately. People will be assigned to the correct division as the divisions are created or their criteria changed. To create a default set of divisions that may be later modified, use the utility function :func:`registration.models.create_divisions`::
+
+   ./manage.py shell_plus
+   >>> from registration.models import create_divisions
+   >>> create_divisions()
+
+Registration
+^^^^^^^^^^^^
+
+Registration is most conveniently done with a Google form. Export the form data as a csv. Import the form data by running::
+
+   ./manage.py import_registrations path/to/file.csv
+
+The application remembers the date stamp on the last imported record to prevent re-importing records multiple times. To reset the date, edit the Config record in the Django admin web page.
+
+Registration may also be done with the sign-up page included with the application. It is assumed that this option will only be used the day of the tournament so it is protected with a login prompt.
+
 Deploying for production
 ------------------------
 
@@ -62,12 +114,12 @@ The documentation is very clear that the built-in web server is suitable for dev
 web, dynamic content, and database servers should be used.
 
 .. todo::
-   Discuss securing the server for production. (`ref <django deploy>`_)
+   Discuss securing the server for production. (`ref <https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/>`_)
 
 Web server
 ^^^^^^^^^^
 
-One possible web server is `nginx <https://www.nginx.com>`_. An example :file:`nginx.conf` file is provided. Create a symlink from `/etc/nginx/sites-available`
+One possible web server is `nginx <https://www.nginx.com>`_ (pronounced *Engine X*). An example :file:`nginx.conf` file is provided. Create a symlink from `/etc/nginx/sites-available`
 to your `nginx.conf`.  Useful commands:
 
 - :command:`nginx` - Start the server
@@ -101,7 +153,7 @@ Migrating from local to production
 
 You can migrate from the old database by exporting its content (`ref <https://coderwall.com/p/mvsoyg/django-dumpdata-and-loaddata>`_)::
 
-   ./manage.py dumpdata --exclude auth.permission --exclude contenttypes > db.json
+   ./manage.py dumpdata --exclude auth.permission --exclude contenttypes --exclude accounts > db.json
 
 changing database configuration and then loading into the new database::
 

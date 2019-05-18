@@ -33,6 +33,14 @@ kata.models module
     :undoc-members:
     :show-inheritance:
 
+kata.test\_views module
+-----------------------
+
+.. automodule:: kata.test_views
+    :members:
+    :undoc-members:
+    :show-inheritance:
+  
 kata.tests module
 -----------------
 
